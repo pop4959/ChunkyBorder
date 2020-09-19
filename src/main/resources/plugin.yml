@@ -1,0 +1,20 @@
+name: ChunkyBorder
+version: ${project.version}
+main: org.popcraft.chunkyborder.ChunkyBorder
+api-version: "1.13"
+depend: [Chunky]
+softdepend: [dynmap]
+load: POSTWORLD
+authors: [pop4959]
+description: Add a border to your Chunky world
+website: TBD
+commands:
+  chunkyborder:
+    description: Set a border
+    aliases: [cb]
+    permission: chunkyborder.chunkyborder
+    usage: /chunkyborder
+permissions:
+  chunkyborder.chunkyborder:
+    description: Set a border
+    default: op
