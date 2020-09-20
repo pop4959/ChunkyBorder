@@ -25,6 +25,7 @@ import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.ShapeFactory;
 import org.popcraft.chunky.shape.ShapeUtil;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -53,26 +54,26 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
             for (Player player : this.getServer().getOnlinePlayers()) {
                 World world = player.getWorld();
-                Location location = player.getEyeLocation();
                 if (!borders.containsKey(world)) {
                     return;
                 }
                 Shape border = borders.get(world);
-                double centerX = 0, centerZ = 0;
-                if (!border.isBounding(location.getX(), location.getZ())) {
+                Location loc = player.getLocation();
+                if (!border.isBounding(loc.getX(), loc.getZ())) {
+                    // TODO: Handle zero vector (might not need to since using getDirection()?)
+                    // TODO: Account for Y direction
+                    // TODO: Safe teleportation
+                    Vector forward = loc.getDirection().setY(0).multiply(3);
+                    Vector backward = forward.clone().rotateAroundY(Math.PI);
+                    Vector posForward = loc.toVector().add(forward);
+                    Vector posBackward = loc.toVector().add(backward);
+                    boolean boundedForward = border.isBounding(posForward.getX(), posForward.getZ());
+                    Vector newPos = boundedForward ? posForward : posBackward;
+                    Location newLoc = newPos.toLocation(world, loc.getYaw(), loc.getPitch());
+                    // TODO: remove debug
+                    this.getServer().getConsoleSender().sendMessage("Outside of border!");
+                    player.teleport(newLoc);
                     // TL
-//                    double deltaX = location.getX() - e.getFrom().getX();
-//                    double deltaZ = location.getZ() - e.getFrom().getZ();
-//                    if (deltaX == 0 && deltaZ == 0) {
-//                        return;
-//                    }
-//                    Vector toEdge = new Vector(deltaX, 0, deltaZ).normalize().multiply(2);
-                    Vector inFrontOfPlayer = player.getEyeLocation().getDirection().setY(0).normalize().multiply(3);
-                    Vector vectorInFront = location.toVector().add(inFrontOfPlayer);
-                    Vector vectorInBack = location.toVector().add(inFrontOfPlayer.rotateAroundY(Math.PI));
-                    Location locInFront = vectorInFront.toLocation(world, location.getYaw(), location.getPitch());
-                    Location locInBack = vectorInBack.toLocation(world, location.getYaw(), location.getPitch());
-                    player.teleport(border.isBounding(vectorInFront.getX(), vectorInFront.getZ()) ? locInFront : locInBack);
                 }
             }
         }, 0L, 1L);
@@ -166,28 +167,34 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             double toX = to.getX();
             double toY = to.getY();
             double toZ = to.getZ();
-            double[] intersectionsX = new double[pointsX.length];
-            double[] intersectionsZ = new double[pointsZ.length];
+            final List<double[]> intersections = new ArrayList<>();
             for (int i = 0; i < pointsX.length; ++i) {
-                double[] intersection = ShapeUtil.intersection(centerX, centerZ, toX, toZ, pointsX[i], pointsZ[i], pointsX[i == pointsX.length - 1 ? 0 : i + 1], pointsZ[i == pointsZ.length - 1 ? 0 : i + 1]);
-                intersectionsX[i] = intersection[0];
-                intersectionsZ[i] = intersection[1];
+                ShapeUtil.intersection(centerX, centerZ, toX, toZ, pointsX[i], pointsZ[i], pointsX[i == pointsX.length - 1 ? 0 : i + 1], pointsZ[i == pointsZ.length - 1 ? 0 : i + 1]).ifPresent(intersections::add);
             }
-            double closestX = intersectionsX[0];
-            double closestZ = intersectionsZ[0];
+            if (intersections.isEmpty()) {
+                e.setTo(toWorld.getSpawnLocation());
+                return;
+            }
+            double closestX = intersections.get(0)[0];
+            double closestZ = intersections.get(0)[1];
             double shortestDistance = Double.MAX_VALUE;
-            for (int i = 0; i < intersectionsX.length; ++i) {
-                double distance = to.distanceSquared(new Vector(intersectionsX[i], toY, intersectionsZ[i]));
+            for (double[] intersection : intersections) {
+                double intersectionX = intersection[0];
+                double intersectionZ = intersection[1];
+                double distance = to.distanceSquared(new Vector(intersectionX, toY, intersectionZ));
                 if (distance < shortestDistance) {
                     shortestDistance = distance;
-                    closestX = intersectionsX[i];
-                    closestZ = intersectionsZ[i];
+                    closestX = intersectionX;
+                    closestZ = intersectionZ;
                 }
             }
-            Vector towardsCenter = new Vector(centerX - toX, 0, centerZ - toZ).normalize().multiply(2);
+            Vector towardsCenter = new Vector(centerX - toX, 0, centerZ - toZ).normalize().multiply(3);
+            // TODO: set the yaw and pitch to look towards the center
             Location insideBorder = new Location(toWorld, closestX, toY, closestZ);
             insideBorder.add(towardsCenter);
             insideBorder.setY(toWorld.getHighestBlockYAt(insideBorder));
+            // TODO: remove debug
+            this.getServer().getConsoleSender().sendMessage("Teleporting into border!");
             e.setTo(insideBorder);
         }
     }
