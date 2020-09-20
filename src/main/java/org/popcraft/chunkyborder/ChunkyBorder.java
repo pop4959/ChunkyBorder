@@ -1,5 +1,8 @@
 package org.popcraft.chunkyborder;
 
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
@@ -30,11 +33,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public final class ChunkyBorder extends JavaPlugin implements Listener {
     private Chunky chunky;
     private Map<World, Shape> borders;
     private Selection selection;
+    private Map<UUID, Location> lastKnownLocation;
 
     @Override
     public void onEnable() {
@@ -49,6 +54,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             return;
         }
         this.borders = new HashMap<>();
+        this.lastKnownLocation = new HashMap<>();
         getServer().getPluginManager().registerEvents(this, this);
         // Load from config
         this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
@@ -59,24 +65,21 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                 }
                 Shape border = borders.get(world);
                 Location loc = player.getLocation();
-                if (!border.isBounding(loc.getX(), loc.getZ())) {
-                    // TODO: Handle zero vector (might not need to since using getDirection()?)
-                    // TODO: Account for Y direction
-                    // TODO: Safe teleportation
-                    Vector forward = loc.getDirection().setY(0).multiply(3);
-                    Vector backward = forward.clone().rotateAroundY(Math.PI);
-                    Vector posForward = loc.toVector().add(forward);
-                    Vector posBackward = loc.toVector().add(backward);
-                    boolean boundedForward = border.isBounding(posForward.getX(), posForward.getZ());
-                    Vector newPos = boundedForward ? posForward : posBackward;
-                    Location newLoc = newPos.toLocation(world, loc.getYaw(), loc.getPitch());
+                if (border.isBounding(loc.getX(), loc.getZ())) {
+                    this.lastKnownLocation.put(player.getUniqueId(), loc);
+                    // TODO: remove locations when player logs off
+                } else {
+                    Location newLoc = this.lastKnownLocation.getOrDefault(player.getUniqueId(), world.getSpawnLocation());
+                    newLoc.setYaw(loc.getYaw());
+                    newLoc.setPitch(loc.getPitch());
                     // TODO: remove debug
                     this.getServer().getConsoleSender().sendMessage("Outside of border!");
+                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.RED + "You have reached the edge of this world."));
                     player.teleport(newLoc);
-                    // TL
+                    // TODO: TL actionbar
                 }
             }
-        }, 0L, 1L);
+        }, 0L, 20L);
     }
 
     @Override
@@ -148,6 +151,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerTeleport(PlayerTeleportEvent e) {
+        Player player = e.getPlayer();
         Location toLocation = e.getTo();
         if (toLocation == null) {
             return;
@@ -175,27 +179,32 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                 e.setTo(toWorld.getSpawnLocation());
                 return;
             }
+            Vector towardsCenter = new Vector(centerX - toX, 0, centerZ - toZ).normalize().multiply(3);
             double closestX = intersections.get(0)[0];
             double closestZ = intersections.get(0)[1];
             double shortestDistance = Double.MAX_VALUE;
             for (double[] intersection : intersections) {
                 double intersectionX = intersection[0];
                 double intersectionZ = intersection[1];
-                double distance = to.distanceSquared(new Vector(intersectionX, toY, intersectionZ));
-                if (distance < shortestDistance) {
+                Vector position = new Vector(intersectionX, toY, intersectionZ).add(towardsCenter);
+                double distance = to.distanceSquared(position);
+                if (distance < shortestDistance && border.isBounding(position.getX(), position.getZ())) {
                     shortestDistance = distance;
                     closestX = intersectionX;
                     closestZ = intersectionZ;
                 }
             }
-            Vector towardsCenter = new Vector(centerX - toX, 0, centerZ - toZ).normalize().multiply(3);
             // TODO: set the yaw and pitch to look towards the center
             Location insideBorder = new Location(toWorld, closestX, toY, closestZ);
             insideBorder.add(towardsCenter);
+            insideBorder.setDirection(towardsCenter);
             insideBorder.setY(toWorld.getHighestBlockYAt(insideBorder));
             // TODO: remove debug
             this.getServer().getConsoleSender().sendMessage("Teleporting into border!");
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.RED + "You have reached the edge of this world."));
+            this.lastKnownLocation.put(player.getUniqueId(), insideBorder);
             e.setTo(insideBorder);
+            //e.getPlayer().teleport(insideBorder);
         }
     }
 }
