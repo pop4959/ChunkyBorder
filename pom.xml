@@ -6,7 +6,7 @@
 
     <groupId>org.popcraft</groupId>
     <artifactId>ChunkyBorder</artifactId>
-    <version>1.1.11</version>
+    <version>1.1.12</version>
     <packaging>jar</packaging>
 
     <name>ChunkyBorder</name>
@@ -66,6 +66,10 @@
             <id>dynmap-repo</id>
             <url>https://repo.mikeprimm.com/</url>
         </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -78,13 +82,19 @@
         <dependency>
             <groupId>org.popcraft</groupId>
             <artifactId>Chunky</artifactId>
-            <version>1.1.11</version>
+            <version>1.1.12</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>us.dynmap</groupId>
             <artifactId>dynmap-api</artifactId>
             <version>3.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.BlueMap-Minecraft</groupId>
+            <artifactId>BlueMapAPI</artifactId>
+            <version>v1.1.0</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

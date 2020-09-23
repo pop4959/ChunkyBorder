@@ -3,7 +3,7 @@ version: ${project.version}
 main: org.popcraft.chunkyborder.ChunkyBorder
 api-version: "1.13"
 depend: [Chunky]
-softdepend: [dynmap]
+softdepend: [dynmap, BlueMap]
 load: POSTWORLD
 authors: [pop4959]
 description: Add a border to your Chunky world
@@ -18,3 +18,9 @@ permissions:
   chunkyborder.chunkyborder:
     description: Set a border
     default: op
+  chunkyborder.bypass.movement:
+    description: Bypass border movement checking
+    default: false
+  chunkyborder.bypass.place:
+    description: Bypass border block placement checking
+    default: false

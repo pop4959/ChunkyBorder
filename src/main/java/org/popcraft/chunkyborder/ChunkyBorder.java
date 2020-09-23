@@ -1,5 +1,6 @@
 package org.popcraft.chunkyborder;
 
+import de.bluecolored.bluemap.api.BlueMapAPI;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
@@ -7,32 +8,36 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 import org.dynmap.DynmapAPI;
-import org.dynmap.markers.AreaMarker;
-import org.dynmap.markers.CircleMarker;
-import org.dynmap.markers.MarkerAPI;
-import org.dynmap.markers.MarkerSet;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.Selection;
+import org.popcraft.chunky.shape.AbstractEllipse;
 import org.popcraft.chunky.shape.AbstractPolygon;
-import org.popcraft.chunky.shape.AbstractShape;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.ShapeFactory;
 import org.popcraft.chunky.shape.ShapeUtil;
+import org.popcraft.chunkyborder.integration.BlueMapIntegration;
+import org.popcraft.chunkyborder.integration.DynmapIntegration;
+import org.popcraft.chunkyborder.integration.MapIntegration;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 public final class ChunkyBorder extends JavaPlugin implements Listener {
@@ -40,6 +45,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     private Map<World, Shape> borders;
     private Selection selection;
     private Map<UUID, Location> lastKnownLocation;
+    private List<MapIntegration> mapIntegrations;
 
     @Override
     public void onEnable() {
@@ -56,6 +62,16 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         this.borders = new HashMap<>();
         this.lastKnownLocation = new HashMap<>();
         getServer().getPluginManager().registerEvents(this, this);
+        // Load integrations
+        this.mapIntegrations = new ArrayList<>();
+        Optional.ofNullable(getServer().getPluginManager().getPlugin("dynmap"))
+                .ifPresent(dynmap -> mapIntegrations.add(new DynmapIntegration((DynmapAPI) dynmap)));
+        Optional.ofNullable(getServer().getPluginManager().getPlugin("BlueMap"))
+                .ifPresent(blueMap -> {
+                    BlueMapIntegration blueMapIntegration = new BlueMapIntegration();
+                    BlueMapAPI.registerListener(blueMapIntegration);
+                    mapIntegrations.add(blueMapIntegration);
+                });
         // Load from config
         this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
             for (Player player : this.getServer().getOnlinePlayers()) {
@@ -69,13 +85,20 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                     this.lastKnownLocation.put(player.getUniqueId(), loc);
                     // TODO: remove locations when player logs off
                 } else {
+                    if (player.hasPermission("chunkyborder.bypass.movement")) {
+                        return;
+                    }
                     Location newLoc = this.lastKnownLocation.getOrDefault(player.getUniqueId(), world.getSpawnLocation());
                     newLoc.setYaw(loc.getYaw());
                     newLoc.setPitch(loc.getPitch());
                     // TODO: remove debug
                     this.getServer().getConsoleSender().sendMessage("Outside of border!");
                     player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.RED + "You have reached the edge of this world."));
+                    Entity vehicle = player.getVehicle();
                     player.teleport(newLoc);
+                    if (vehicle != null) {
+                        vehicle.teleport(newLoc);
+                    }
                     // TODO: TL actionbar
                 }
             }
@@ -85,36 +108,18 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         HandlerList.unregisterAll((Plugin) this);
+        mapIntegrations.forEach(MapIntegration::removeAllShapeMarkers);
+        mapIntegrations.clear();
         // Save to config
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         this.selection = chunky.getSelection();
-        Shape shape = ShapeFactory.getShape(selection);
-        if (!(shape instanceof AbstractPolygon)) {
-            return true;
-        }
-        AbstractPolygon poly = (AbstractPolygon) shape;
+        final Shape shape = ShapeFactory.getShape(selection);
         borders.put(selection.world, shape);
+        mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(selection.world, shape));
         // TL
-        Plugin dynmap = getServer().getPluginManager().getPlugin("dynmap");
-        if (dynmap == null) {
-            return true;
-        }
-        DynmapAPI dynmapAPI = (DynmapAPI) dynmap;
-        MarkerAPI markerAPI = dynmapAPI.getMarkerAPI();
-        MarkerSet oldMarkerSet = markerAPI.getMarkerSet("chunkyborder.markerset");
-        if (oldMarkerSet != null) {
-            oldMarkerSet.deleteMarkerSet();
-        }
-        MarkerSet markerSet = markerAPI.createMarkerSet("chunkyborder.markerset", "World Border", null, false);
-        AreaMarker areaMarker = markerSet.createAreaMarker("chunkyborder.marker." + selection.world.getName(), "World Border", false, selection.world.getName(), poly.pointsX(), poly.pointsZ(), false);
-        areaMarker.setLineStyle(3, 1f, 0xFF0000);
-        areaMarker.setFillStyle(0f, 0x000000);
-        //CircleMarker circleMarker = markerSet.createCircleMarker("chunkyborder.marker." + selection.world.getName(), "World Border", false, selection.world.getName(), selection.x + 8, Math.min(selection.world.getSeaLevel(), selection.world.getMaxHeight()), selection.z + 8, (selection.getDiameterChunks() * 16) / 2f, (selection.getDiameterChunksZ() * 16) / 2f, false);
-        //circleMarker.setLineStyle(3, 1f, 0xFF0000);
-        //circleMarker.setFillStyle(0f, 0x000000);
         return true;
     }
 
@@ -123,33 +128,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         return Collections.emptyList();
     }
 
-//    @EventHandler
-//    public void onPlayerMove(PlayerMoveEvent e) {
-//        Player player = e.getPlayer();
-//        World world = player.getWorld();
-//        Location location = player.getEyeLocation();
-//        if (!borders.containsKey(world)) {
-//            return;
-//        }
-//        Shape border = borders.get(world);
-//        double centerX = 0, centerZ = 0;
-//        if (!border.isBounding(location.getX(), location.getZ())) {
-//            // TL
-//            double deltaX = location.getX() - e.getFrom().getX();
-//            double deltaZ = location.getZ() - e.getFrom().getZ();
-//            if (deltaX == 0 && deltaZ == 0) {
-//                return;
-//            }
-//            Vector toEdge = new Vector(deltaX, 0, deltaZ).normalize().multiply(2);
-//            if (border.isBounding(location.getX() + toEdge.getX(), location.getZ() + toEdge.getZ())) {
-//                player.teleport(new Location(location.getWorld(), location.getX() + toEdge.getX(), location.getY(), location.getZ() + toEdge.getZ(), location.getYaw(), location.getPitch()));
-//            } else {
-//                player.teleport(new Location(location.getWorld(), location.getX() - toEdge.getX(), location.getY(), location.getZ() - toEdge.getZ(), location.getYaw(), location.getPitch()));
-//            }
-//        }
-//    }
-
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onPlayerTeleport(PlayerTeleportEvent e) {
         Player player = e.getPlayer();
         Location toLocation = e.getTo();
@@ -160,33 +139,56 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         if (toWorld == null || !borders.containsKey(toWorld)) {
             return;
         }
-        AbstractPolygon border = (AbstractPolygon) borders.get(toWorld); // TODO: This could be something else
+        Shape border = borders.get(toWorld);
+        if (border == null) {
+            return;
+        }
         Vector to = toLocation.toVector();
         if (!border.isBounding(to.getX(), to.getZ())) {
+            if (player.hasPermission("chunkyborder.bypass.movement")) {
+                return;
+            }
+            // Cancel enderpearls
+            if (PlayerTeleportEvent.TeleportCause.ENDER_PEARL.equals(e.getCause())) {
+                e.setCancelled(true);
+                return;
+            }
             // TL
-            double[] pointsX = border.pointsX();
-            double[] pointsZ = border.pointsZ();
+            // TODO: don't use selection, use saved border
             double centerX = selection.x;
             double centerZ = selection.z;
             double toX = to.getX();
             double toY = to.getY();
             double toZ = to.getZ();
             final List<double[]> intersections = new ArrayList<>();
-            for (int i = 0; i < pointsX.length; ++i) {
-                ShapeUtil.intersection(centerX, centerZ, toX, toZ, pointsX[i], pointsZ[i], pointsX[i == pointsX.length - 1 ? 0 : i + 1], pointsZ[i == pointsZ.length - 1 ? 0 : i + 1]).ifPresent(intersections::add);
+            if (border instanceof AbstractPolygon) {
+                AbstractPolygon polygonBorder = (AbstractPolygon) border;
+                double[] pointsX = polygonBorder.pointsX();
+                double[] pointsZ = polygonBorder.pointsZ();
+                for (int i = 0; i < pointsX.length; ++i) {
+                    ShapeUtil.intersection(centerX, centerZ, toX, toZ, pointsX[i], pointsZ[i], pointsX[i == pointsX.length - 1 ? 0 : i + 1], pointsZ[i == pointsZ.length - 1 ? 0 : i + 1]).ifPresent(intersections::add);
+                }
+            } else if (border instanceof AbstractEllipse) {
+                AbstractEllipse ellipticalBorder = (AbstractEllipse) border;
+                double[] center = ellipticalBorder.getCenter();
+                double[] radii = ellipticalBorder.getRadii();
+                double angle = Math.atan2(toZ - centerX, toX - centerZ);
+                double intersectionX = center[0] + radii[0] * Math.cos(angle);
+                double intersectionZ = center[1] + radii[1] * Math.sin(angle);
+                intersections.add(new double[]{intersectionX, intersectionZ});
             }
             if (intersections.isEmpty()) {
                 e.setTo(toWorld.getSpawnLocation());
                 return;
             }
-            Vector towardsCenter = new Vector(centerX - toX, 0, centerZ - toZ).normalize().multiply(3);
+            Vector centerDirection = new Vector(centerX - toX, 0, centerZ - toZ).normalize().multiply(3);
             double closestX = intersections.get(0)[0];
             double closestZ = intersections.get(0)[1];
             double shortestDistance = Double.MAX_VALUE;
             for (double[] intersection : intersections) {
                 double intersectionX = intersection[0];
                 double intersectionZ = intersection[1];
-                Vector position = new Vector(intersectionX, toY, intersectionZ).add(towardsCenter);
+                Vector position = new Vector(intersectionX, toY, intersectionZ).add(centerDirection);
                 double distance = to.distanceSquared(position);
                 if (distance < shortestDistance && border.isBounding(position.getX(), position.getZ())) {
                     shortestDistance = distance;
@@ -194,17 +196,89 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                     closestZ = intersectionZ;
                 }
             }
-            // TODO: set the yaw and pitch to look towards the center
             Location insideBorder = new Location(toWorld, closestX, toY, closestZ);
-            insideBorder.add(towardsCenter);
-            insideBorder.setDirection(towardsCenter);
+            insideBorder.add(centerDirection);
+            insideBorder.setDirection(centerDirection);
+            // TODO: getHighestBlockYAt version offset
             insideBorder.setY(toWorld.getHighestBlockYAt(insideBorder));
+
             // TODO: remove debug
             this.getServer().getConsoleSender().sendMessage("Teleporting into border!");
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.RED + "You have reached the edge of this world."));
-            this.lastKnownLocation.put(player.getUniqueId(), insideBorder);
+            lastKnownLocation.put(player.getUniqueId(), insideBorder);
             e.setTo(insideBorder);
-            //e.getPlayer().teleport(insideBorder);
         }
     }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onCreatureSpawn(CreatureSpawnEvent e) {
+        Location location = e.getLocation();
+        Shape border = borders.get(location.getWorld());
+        if (border != null && !border.isBounding(location.getX(), location.getZ())) {
+            e.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onBlockPlace(BlockPlaceEvent e) {
+        Location location = e.getBlockPlaced().getLocation();
+        Shape border = borders.get(location.getWorld());
+        if (border != null && !border.isBounding(location.getX(), location.getZ()) && !e.getPlayer().hasPermission("chunkyborder.bypass.place")) {
+            e.setCancelled(true);
+        }
+    }
+
+//    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+//    public void onPlayerPortal(PlayerPortalEvent e) {
+//
+//    }
+
+//    private Location findClosest(Vector to, World world, Shape border) {
+//        double centerX = selection.x;
+//        double centerZ = selection.z;
+//        double toX = to.getX();
+//        double toY = to.getY();
+//        double toZ = to.getZ();
+//        final List<double[]> intersections = new ArrayList<>();
+//        if (border instanceof AbstractPolygon) {
+//            AbstractPolygon polygonBorder = (AbstractPolygon) border;
+//            double[] pointsX = polygonBorder.pointsX();
+//            double[] pointsZ = polygonBorder.pointsZ();
+//            for (int i = 0; i < pointsX.length; ++i) {
+//                ShapeUtil.intersection(centerX, centerZ, toX, toZ, pointsX[i], pointsZ[i], pointsX[i == pointsX.length - 1 ? 0 : i + 1], pointsZ[i == pointsZ.length - 1 ? 0 : i + 1]).ifPresent(intersections::add);
+//            }
+//        } else if (border instanceof AbstractEllipse) {
+//            AbstractEllipse ellipticalBorder = (AbstractEllipse) border;
+//            double[] center = ellipticalBorder.getCenter();
+//            double[] radii = ellipticalBorder.getRadii();
+//            double angle = Math.atan2(toZ - centerX, toX - centerZ);
+//            double intersectionX = center[0] + radii[0] * Math.cos(angle);
+//            double intersectionZ = center[1] + radii[1] * Math.sin(angle);
+//            intersections.add(new double[]{intersectionX, intersectionZ});
+//        }
+//        if (intersections.isEmpty()) {
+//            return world.getSpawnLocation();
+//        }
+//        Vector centerDirection = new Vector(centerX - toX, 0, centerZ - toZ).normalize().multiply(3);
+//        double closestX = intersections.get(0)[0];
+//        double closestZ = intersections.get(0)[1];
+//        double shortestDistance = Double.MAX_VALUE;
+//        for (double[] intersection : intersections) {
+//            double intersectionX = intersection[0];
+//            double intersectionZ = intersection[1];
+//            Vector position = new Vector(intersectionX, toY, intersectionZ).add(centerDirection);
+//            double distance = to.distanceSquared(position);
+//            if (distance < shortestDistance && border.isBounding(position.getX(), position.getZ())) {
+//                shortestDistance = distance;
+//                closestX = intersectionX;
+//                closestZ = intersectionZ;
+//            }
+//        }
+//        Location insideBorder = new Location(world, closestX, toY, closestZ);
+//        insideBorder.add(centerDirection);
+//        insideBorder.setDirection(centerDirection);
+//        // TODO: getHighestBlockYAt version offset
+//        insideBorder.setY(world.getHighestBlockYAt(insideBorder));
+//        return insideBorder;
+//    }
 }
