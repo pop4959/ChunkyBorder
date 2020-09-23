@@ -1,5 +1,6 @@
 package org.popcraft.chunkyborder;
 
+import com.google.gson.Gson;
 import de.bluecolored.bluemap.api.BlueMapAPI;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -16,6 +17,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -32,6 +34,9 @@ import org.popcraft.chunkyborder.integration.BlueMapIntegration;
 import org.popcraft.chunkyborder.integration.DynmapIntegration;
 import org.popcraft.chunkyborder.integration.MapIntegration;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,6 +54,9 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        this.getConfig().options().copyDefaults(true);
+        this.getConfig().options().copyHeader(true);
+        this.saveConfig();
         this.chunky = (Chunky) getServer().getPluginManager().getPlugin("Chunky");
         if (chunky == null) {
             // TL
@@ -83,7 +91,6 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                 Location loc = player.getLocation();
                 if (border.isBounding(loc.getX(), loc.getZ())) {
                     this.lastKnownLocation.put(player.getUniqueId(), loc);
-                    // TODO: remove locations when player logs off
                 } else {
                     if (player.hasPermission("chunkyborder.bypass.movement")) {
                         return;
@@ -93,13 +100,13 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                     newLoc.setPitch(loc.getPitch());
                     // TODO: remove debug
                     this.getServer().getConsoleSender().sendMessage("Outside of border!");
+                    // TODO: TL actionbar
                     player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.RED + "You have reached the edge of this world."));
                     Entity vehicle = player.getVehicle();
                     player.teleport(newLoc);
                     if (vehicle != null) {
                         vehicle.teleport(newLoc);
                     }
-                    // TODO: TL actionbar
                 }
             }
         }, 0L, 20L);
@@ -108,8 +115,16 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         HandlerList.unregisterAll((Plugin) this);
-        mapIntegrations.forEach(MapIntegration::removeAllShapeMarkers);
-        mapIntegrations.clear();
+        if (mapIntegrations != null) {
+            mapIntegrations.forEach(MapIntegration::removeAllShapeMarkers);
+            mapIntegrations.clear();
+        }
+        // TODO: improve this
+        try (FileWriter fileWriter = new FileWriter(new File(this.getDataFolder(), "borders.json"))) {
+            fileWriter.write(new Gson().toJson(borders));
+        } catch (IOException e) {
+            this.getLogger().warning("Unable to save borders");
+        }
         // Save to config
     }
 
@@ -126,6 +141,11 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         return Collections.emptyList();
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent e) {
+        this.lastKnownLocation.remove(e.getPlayer().getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
@@ -148,7 +168,6 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             if (player.hasPermission("chunkyborder.bypass.movement")) {
                 return;
             }
-            // Cancel enderpearls
             if (PlayerTeleportEvent.TeleportCause.ENDER_PEARL.equals(e.getCause())) {
                 e.setCancelled(true);
                 return;
@@ -201,7 +220,6 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             insideBorder.setDirection(centerDirection);
             // TODO: getHighestBlockYAt version offset
             insideBorder.setY(toWorld.getHighestBlockYAt(insideBorder));
-
             // TODO: remove debug
             this.getServer().getConsoleSender().sendMessage("Teleporting into border!");
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.RED + "You have reached the edge of this world."));
@@ -227,58 +245,4 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             e.setCancelled(true);
         }
     }
-
-//    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-//    public void onPlayerPortal(PlayerPortalEvent e) {
-//
-//    }
-
-//    private Location findClosest(Vector to, World world, Shape border) {
-//        double centerX = selection.x;
-//        double centerZ = selection.z;
-//        double toX = to.getX();
-//        double toY = to.getY();
-//        double toZ = to.getZ();
-//        final List<double[]> intersections = new ArrayList<>();
-//        if (border instanceof AbstractPolygon) {
-//            AbstractPolygon polygonBorder = (AbstractPolygon) border;
-//            double[] pointsX = polygonBorder.pointsX();
-//            double[] pointsZ = polygonBorder.pointsZ();
-//            for (int i = 0; i < pointsX.length; ++i) {
-//                ShapeUtil.intersection(centerX, centerZ, toX, toZ, pointsX[i], pointsZ[i], pointsX[i == pointsX.length - 1 ? 0 : i + 1], pointsZ[i == pointsZ.length - 1 ? 0 : i + 1]).ifPresent(intersections::add);
-//            }
-//        } else if (border instanceof AbstractEllipse) {
-//            AbstractEllipse ellipticalBorder = (AbstractEllipse) border;
-//            double[] center = ellipticalBorder.getCenter();
-//            double[] radii = ellipticalBorder.getRadii();
-//            double angle = Math.atan2(toZ - centerX, toX - centerZ);
-//            double intersectionX = center[0] + radii[0] * Math.cos(angle);
-//            double intersectionZ = center[1] + radii[1] * Math.sin(angle);
-//            intersections.add(new double[]{intersectionX, intersectionZ});
-//        }
-//        if (intersections.isEmpty()) {
-//            return world.getSpawnLocation();
-//        }
-//        Vector centerDirection = new Vector(centerX - toX, 0, centerZ - toZ).normalize().multiply(3);
-//        double closestX = intersections.get(0)[0];
-//        double closestZ = intersections.get(0)[1];
-//        double shortestDistance = Double.MAX_VALUE;
-//        for (double[] intersection : intersections) {
-//            double intersectionX = intersection[0];
-//            double intersectionZ = intersection[1];
-//            Vector position = new Vector(intersectionX, toY, intersectionZ).add(centerDirection);
-//            double distance = to.distanceSquared(position);
-//            if (distance < shortestDistance && border.isBounding(position.getX(), position.getZ())) {
-//                shortestDistance = distance;
-//                closestX = intersectionX;
-//                closestZ = intersectionZ;
-//            }
-//        }
-//        Location insideBorder = new Location(world, closestX, toY, closestZ);
-//        insideBorder.add(centerDirection);
-//        insideBorder.setDirection(centerDirection);
-//        // TODO: getHighestBlockYAt version offset
-//        insideBorder.setY(world.getHighestBlockYAt(insideBorder));
-//        return insideBorder;
-//    }
 }
