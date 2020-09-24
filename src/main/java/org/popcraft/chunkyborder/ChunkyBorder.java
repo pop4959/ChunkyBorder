@@ -30,9 +30,9 @@ import org.popcraft.chunky.shape.AbstractPolygon;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.ShapeFactory;
 import org.popcraft.chunky.shape.ShapeUtil;
-import org.popcraft.chunkyborder.integration.BlueMapIntegration;
-import org.popcraft.chunkyborder.integration.DynmapIntegration;
-import org.popcraft.chunkyborder.integration.MapIntegration;
+import org.popcraft.chunky.integration.BlueMapIntegration;
+import org.popcraft.chunky.integration.DynmapIntegration;
+import org.popcraft.chunky.integration.MapIntegration;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -192,6 +192,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                 double[] center = ellipticalBorder.getCenter();
                 double[] radii = ellipticalBorder.getRadii();
                 double angle = Math.atan2(toZ - centerX, toX - centerZ);
+                intersections.add(ShapeUtil.pointOnEllipse(center[0], center[1], radii[0], radii[1], angle));
                 double intersectionX = center[0] + radii[0] * Math.cos(angle);
                 double intersectionZ = center[1] + radii[1] * Math.sin(angle);
                 intersections.add(new double[]{intersectionX, intersectionZ});
