@@ -1,2 +1,21 @@
 # ChunkyBorder Configuration
-# Eventually something might be here
+# https://github.com/pop4959/ChunkyBorder/wiki/Configuration
+version: 1
+border-options:
+  check-interval: 20
+  message: "&cYou have reached the edge of this world."
+  use-action-bar: true
+  effect: ender_signal
+  sound: entity_evocation_illager_prepare_wololo
+  prevent:
+    enderpearl: true
+    mob-spawns: true
+map-options:
+  enable:
+    bluemap: true
+    dynmap: true
+  label: "World Border"
+  hide-by-default: false
+  color: FF0000
+  weight: 3
+  priority: 0

@@ -2,10 +2,13 @@ package org.popcraft.chunkyborder;
 
 import com.google.gson.Gson;
 import de.bluecolored.bluemap.api.BlueMapAPI;
+import io.papermc.lib.PaperLib;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
+import org.bukkit.Effect;
 import org.bukkit.Location;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -25,14 +28,16 @@ import org.bukkit.util.Vector;
 import org.dynmap.DynmapAPI;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.Selection;
-import org.popcraft.chunky.shape.AbstractEllipse;
-import org.popcraft.chunky.shape.AbstractPolygon;
-import org.popcraft.chunky.shape.Shape;
-import org.popcraft.chunky.shape.ShapeFactory;
-import org.popcraft.chunky.shape.ShapeUtil;
 import org.popcraft.chunky.integration.BlueMapIntegration;
 import org.popcraft.chunky.integration.DynmapIntegration;
 import org.popcraft.chunky.integration.MapIntegration;
+import org.popcraft.chunky.shape.AbstractEllipse;
+import org.popcraft.chunky.shape.AbstractPolygon;
+import org.popcraft.chunky.shape.AbstractShape;
+import org.popcraft.chunky.shape.Shape;
+import org.popcraft.chunky.shape.ShapeFactory;
+import org.popcraft.chunky.shape.ShapeUtil;
+import org.popcraft.chunky.util.Version;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -42,15 +47,19 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
 public final class ChunkyBorder extends JavaPlugin implements Listener {
     private Chunky chunky;
-    private Map<World, Shape> borders;
-    private Selection selection;
+    private Map<World, AbstractShape> borders;
     private Map<UUID, Location> lastKnownLocation;
     private List<MapIntegration> mapIntegrations;
+    private String borderMessage;
+    private boolean useActionBar, preventEnderpearl, preventMobSpawns;
+    private final Version minimumChunkyVersion = new Version(1, 1, 13);
+    private static final int HIGHEST_BLOCK_Y_OFFSET = Version.getCurrentMinecraftVersion().isHigherThanOrEqualTo(new Version(1, 15, 0)) ? 1 : 0;
 
     @Override
     public void onEnable() {
@@ -59,28 +68,43 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         this.saveConfig();
         this.chunky = (Chunky) getServer().getPluginManager().getPlugin("Chunky");
         if (chunky == null) {
-            // TL
+            getLogger().severe("Chunky is required to use this plugin!");
             this.setEnabled(false);
             return;
-        } else if (!getDescription().getVersion().equals(chunky.getDescription().getVersion())) {
-            // TL
+        } else if (minimumChunkyVersion.isLowerThanOrEqualTo(new Version(chunky.getDescription().getVersion()))) {
+            getLogger().severe("Chunky needs to be updated in order to use ChunkyBorder!");
             this.setEnabled(false);
             return;
         }
         this.borders = new HashMap<>();
         this.lastKnownLocation = new HashMap<>();
         getServer().getPluginManager().registerEvents(this, this);
-        // Load integrations
         this.mapIntegrations = new ArrayList<>();
-        Optional.ofNullable(getServer().getPluginManager().getPlugin("dynmap"))
-                .ifPresent(dynmap -> mapIntegrations.add(new DynmapIntegration((DynmapAPI) dynmap)));
-        Optional.ofNullable(getServer().getPluginManager().getPlugin("BlueMap"))
-                .ifPresent(blueMap -> {
-                    BlueMapIntegration blueMapIntegration = new BlueMapIntegration();
-                    BlueMapAPI.registerListener(blueMapIntegration);
-                    mapIntegrations.add(blueMapIntegration);
-                });
-        // Load from config
+        if (this.getConfig().getBoolean("map-options.enable.bluemap", true)) {
+            Optional.ofNullable(getServer().getPluginManager().getPlugin("BlueMap"))
+                    .ifPresent(blueMap -> {
+                        BlueMapIntegration blueMapIntegration = new BlueMapIntegration();
+                        BlueMapAPI.registerListener(blueMapIntegration);
+                        mapIntegrations.add(blueMapIntegration);
+                    });
+        }
+        if (this.getConfig().getBoolean("map-options.enable.dynmap", true)) {
+            Optional.ofNullable(getServer().getPluginManager().getPlugin("dynmap"))
+                    .ifPresent(dynmap -> mapIntegrations.add(new DynmapIntegration((DynmapAPI) dynmap)));
+        }
+        final String label = this.getConfig().getString("map-options.label", "World Border");
+        final String color = this.getConfig().getString("map-options.color", "FF0000");
+        final boolean hideByDefault = this.getConfig().getBoolean("map-options.hide-by-default", false);
+        final int priority = this.getConfig().getInt("map-options.priority", 0);
+        final int weight = this.getConfig().getInt("map-options.weight", 3);
+        this.mapIntegrations.forEach(mapIntegration -> mapIntegration.setOptions(label, color, hideByDefault, priority, weight));
+        final long checkInterval = this.getConfig().getLong("border-options.check-interval", 20);
+        this.borderMessage = ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(this.getConfig().getString("border-options.message", "&cYou have reached the edge of this world.")));
+        this.useActionBar = this.getConfig().getBoolean("border-options.use-action-bar", true);
+        this.preventEnderpearl = this.getConfig().getBoolean("border-options.prevent.enderpearl", true);
+        this.preventMobSpawns = this.getConfig().getBoolean("border-options.prevent.mob-spawns", true);
+        final Effect effect = Effect.valueOf(Objects.requireNonNull(this.getConfig().getString("border-options.effect", "entity_evocation_illager_prepare_wololo")).toUpperCase());
+        final Sound sound = Sound.valueOf(Objects.requireNonNull(this.getConfig().getString("border-options.sound", "ender_signal")).toUpperCase());
         this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
             for (Player player : this.getServer().getOnlinePlayers()) {
                 World world = player.getWorld();
@@ -98,18 +122,17 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                     Location newLoc = this.lastKnownLocation.getOrDefault(player.getUniqueId(), world.getSpawnLocation());
                     newLoc.setYaw(loc.getYaw());
                     newLoc.setPitch(loc.getPitch());
-                    // TODO: remove debug
-                    this.getServer().getConsoleSender().sendMessage("Outside of border!");
-                    // TODO: TL actionbar
-                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.RED + "You have reached the edge of this world."));
+                    sendBorderMessage(player);
+                    player.getWorld().playEffect(player.getLocation(), effect, 0);
+                    player.getWorld().playSound(player.getLocation(), sound, 1f, 1f);
                     Entity vehicle = player.getVehicle();
-                    player.teleport(newLoc);
+                    PaperLib.teleportAsync(player, newLoc);
                     if (vehicle != null) {
-                        vehicle.teleport(newLoc);
+                        PaperLib.teleportAsync(vehicle, newLoc);
                     }
                 }
             }
-        }, 0L, 20L);
+        }, checkInterval, checkInterval);
     }
 
     @Override
@@ -125,15 +148,16 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         } catch (IOException e) {
             this.getLogger().warning("Unable to save borders");
         }
-        // Save to config
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        this.selection = chunky.getSelection();
+        Selection selection = chunky.getSelection();
         final Shape shape = ShapeFactory.getShape(selection);
-        borders.put(selection.world, shape);
-        mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(selection.world, shape));
+        if (shape instanceof AbstractShape) {
+            borders.put(selection.world, (AbstractShape) shape);
+            mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(selection.world, shape));
+        }
         // TL
         return true;
     }
@@ -143,20 +167,18 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         return Collections.emptyList();
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onPlayerQuit(PlayerQuitEvent e) {
-        this.lastKnownLocation.remove(e.getPlayer().getUniqueId());
-    }
-
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onPlayerTeleport(PlayerTeleportEvent e) {
         Player player = e.getPlayer();
         Location toLocation = e.getTo();
+        if (toLocation == null) {
+            return;
+        }
         World toWorld = toLocation.getWorld();
         if (toWorld == null || !borders.containsKey(toWorld)) {
             return;
         }
-        Shape border = borders.get(toWorld);
+        AbstractShape border = borders.get(toWorld);
         if (border == null) {
             return;
         }
@@ -165,14 +187,13 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             if (player.hasPermission("chunkyborder.bypass.movement")) {
                 return;
             }
-            if (PlayerTeleportEvent.TeleportCause.ENDER_PEARL.equals(e.getCause())) {
+            if (preventEnderpearl && PlayerTeleportEvent.TeleportCause.ENDER_PEARL.equals(e.getCause())) {
                 e.setCancelled(true);
                 return;
             }
-            // TL
-            // TODO: don't use selection, use saved border
-            double centerX = selection.x;
-            double centerZ = selection.z;
+            double[] center = border.getCenter();
+            double centerX = center[0];
+            double centerZ = center[1];
             double toX = to.getX();
             double toY = to.getY();
             double toZ = to.getZ();
@@ -186,7 +207,6 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                 }
             } else if (border instanceof AbstractEllipse) {
                 AbstractEllipse ellipticalBorder = (AbstractEllipse) border;
-                double[] center = ellipticalBorder.getCenter();
                 double[] radii = ellipticalBorder.getRadii();
                 double angle = Math.atan2(toZ - centerX, toX - centerZ);
                 intersections.add(ShapeUtil.pointOnEllipse(center[0], center[1], radii[0], radii[1], angle));
@@ -216,11 +236,8 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             Location insideBorder = new Location(toWorld, closestX, toY, closestZ);
             insideBorder.add(centerDirection);
             insideBorder.setDirection(centerDirection);
-            // TODO: getHighestBlockYAt version offset
-            insideBorder.setY(toWorld.getHighestBlockYAt(insideBorder));
-            // TODO: remove debug
-            this.getServer().getConsoleSender().sendMessage("Teleporting into border!");
-            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.RED + "You have reached the edge of this world."));
+            insideBorder.setY(toWorld.getHighestBlockYAt(insideBorder) + HIGHEST_BLOCK_Y_OFFSET);
+            sendBorderMessage(player);
             lastKnownLocation.put(player.getUniqueId(), insideBorder);
             e.setTo(insideBorder);
         }
@@ -228,6 +245,9 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onCreatureSpawn(CreatureSpawnEvent e) {
+        if (!preventMobSpawns) {
+            return;
+        }
         Location location = e.getLocation();
         Shape border = borders.get(location.getWorld());
         if (border != null && !border.isBounding(location.getX(), location.getZ())) {
@@ -241,6 +261,19 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         Shape border = borders.get(location.getWorld());
         if (border != null && !border.isBounding(location.getX(), location.getZ()) && !e.getPlayer().hasPermission("chunkyborder.bypass.place")) {
             e.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerQuit(PlayerQuitEvent e) {
+        this.lastKnownLocation.remove(e.getPlayer().getUniqueId());
+    }
+
+    private void sendBorderMessage(Player player) {
+        if (useActionBar) {
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(borderMessage));
+        } else {
+            player.sendMessage(borderMessage);
         }
     }
 }
