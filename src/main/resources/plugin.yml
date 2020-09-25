@@ -6,7 +6,7 @@ depend: [Chunky]
 softdepend: [dynmap, BlueMap]
 load: POSTWORLD
 authors: [pop4959]
-description: Add a border to your Chunky world
+description: Add a world border to your Chunky world
 website: TBD
 commands:
   chunkyborder:

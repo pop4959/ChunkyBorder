@@ -11,7 +11,7 @@
 
     <name>ChunkyBorder</name>
 
-    <description>Add a border to your Chunky world</description>
+    <description>Add a world border to your Chunky world</description>
     <properties>
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
