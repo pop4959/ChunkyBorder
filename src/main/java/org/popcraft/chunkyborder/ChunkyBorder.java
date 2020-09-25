@@ -133,6 +133,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                 }
             }
         }, checkInterval, checkInterval);
+        Metrics metrics = new Metrics(this, 8953);
     }
 
     @Override
