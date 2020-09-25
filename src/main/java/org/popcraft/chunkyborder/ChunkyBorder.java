@@ -71,7 +71,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             getLogger().severe("Chunky is required to use this plugin!");
             this.setEnabled(false);
             return;
-        } else if (minimumChunkyVersion.isLowerThanOrEqualTo(new Version(chunky.getDescription().getVersion()))) {
+        } else if (minimumChunkyVersion.isHigherThan(new Version(chunky.getDescription().getVersion()))) {
             getLogger().severe("Chunky needs to be updated in order to use ChunkyBorder!");
             this.setEnabled(false);
             return;
@@ -103,8 +103,8 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         this.useActionBar = this.getConfig().getBoolean("border-options.use-action-bar", true);
         this.preventEnderpearl = this.getConfig().getBoolean("border-options.prevent.enderpearl", true);
         this.preventMobSpawns = this.getConfig().getBoolean("border-options.prevent.mob-spawns", true);
-        final Effect effect = Effect.valueOf(Objects.requireNonNull(this.getConfig().getString("border-options.effect", "entity_evocation_illager_prepare_wololo")).toUpperCase());
-        final Sound sound = Sound.valueOf(Objects.requireNonNull(this.getConfig().getString("border-options.sound", "ender_signal")).toUpperCase());
+        final Effect effect = Effect.valueOf(Objects.requireNonNull(this.getConfig().getString("border-options.effect", "ender_signal")).toUpperCase());
+        final Sound sound = Sound.valueOf(Objects.requireNonNull(this.getConfig().getString("border-options.sound", "entity_enderman_teleport")).toUpperCase());
         this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
             for (Player player : this.getServer().getOnlinePlayers()) {
                 World world = player.getWorld();
@@ -116,7 +116,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                 if (border.isBounding(loc.getX(), loc.getZ())) {
                     this.lastKnownLocation.put(player.getUniqueId(), loc);
                 } else {
-                    if (player.hasPermission("chunkyborder.bypass.movement")) {
+                    if (player.hasPermission("chunkyborder.bypass.move")) {
                         return;
                     }
                     Location newLoc = this.lastKnownLocation.getOrDefault(player.getUniqueId(), world.getSpawnLocation());
@@ -124,7 +124,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                     newLoc.setPitch(loc.getPitch());
                     sendBorderMessage(player);
                     player.getWorld().playEffect(player.getLocation(), effect, 0);
-                    player.getWorld().playSound(player.getLocation(), sound, 1f, 1f);
+                    player.getWorld().playSound(player.getLocation(), sound, 2f, 1f);
                     Entity vehicle = player.getVehicle();
                     PaperLib.teleportAsync(player, newLoc);
                     if (vehicle != null) {
@@ -184,7 +184,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         }
         Vector to = toLocation.toVector();
         if (!border.isBounding(to.getX(), to.getZ())) {
-            if (player.hasPermission("chunkyborder.bypass.movement")) {
+            if (player.hasPermission("chunkyborder.bypass.move")) {
                 return;
             }
             if (preventEnderpearl && PlayerTeleportEvent.TeleportCause.ENDER_PEARL.equals(e.getCause())) {

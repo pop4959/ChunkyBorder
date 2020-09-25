@@ -6,7 +6,7 @@ border-options:
   message: "&cYou have reached the edge of this world."
   use-action-bar: true
   effect: ender_signal
-  sound: entity_evocation_illager_prepare_wololo
+  sound: entity_enderman_teleport
   prevent:
     enderpearl: true
     mob-spawns: true
