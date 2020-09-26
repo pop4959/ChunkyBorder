@@ -84,14 +84,13 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         this.lastKnownLocation = new HashMap<>();
         getServer().getPluginManager().registerEvents(this, this);
         this.mapIntegrations = new ArrayList<>();
-//        if (this.getConfig().getBoolean("map-options.enable.bluemap", true)) {
-//            Optional.ofNullable(this.getServer().getPluginManager().getPlugin("BlueMap"))
-//                    .ifPresent(blueMap -> {
-//                        BlueMapIntegration blueMapIntegration = new BlueMapIntegration();
-//                        BlueMapAPI.registerListener(blueMapIntegration);
-//                        mapIntegrations.add(blueMapIntegration);
-//                    });
-//        }
+        if (this.getConfig().getBoolean("map-options.enable.bluemap", true)) {
+            try {
+                Class.forName("de.bluecolored.bluemap.api.BlueMapAPIListener");
+                BlueMapWorkaround.load(this, mapIntegrations);
+            } catch (ClassNotFoundException ignored) {
+            }
+        }
         if (this.getConfig().getBoolean("map-options.enable.dynmap", true)) {
             Optional.ofNullable(getServer().getPluginManager().getPlugin("dynmap"))
                     .ifPresent(dynmap -> mapIntegrations.add(new DynmapIntegration((DynmapAPI) dynmap)));
