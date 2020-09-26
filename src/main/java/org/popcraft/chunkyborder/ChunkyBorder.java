@@ -1,7 +1,6 @@
 package org.popcraft.chunkyborder;
 
 import com.google.gson.Gson;
-import de.bluecolored.bluemap.api.BlueMapAPI;
 import io.papermc.lib.PaperLib;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -28,7 +27,6 @@ import org.bukkit.util.Vector;
 import org.dynmap.DynmapAPI;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.Selection;
-import org.popcraft.chunky.integration.BlueMapIntegration;
 import org.popcraft.chunky.integration.DynmapIntegration;
 import org.popcraft.chunky.integration.MapIntegration;
 import org.popcraft.chunky.shape.AbstractEllipse;
@@ -58,8 +56,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     private List<MapIntegration> mapIntegrations;
     private String borderMessage;
     private boolean useActionBar, preventEnderpearl, preventMobSpawns;
-    private final Version minimumChunkyVersion = new Version(1, 1, 13);
-    private static final int HIGHEST_BLOCK_Y_OFFSET = Version.getCurrentMinecraftVersion().isHigherThanOrEqualTo(new Version(1, 15, 0)) ? 1 : 0;
+    private static int HIGHEST_BLOCK_Y_OFFSET;
 
     @Override
     public void onEnable() {
@@ -71,23 +68,30 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             getLogger().severe("Chunky is required to use this plugin!");
             this.setEnabled(false);
             return;
-        } else if (minimumChunkyVersion.isHigherThan(new Version(chunky.getDescription().getVersion()))) {
+        }
+        try {
+            Class.forName("org.popcraft.chunky.util.Version");
+            if (new Version(1, 1, 13).isHigherThan(new Version(chunky.getDescription().getVersion()))) {
+                throw new Exception();
+            }
+        } catch (Throwable e) {
             getLogger().severe("Chunky needs to be updated in order to use ChunkyBorder!");
             this.setEnabled(false);
             return;
         }
+        HIGHEST_BLOCK_Y_OFFSET = Version.getCurrentMinecraftVersion().isHigherThanOrEqualTo(new Version(1, 15, 0)) ? 1 : 0;
         this.borders = new HashMap<>();
         this.lastKnownLocation = new HashMap<>();
         getServer().getPluginManager().registerEvents(this, this);
         this.mapIntegrations = new ArrayList<>();
-        if (this.getConfig().getBoolean("map-options.enable.bluemap", true)) {
-            Optional.ofNullable(getServer().getPluginManager().getPlugin("BlueMap"))
-                    .ifPresent(blueMap -> {
-                        BlueMapIntegration blueMapIntegration = new BlueMapIntegration();
-                        BlueMapAPI.registerListener(blueMapIntegration);
-                        mapIntegrations.add(blueMapIntegration);
-                    });
-        }
+//        if (this.getConfig().getBoolean("map-options.enable.bluemap", true)) {
+//            Optional.ofNullable(this.getServer().getPluginManager().getPlugin("BlueMap"))
+//                    .ifPresent(blueMap -> {
+//                        BlueMapIntegration blueMapIntegration = new BlueMapIntegration();
+//                        BlueMapAPI.registerListener(blueMapIntegration);
+//                        mapIntegrations.add(blueMapIntegration);
+//                    });
+//        }
         if (this.getConfig().getBoolean("map-options.enable.dynmap", true)) {
             Optional.ofNullable(getServer().getPluginManager().getPlugin("dynmap"))
                     .ifPresent(dynmap -> mapIntegrations.add(new DynmapIntegration((DynmapAPI) dynmap)));
