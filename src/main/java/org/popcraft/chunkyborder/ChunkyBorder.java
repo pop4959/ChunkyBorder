@@ -55,7 +55,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     private Map<UUID, Location> lastKnownLocation;
     private List<MapIntegration> mapIntegrations;
     private String borderMessage;
-    private boolean useActionBar, preventEnderpearl, preventMobSpawns;
+    private boolean useActionBar, preventMobSpawns;
     private static int HIGHEST_BLOCK_Y_OFFSET;
 
     @Override
@@ -105,8 +105,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         final long checkInterval = this.getConfig().getLong("border-options.check-interval", 20);
         this.borderMessage = ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(this.getConfig().getString("border-options.message", "&cYou have reached the edge of this world.")));
         this.useActionBar = this.getConfig().getBoolean("border-options.use-action-bar", true);
-        this.preventEnderpearl = this.getConfig().getBoolean("border-options.prevent.enderpearl", true);
-        this.preventMobSpawns = this.getConfig().getBoolean("border-options.prevent.mob-spawns", true);
+        this.preventMobSpawns = this.getConfig().getBoolean("border-options.prevent-mob-spawns", true);
         final Effect effect = Effect.valueOf(Objects.requireNonNull(this.getConfig().getString("border-options.effect", "ender_signal")).toUpperCase());
         final Sound sound = Sound.valueOf(Objects.requireNonNull(this.getConfig().getString("border-options.sound", "entity_enderman_teleport")).toUpperCase());
         this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
@@ -190,10 +189,6 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         Vector to = toLocation.toVector();
         if (!border.isBounding(to.getX(), to.getZ())) {
             if (player.hasPermission("chunkyborder.bypass.move")) {
-                return;
-            }
-            if (preventEnderpearl && PlayerTeleportEvent.TeleportCause.ENDER_PEARL.equals(e.getCause())) {
-                e.setCancelled(true);
                 return;
             }
             double[] center = border.getCenter();

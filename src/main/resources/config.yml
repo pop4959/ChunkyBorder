@@ -7,9 +7,7 @@ border-options:
   use-action-bar: true
   effect: ender_signal
   sound: entity_enderman_teleport
-  prevent:
-    enderpearl: true
-    mob-spawns: true
+  prevent-mob-spawns: true
 map-options:
   enable:
     bluemap: true
