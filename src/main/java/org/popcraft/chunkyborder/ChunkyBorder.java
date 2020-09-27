@@ -117,7 +117,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
             for (Player player : this.getServer().getOnlinePlayers()) {
                 World world = player.getWorld();
-                if (!borders.containsKey(world.getName())) {
+                if (borders == null || !borders.containsKey(world.getName())) {
                     return;
                 }
                 BorderData borderData = borders.get(world.getName());
@@ -205,7 +205,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             return;
         }
         World toWorld = toLocation.getWorld();
-        if (toWorld == null || !borders.containsKey(toWorld.getName())) {
+        if (toWorld == null || borders == null || !borders.containsKey(toWorld.getName())) {
             return;
         }
         BorderData borderData = borders.get(toWorld.getName());
@@ -280,7 +280,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         }
         Location location = e.getLocation();
         World world = location.getWorld();
-        if (world == null) {
+        if (world == null || borders == null) {
             return;
         }
         BorderData borderData = borders.get(world.getName());
@@ -297,7 +297,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     public void onBlockPlace(BlockPlaceEvent e) {
         Location location = e.getBlockPlaced().getLocation();
         World world = location.getWorld();
-        if (world == null) {
+        if (world == null || borders == null) {
             return;
         }
         BorderData borderData = borders.get(world.getName());
