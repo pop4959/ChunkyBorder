@@ -251,6 +251,10 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                     closestZ = intersectionZ;
                 }
             }
+            if (shortestDistance == Double.MAX_VALUE) {
+                e.setTo(toWorld.getSpawnLocation());
+                return;
+            }
             Location insideBorder = new Location(toWorld, closestX, toY, closestZ);
             insideBorder.add(centerDirection);
             insideBorder.setDirection(centerDirection);
