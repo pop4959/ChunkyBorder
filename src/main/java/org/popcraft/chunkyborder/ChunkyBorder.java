@@ -79,7 +79,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             this.setEnabled(false);
             return;
         }
-        HIGHEST_BLOCK_Y_OFFSET = Version.getCurrentMinecraftVersion().isHigherThanOrEqualTo(new Version(1, 15, 0)) ? 1 : 0;
+        HIGHEST_BLOCK_Y_OFFSET = Version.getCurrentMinecraftVersion().isHigherThanOrEqualTo(Version.v1_15_0) ? 1 : 0;
         this.lastKnownLocation = new HashMap<>();
         getServer().getPluginManager().registerEvents(this, this);
         this.mapIntegrations = new ArrayList<>();
