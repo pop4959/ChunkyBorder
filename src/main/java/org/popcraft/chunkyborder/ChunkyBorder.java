@@ -327,6 +327,9 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         try (FileReader fileReader = new FileReader(new File(this.getDataFolder(), "borders.json"))) {
             this.borders = new Gson().fromJson(fileReader, new TypeToken<Map<String, BorderData>>() {
             }.getType());
+            if (this.borders == null) {
+                this.borders = new HashMap<>();
+            }
         } catch (IOException e) {
             this.getLogger().warning("No saved borders found");
         }
