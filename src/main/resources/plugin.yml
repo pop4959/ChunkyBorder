@@ -7,7 +7,7 @@ softdepend: [dynmap, BlueMap]
 load: POSTWORLD
 authors: [pop4959]
 description: Add a world border to your Chunky world
-website: TBD
+website: https://github.com/pop4959/ChunkyBorder
 commands:
   chunkyborder:
     description: Set a border
