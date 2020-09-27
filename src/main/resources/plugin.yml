@@ -13,14 +13,14 @@ commands:
     description: Set a border
     aliases: [cb]
     permission: chunkyborder.chunkyborder
-    usage: /chunkyborder
+    usage: /chunkyborder <add|remove>
 permissions:
   chunkyborder.chunkyborder:
     description: Set a border
     default: op
   chunkyborder.bypass.move:
-    description: Bypass border movement checking
+    description: Bypass border movement checks
     default: false
   chunkyborder.bypass.place:
-    description: Bypass border block placement checking
+    description: Bypass border block placement checks
     default: false

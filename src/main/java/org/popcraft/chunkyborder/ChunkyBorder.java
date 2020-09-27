@@ -1,6 +1,7 @@
 package org.popcraft.chunkyborder;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.papermc.lib.PaperLib;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -31,13 +32,12 @@ import org.popcraft.chunky.integration.DynmapIntegration;
 import org.popcraft.chunky.integration.MapIntegration;
 import org.popcraft.chunky.shape.AbstractEllipse;
 import org.popcraft.chunky.shape.AbstractPolygon;
-import org.popcraft.chunky.shape.AbstractShape;
 import org.popcraft.chunky.shape.Shape;
-import org.popcraft.chunky.shape.ShapeFactory;
 import org.popcraft.chunky.shape.ShapeUtil;
 import org.popcraft.chunky.util.Version;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,7 +51,7 @@ import java.util.UUID;
 
 public final class ChunkyBorder extends JavaPlugin implements Listener {
     private Chunky chunky;
-    private Map<World, AbstractShape> borders;
+    private Map<String, BorderData> borders;
     private Map<UUID, Location> lastKnownLocation;
     private List<MapIntegration> mapIntegrations;
     private String borderMessage;
@@ -80,7 +80,6 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             return;
         }
         HIGHEST_BLOCK_Y_OFFSET = Version.getCurrentMinecraftVersion().isHigherThanOrEqualTo(new Version(1, 15, 0)) ? 1 : 0;
-        this.borders = new HashMap<>();
         this.lastKnownLocation = new HashMap<>();
         getServer().getPluginManager().registerEvents(this, this);
         this.mapIntegrations = new ArrayList<>();
@@ -101,6 +100,12 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         final int priority = this.getConfig().getInt("map-options.priority", 0);
         final int weight = this.getConfig().getInt("map-options.weight", 3);
         this.mapIntegrations.forEach(mapIntegration -> mapIntegration.setOptions(label, color, hideByDefault, priority, weight));
+        this.borders = new HashMap<>();
+        loadBorders();
+        borders.values().forEach(border -> {
+            border.reinitializeBorder();
+            mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(getServer().getWorld(border.getWorld()), border.getBorder()));
+        });
         final long checkInterval = this.getConfig().getLong("border-options.check-interval", 20);
         this.borderMessage = ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(this.getConfig().getString("border-options.message", "&cYou have reached the edge of this world.")));
         this.useActionBar = this.getConfig().getBoolean("border-options.use-action-bar", true);
@@ -110,10 +115,14 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
             for (Player player : this.getServer().getOnlinePlayers()) {
                 World world = player.getWorld();
-                if (!borders.containsKey(world)) {
+                if (!borders.containsKey(world.getName())) {
                     return;
                 }
-                Shape border = borders.get(world);
+                BorderData borderData = borders.get(world.getName());
+                if (borderData == null) {
+                    return;
+                }
+                Shape border = borderData.getBorder();
                 Location loc = player.getLocation();
                 if (border.isBounding(loc.getX(), loc.getZ())) {
                     this.lastKnownLocation.put(player.getUniqueId(), loc);
@@ -145,30 +154,34 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             mapIntegrations.forEach(MapIntegration::removeAllShapeMarkers);
             mapIntegrations.clear();
         }
-        // TODO: improve this
-        try (FileWriter fileWriter = new FileWriter(new File(this.getDataFolder(), "borders.json"))) {
-            fileWriter.write(new Gson().toJson(borders));
-        } catch (IOException e) {
-            this.getLogger().warning("Unable to save borders");
-        }
+        saveBorders();
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        Selection selection = chunky.getSelection();
-        final Shape shape = ShapeFactory.getShape(selection);
-        if (shape instanceof AbstractShape) {
-            borders.put(selection.world, (AbstractShape) shape);
-            mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(selection.world, shape));
+        if (args.length == 1 && "add".equalsIgnoreCase(args[0])) {
+            Selection selection = chunky.getSelection();
+            BorderData borderData = new BorderData(selection);
+            borders.put(selection.world.getName(), borderData);
+            mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(selection.world, borderData.getBorder()));
+            sender.sendMessage(String.format("[Chunky] Added %s world border to %s with center %d, %d, and radius %s.",
+                    selection.shape,
+                    selection.world.getName(),
+                    selection.centerX,
+                    selection.centerZ,
+                    selection.radiusX == selection.radiusZ ? String.valueOf(selection.radiusX) : String.format("%d, %d", selection.radiusX, selection.radiusZ)
+            ));
+            saveBorders();
+            return true;
+        } else if (args.length == 1 && "remove".equalsIgnoreCase(args[0])) {
+            final World world = chunky.getSelection().world;
+            borders.remove(world.getName());
+            mapIntegrations.forEach(mapIntegration -> mapIntegration.removeShapeMarker(world));
+            sender.sendMessage(String.format("[Chunky] Removed world border from %s.", world.getName()));
+            saveBorders();
+            return true;
         }
-        sender.sendMessage(String.format("[Chunky] Set %s world border for %s with center %d, %d, and radius %s.",
-                        selection.shape,
-                        selection.world.getName(),
-                        selection.centerX,
-                        selection.centerZ,
-                        selection.radiusX == selection.radiusZ ? String.valueOf(selection.radiusX) : String.format("%d, %d", selection.radiusX, selection.radiusZ)
-                ));
-        return true;
+        return false;
     }
 
     @Override
@@ -184,10 +197,14 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             return;
         }
         World toWorld = toLocation.getWorld();
-        if (toWorld == null || !borders.containsKey(toWorld)) {
+        if (toWorld == null || !borders.containsKey(toWorld.getName())) {
             return;
         }
-        AbstractShape border = borders.get(toWorld);
+        BorderData borderData = borders.get(toWorld.getName());
+        if (borderData == null) {
+            return;
+        }
+        Shape border = borderData.getBorder();
         if (border == null) {
             return;
         }
@@ -196,9 +213,8 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             if (player.hasPermission("chunkyborder.bypass.move")) {
                 return;
             }
-            double[] center = border.getCenter();
-            double centerX = center[0];
-            double centerZ = center[1];
+            double centerX = borderData.getCenterX();
+            double centerZ = borderData.getCenterZ();
             double toX = to.getX();
             double toY = to.getY();
             double toZ = to.getZ();
@@ -214,10 +230,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                 AbstractEllipse ellipticalBorder = (AbstractEllipse) border;
                 double[] radii = ellipticalBorder.getRadii();
                 double angle = Math.atan2(toZ - centerX, toX - centerZ);
-                intersections.add(ShapeUtil.pointOnEllipse(center[0], center[1], radii[0], radii[1], angle));
-                double intersectionX = center[0] + radii[0] * Math.cos(angle);
-                double intersectionZ = center[1] + radii[1] * Math.sin(angle);
-                intersections.add(new double[]{intersectionX, intersectionZ});
+                intersections.add(ShapeUtil.pointOnEllipse(centerX, centerZ, radii[0], radii[1], angle));
             }
             if (intersections.isEmpty()) {
                 e.setTo(toWorld.getSpawnLocation());
@@ -254,7 +267,15 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             return;
         }
         Location location = e.getLocation();
-        Shape border = borders.get(location.getWorld());
+        World world = location.getWorld();
+        if (world == null) {
+            return;
+        }
+        BorderData borderData = borders.get(world.getName());
+        if (borderData == null) {
+            return;
+        }
+        Shape border = borderData.getBorder();
         if (border != null && !border.isBounding(location.getX(), location.getZ())) {
             e.setCancelled(true);
         }
@@ -263,7 +284,15 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent e) {
         Location location = e.getBlockPlaced().getLocation();
-        Shape border = borders.get(location.getWorld());
+        World world = location.getWorld();
+        if (world == null) {
+            return;
+        }
+        BorderData borderData = borders.get(world.getName());
+        if (borderData == null) {
+            return;
+        }
+        Shape border = borderData.getBorder();
         if (border != null && !border.isBounding(location.getX(), location.getZ()) && !e.getPlayer().hasPermission("chunkyborder.bypass.place")) {
             e.setCancelled(true);
         }
@@ -279,6 +308,23 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(borderMessage));
         } else {
             player.sendMessage(borderMessage);
+        }
+    }
+
+    private void loadBorders() {
+        try (FileReader fileReader = new FileReader(new File(this.getDataFolder(), "borders.json"))) {
+            this.borders = new Gson().fromJson(fileReader, new TypeToken<Map<String, BorderData>>() {
+            }.getType());
+        } catch (IOException e) {
+            this.getLogger().warning("No saved borders found");
+        }
+    }
+
+    private void saveBorders() {
+        try (FileWriter fileWriter = new FileWriter(new File(this.getDataFolder(), "borders.json"))) {
+            fileWriter.write(new Gson().toJson(borders));
+        } catch (IOException e) {
+            this.getLogger().warning("Unable to save borders");
         }
     }
 }
