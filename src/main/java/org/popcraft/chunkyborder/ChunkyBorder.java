@@ -41,6 +41,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +49,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public final class ChunkyBorder extends JavaPlugin implements Listener {
     private Chunky chunky;
@@ -159,7 +161,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length == 1 && "add".equalsIgnoreCase(args[0])) {
+        if (args.length > 0 && "add".equalsIgnoreCase(args[0])) {
             Selection selection = chunky.getSelection();
             BorderData borderData = new BorderData(selection);
             borders.put(selection.world.getName(), borderData);
@@ -172,20 +174,26 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                     selection.radiusX == selection.radiusZ ? String.valueOf(selection.radiusX) : String.format("%d, %d", selection.radiusX, selection.radiusZ)
             ));
             saveBorders();
-            return true;
-        } else if (args.length == 1 && "remove".equalsIgnoreCase(args[0])) {
+        } else if (args.length > 0 && "remove".equalsIgnoreCase(args[0])) {
             final World world = chunky.getSelection().world;
             borders.remove(world.getName());
             mapIntegrations.forEach(mapIntegration -> mapIntegration.removeShapeMarker(world));
             sender.sendMessage(String.format("[Chunky] Removed world border from %s.", world.getName()));
             saveBorders();
-            return true;
+        } else {
+            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&2chunkyborder <add|remove>&r - Add or remove a world border"));
         }
-        return false;
+        return true;
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (args.length == 1) {
+            final List<String> suggestions = new ArrayList<>(Arrays.asList("add", "remove"));
+            return suggestions.stream()
+                    .filter(s -> s.toLowerCase().contains(args[args.length - 1].toLowerCase()))
+                    .collect(Collectors.toList());
+        }
         return Collections.emptyList();
     }
 
