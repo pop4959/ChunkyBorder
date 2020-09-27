@@ -71,7 +71,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         }
         try {
             Class.forName("org.popcraft.chunky.util.Version");
-            if (new Version(1, 1, 13).isHigherThan(new Version(chunky.getDescription().getVersion()))) {
+            if (new Version(1, 1, 14).isHigherThan(new Version(chunky.getDescription().getVersion()))) {
                 throw new Exception();
             }
         } catch (Throwable e) {
@@ -161,7 +161,13 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             borders.put(selection.world, (AbstractShape) shape);
             mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(selection.world, shape));
         }
-        // TL
+        sender.sendMessage(String.format("[Chunky] Set %s world border for %s with center %d, %d, and radius %s.",
+                        selection.shape,
+                        selection.world.getName(),
+                        selection.centerX,
+                        selection.centerZ,
+                        selection.radiusX == selection.radiusZ ? String.valueOf(selection.radiusX) : String.format("%d, %d", selection.radiusX, selection.radiusZ)
+                ));
         return true;
     }
 
