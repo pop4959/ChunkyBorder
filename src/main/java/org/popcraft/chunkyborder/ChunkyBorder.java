@@ -338,6 +338,9 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     }
 
     private void saveBorders() {
+        if (borders == null) {
+            return;
+        }
         try (FileWriter fileWriter = new FileWriter(new File(this.getDataFolder(), "borders.json"))) {
             fileWriter.write(new Gson().toJson(borders));
         } catch (IOException e) {
