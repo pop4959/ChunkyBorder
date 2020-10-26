@@ -56,6 +56,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     private Map<String, BorderData> borders;
     private Map<UUID, Location> lastKnownLocation;
     private List<MapIntegration> mapIntegrations;
+    private boolean alignToChunk;
     private String borderMessage;
     private boolean useActionBar, preventMobSpawns;
     private static int HIGHEST_BLOCK_Y_OFFSET;
@@ -73,7 +74,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         }
         try {
             Class.forName("org.popcraft.chunky.util.Version");
-            if (new Version(1, 1, 14).isHigherThan(new Version(chunky.getDescription().getVersion()))) {
+            if (new Version(1, 1, 20).isHigherThan(new Version(chunky.getDescription().getVersion()))) {
                 throw new Exception();
             }
         } catch (Throwable e) {
@@ -104,8 +105,9 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         this.mapIntegrations.forEach(mapIntegration -> mapIntegration.setOptions(label, color, hideByDefault, priority, weight));
         this.borders = new HashMap<>();
         loadBorders();
+        this.alignToChunk = this.getConfig().getBoolean("border-options.align-to-chunk", false);
         borders.values().forEach(border -> {
-            border.reinitializeBorder();
+            border.reinitializeBorder(alignToChunk);
             mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(getServer().getWorld(border.getWorld()), border.getBorder()));
         });
         final long checkInterval = this.getConfig().getLong("border-options.check-interval", 20);
@@ -163,7 +165,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length > 0 && "add".equalsIgnoreCase(args[0])) {
             Selection selection = chunky.getSelection();
-            BorderData borderData = new BorderData(selection);
+            BorderData borderData = new BorderData(selection, alignToChunk);
             borders.put(selection.world.getName(), borderData);
             mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(selection.world, borderData.getBorder()));
             sender.sendMessage(String.format("[Chunky] Added %s world border to %s with center %d, %d, and radius %s.",

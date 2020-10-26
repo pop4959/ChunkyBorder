@@ -2,6 +2,7 @@
 # https://github.com/pop4959/ChunkyBorder/wiki/Configuration
 version: 1
 border-options:
+  align-to-chunk: false
   check-interval: 20
   message: "&cYou have reached the edge of this world."
   use-action-bar: true

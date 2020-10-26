@@ -15,8 +15,8 @@ public class BorderData {
     public BorderData() {
     }
 
-    public BorderData(Selection selection) {
-        this.border = ShapeFactory.getShape(selection);
+    public BorderData(Selection selection, boolean alignToChunk) {
+        this.border = ShapeFactory.getShape(selection, alignToChunk);
         this.world = selection.world.getName();
         this.centerX = selection.centerX;
         this.centerZ = selection.centerZ;
@@ -25,7 +25,7 @@ public class BorderData {
         this.shape = selection.shape;
     }
 
-    public void reinitializeBorder() {
+    public void reinitializeBorder(boolean alignToChunk) {
         Selection selection = new Selection();
         selection.world = Bukkit.getWorld(world);
         selection.centerX = this.centerX;
@@ -33,7 +33,7 @@ public class BorderData {
         selection.radiusX = this.radiusX;
         selection.radiusZ = this.radiusZ;
         selection.shape = this.shape;
-        this.border = ShapeFactory.getShape(selection);
+        this.border = ShapeFactory.getShape(selection, alignToChunk);
     }
 
     public Shape getBorder() {
