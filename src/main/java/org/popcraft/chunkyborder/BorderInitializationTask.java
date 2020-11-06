@@ -31,7 +31,15 @@ public class BorderInitializationTask implements Runnable {
         }
         if (chunkyBorder.getConfig().getBoolean("map-options.enable.dynmap", true)) {
             Optional.ofNullable(chunkyBorder.getServer().getPluginManager().getPlugin("dynmap"))
-                    .ifPresent(dynmap -> mapIntegrations.add(new DynmapIntegration((DynmapAPI) dynmap)));
+                    .ifPresent(dynmap -> {
+                        DynmapAPI dynmapAPI = (DynmapAPI) dynmap;
+                        try {
+                            // This next line will throw an exception if Dynmap did not enable properly.
+                            dynmapAPI.getMarkerAPI();
+                            mapIntegrations.add(new DynmapIntegration(dynmapAPI));
+                        } catch (NullPointerException ignored) {
+                        }
+                    });
         }
         mapIntegrations.forEach(mapIntegration -> mapIntegration.setOptions(label, color, hideByDefault, priority, weight));
         chunkyBorder.getBorders().values().forEach(border -> {

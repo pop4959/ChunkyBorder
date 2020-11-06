@@ -29,6 +29,9 @@ public class BorderCheckTask implements Runnable {
                 return;
             }
             final Shape border = borderData.getBorder();
+            if (border == null) {
+                return;
+            }
             final Location loc = player.getLocation();
             if (border.isBounding(loc.getX(), loc.getZ())) {
                 chunkyBorder.getLastKnownLocation().put(player.getUniqueId(), loc);
