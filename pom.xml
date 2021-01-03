@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.popcraft</groupId>
-    <artifactId>ChunkyBorder</artifactId>
+    <artifactId>chunkyborder</artifactId>
     <version>1.0.5</version>
     <packaging>jar</packaging>
 
