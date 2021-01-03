@@ -3,6 +3,7 @@ package org.popcraft.chunkyborder;
 import org.dynmap.DynmapAPI;
 import org.popcraft.chunky.integration.DynmapIntegration;
 import org.popcraft.chunky.integration.MapIntegration;
+import org.popcraft.chunky.platform.World;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,8 +44,10 @@ public class BorderInitializationTask implements Runnable {
         }
         mapIntegrations.forEach(mapIntegration -> mapIntegration.setOptions(label, color, hideByDefault, priority, weight));
         chunkyBorder.getBorders().values().forEach(border -> {
-            border.reinitializeBorder(chunkyBorder.isBorderChunkAligned());
-            mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(chunkyBorder.getServer().getWorld(border.getWorld()), border.getBorder()));
+            border.reinitializeBorder(chunkyBorder.getChunky(), chunkyBorder.isBorderChunkAligned());
+            if (border.getWorld() != null) {
+                chunkyBorder.getChunky().getPlatform().getServer().getWorld(border.getWorld()).ifPresent(world -> mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(world, border.getBorder())));
+            }
         });
     }
 }

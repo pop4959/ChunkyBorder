@@ -11,7 +11,7 @@ public class BlueMapWorkaround {
     public static void load(ChunkyBorder chunkyBorder, List<MapIntegration> mapIntegrations) {
         Optional.ofNullable(chunkyBorder.getServer().getPluginManager().getPlugin("BlueMap"))
                 .ifPresent(blueMap -> {
-                    BlueMapIntegration blueMapIntegration = new BlueMapIntegration();
+                    BlueMapIntegration blueMapIntegration = new BlueMapIntegration(chunkyBorder.getChunky());
                     BlueMapAPI.registerListener(blueMapIntegration);
                     mapIntegrations.add(blueMapIntegration);
                 });

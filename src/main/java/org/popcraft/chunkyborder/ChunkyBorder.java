@@ -26,6 +26,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 import org.popcraft.chunky.Chunky;
+import org.popcraft.chunky.ChunkyBukkit;
 import org.popcraft.chunky.Selection;
 import org.popcraft.chunky.integration.MapIntegration;
 import org.popcraft.chunky.shape.AbstractEllipse;
@@ -98,7 +99,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             ));
             saveBorders();
         } else if (args.length > 0 && "remove".equalsIgnoreCase(args[0])) {
-            final World world = getChunky().getSelection().world;
+            final org.popcraft.chunky.platform.World world = getChunky().getSelection().world;
             borders.remove(world.getName());
             mapIntegrations.forEach(mapIntegration -> mapIntegration.removeShapeMarker(world));
             sender.sendMessage(String.format("[Chunky] Removed world border from %s.", world.getName()));
@@ -288,7 +289,9 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     }
 
     public Chunky getChunky() {
-        Chunky chunky = (Chunky) getServer().getPluginManager().getPlugin("Chunky");
+        ChunkyBukkit chunkyBukkit = ((ChunkyBukkit) getServer().getPluginManager().getPlugin("Chunky"));
+        Validate.notNull(chunkyBukkit);
+        Chunky chunky = chunkyBukkit.getChunky();
         Validate.notNull(chunky);
         return chunky;
     }

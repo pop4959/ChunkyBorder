@@ -1,6 +1,7 @@
 package org.popcraft.chunkyborder;
 
 import org.bukkit.Bukkit;
+import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.Selection;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.ShapeFactory;
@@ -25,9 +26,9 @@ public class BorderData {
         this.shape = selection.shape;
     }
 
-    public void reinitializeBorder(boolean alignToChunk) {
-        Selection selection = new Selection();
-        selection.world = Bukkit.getWorld(world);
+    public void reinitializeBorder(Chunky chunky, boolean alignToChunk) {
+        Selection selection = new Selection(chunky);
+        selection.world = chunky.getPlatform().getServer().getWorld(world).orElse(null);
         selection.centerX = this.centerX;
         selection.centerZ = this.centerZ;
         selection.radiusX = this.radiusX;
