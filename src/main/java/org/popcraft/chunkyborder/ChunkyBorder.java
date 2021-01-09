@@ -29,6 +29,7 @@ import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.ChunkyBukkit;
 import org.popcraft.chunky.Selection;
 import org.popcraft.chunky.integration.MapIntegration;
+import org.popcraft.chunky.platform.BukkitWorld;
 import org.popcraft.chunky.shape.AbstractEllipse;
 import org.popcraft.chunky.shape.AbstractPolygon;
 import org.popcraft.chunky.shape.Shape;
@@ -85,21 +86,23 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        Selection selection = getChunky().getSelection();
+        final org.popcraft.chunky.platform.World nullableWorld = getChunky().getSelection().world;
+        final org.popcraft.chunky.platform.World senderWorld = new BukkitWorld(sender instanceof Player ? ((Player) sender).getWorld() : getServer().getWorlds().get(0));
+        final org.popcraft.chunky.platform.World world = nullableWorld == null ? senderWorld : nullableWorld;
         if (args.length > 0 && "add".equalsIgnoreCase(args[0])) {
-            Selection selection = getChunky().getSelection();
             BorderData borderData = new BorderData(selection, isBorderChunkAligned());
-            borders.put(selection.world.getName(), borderData);
-            mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(selection.world, borderData.getBorder()));
+            borders.put(world.getName(), borderData);
+            mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(world, borderData.getBorder()));
             sender.sendMessage(String.format("[Chunky] Added %s world border to %s with center %d, %d, and radius %s.",
                     selection.shape,
-                    selection.world.getName(),
+                    world.getName(),
                     selection.centerX,
                     selection.centerZ,
                     selection.radiusX == selection.radiusZ ? String.valueOf(selection.radiusX) : String.format("%d, %d", selection.radiusX, selection.radiusZ)
             ));
             saveBorders();
         } else if (args.length > 0 && "remove".equalsIgnoreCase(args[0])) {
-            final org.popcraft.chunky.platform.World world = getChunky().getSelection().world;
             borders.remove(world.getName());
             mapIntegrations.forEach(mapIntegration -> mapIntegration.removeShapeMarker(world));
             sender.sendMessage(String.format("[Chunky] Removed world border from %s.", world.getName()));
