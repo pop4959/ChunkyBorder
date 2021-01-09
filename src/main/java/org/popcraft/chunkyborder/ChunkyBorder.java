@@ -109,8 +109,14 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             mapIntegrations.forEach(mapIntegration -> mapIntegration.removeShapeMarker(world));
             sender.sendMessage(String.format("[Chunky] Removed world border from %s.", world.getName()));
             saveBorders();
+        } else if (args.length > 0 && "list".equalsIgnoreCase(args[0])) {
+            sender.sendMessage("Border List");
+            borders.values().forEach(border -> {
+                String radii = border.getRadiusX() == border.getRadiusZ() ? String.format("radius %d", border.getRadiusX()) : String.format("radii %d, %d", border.getRadiusX(), border.getRadiusZ());
+                sender.sendMessage(String.format("%s: %s with center %d, %d and %s", border.getWorld(), border.getShape(), border.getCenterX(), border.getCenterZ(), radii));
+            });
         } else {
-            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&2chunkyborder <add|remove>&r - Add or remove a world border"));
+            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&2chunkyborder <add|remove|list>&r - Add, remove, or list world borders"));
         }
         return true;
     }
@@ -118,7 +124,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            final List<String> suggestions = new ArrayList<>(Arrays.asList("add", "remove"));
+            final List<String> suggestions = new ArrayList<>(Arrays.asList("add", "remove", "list"));
             return suggestions.stream()
                     .filter(s -> s.toLowerCase().contains(args[args.length - 1].toLowerCase()))
                     .collect(Collectors.toList());
