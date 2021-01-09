@@ -33,10 +33,16 @@ public class BorderCheckTask implements Runnable {
                 return;
             }
             final Location loc = player.getLocation();
-            if (border.isBounding(loc.getX(), loc.getZ())) {
+            boolean currentLocationValid = border.isBounding(loc.getX(), loc.getZ());
+            boolean lastLocationValid = chunkyBorder.getLastLocationValid().getOrDefault(player.getUniqueId(), true);
+            chunkyBorder.getLastLocationValid().put(player.getUniqueId(), currentLocationValid);
+            if (currentLocationValid) {
                 chunkyBorder.getLastKnownLocation().put(player.getUniqueId(), loc);
             } else {
                 if (player.hasPermission("chunkyborder.bypass.move")) {
+                    if (lastLocationValid) {
+                        chunkyBorder.sendBorderMessage(player);
+                    }
                     return;
                 }
                 final Location newLoc = chunkyBorder.getLastKnownLocation().getOrDefault(player.getUniqueId(), world.getSpawnLocation());

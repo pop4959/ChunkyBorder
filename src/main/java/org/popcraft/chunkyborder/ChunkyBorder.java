@@ -53,12 +53,14 @@ import java.util.stream.Collectors;
 public final class ChunkyBorder extends JavaPlugin implements Listener {
     private Map<String, BorderData> borders;
     private Map<UUID, Location> lastKnownLocation;
+    private Map<UUID, Boolean> lastLocationValid;
     private List<MapIntegration> mapIntegrations;
 
     @Override
     public void onEnable() {
         this.borders = loadBorders();
         this.lastKnownLocation = new HashMap<>();
+        this.lastLocationValid = new HashMap<>();
         this.mapIntegrations = new ArrayList<>();
         if (!isCompatibleChunkyVersion()) {
             getLogger().severe("Chunky needs to be updated in order to use ChunkyBorder!");
@@ -241,6 +243,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent e) {
         this.lastKnownLocation.remove(e.getPlayer().getUniqueId());
+        this.lastLocationValid.remove(e.getPlayer().getUniqueId());
     }
 
     public void sendBorderMessage(Player player) {
@@ -285,6 +288,10 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
 
     public Map<UUID, Location> getLastKnownLocation() {
         return lastKnownLocation;
+    }
+
+    public Map<UUID, Boolean> getLastLocationValid() {
+        return lastLocationValid;
     }
 
     public List<MapIntegration> getMapIntegrations() {
