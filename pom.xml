@@ -6,7 +6,7 @@
 
     <groupId>org.popcraft</groupId>
     <artifactId>chunkyborder</artifactId>
-    <version>1.0.6</version>
+    <version>1.0.7</version>
     <packaging>jar</packaging>
 
     <name>ChunkyBorder</name>
@@ -81,6 +81,10 @@
             <url>https://repo.mikeprimm.com/</url>
         </repository>
         <repository>
+            <id>pl3x-repo</id>
+            <url>https://repo.pl3x.net</url>
+        </repository>
+        <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
@@ -102,13 +106,13 @@
         <dependency>
             <groupId>org.popcraft</groupId>
             <artifactId>chunky-common</artifactId>
-            <version>1.2.0</version>
+            <version>1.2.12</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.popcraft</groupId>
             <artifactId>chunky-bukkit</artifactId>
-            <version>1.2.0</version>
+            <version>1.2.12</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -123,8 +127,13 @@
             <version>v1.1.0</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>net.pl3x.map</groupId>
+            <artifactId>pl3xmap-api</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
-
     <distributionManagement>
         <repository>
             <id>codemc-releases</id>

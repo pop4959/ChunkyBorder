@@ -1,9 +1,11 @@
 package org.popcraft.chunkyborder;
 
+import net.pl3x.map.api.Pl3xMap;
+import net.pl3x.map.api.Pl3xMapProvider;
 import org.dynmap.DynmapAPI;
 import org.popcraft.chunky.integration.DynmapIntegration;
 import org.popcraft.chunky.integration.MapIntegration;
-import org.popcraft.chunky.platform.World;
+import org.popcraft.chunky.integration.Pl3xMapIntegration;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +41,16 @@ public class BorderInitializationTask implements Runnable {
                             dynmapAPI.getMarkerAPI();
                             mapIntegrations.add(new DynmapIntegration(dynmapAPI));
                         } catch (NullPointerException ignored) {
+                        }
+                    });
+        }
+        if (chunkyBorder.getConfig().getBoolean("map-options.enable.pl3xmap", true)) {
+            Optional.ofNullable(chunkyBorder.getServer().getPluginManager().getPlugin("Pl3xMap"))
+                    .ifPresent(pl3xMap -> {
+                        try {
+                            Pl3xMap pl3xMapAPI = Pl3xMapProvider.get();
+                            mapIntegrations.add(new Pl3xMapIntegration(pl3xMapAPI));
+                        } catch (IllegalStateException ignored) {
                         }
                     });
         }

@@ -3,7 +3,7 @@ version: ${project.version}
 main: org.popcraft.chunkyborder.ChunkyBorder
 api-version: "1.13"
 depend: [Chunky]
-softdepend: [dynmap, BlueMap]
+softdepend: [dynmap, BlueMap, Pl3xMap]
 load: POSTWORLD
 authors: [pop4959]
 description: Add a world border to your Chunky world
