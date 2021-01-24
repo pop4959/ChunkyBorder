@@ -22,6 +22,8 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.world.WorldLoadEvent;
+import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
@@ -55,6 +57,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     private Map<UUID, Location> lastKnownLocation;
     private Map<UUID, Boolean> lastLocationValid;
     private List<MapIntegration> mapIntegrations;
+    private static boolean alignToChunk;
 
     @Override
     public void onEnable() {
@@ -74,6 +77,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         getServer().getScheduler().scheduleSyncDelayedTask(this, new BorderInitializationTask(this));
         final long checkInterval = getConfig().getLong("border-options.check-interval", 20);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new BorderCheckTask(this), checkInterval, checkInterval);
+        alignToChunk = getConfig().getBoolean("border-options.align-to-chunk", false);
         new Metrics(this, 8953);
     }
 
@@ -89,11 +93,10 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         Selection selection = getChunky().getSelection();
-        final org.popcraft.chunky.platform.World nullableWorld = getChunky().getSelection().world;
         final org.popcraft.chunky.platform.World senderWorld = new BukkitWorld(sender instanceof Player ? ((Player) sender).getWorld() : getServer().getWorlds().get(0));
-        final org.popcraft.chunky.platform.World world = nullableWorld == null ? senderWorld : nullableWorld;
+        final org.popcraft.chunky.platform.World world = selection.getWorld().orElse(senderWorld);
         if (args.length > 0 && "add".equalsIgnoreCase(args[0])) {
-            BorderData borderData = new BorderData(selection, isBorderChunkAligned());
+            BorderData borderData = new BorderData(selection);
             borders.put(world.getName(), borderData);
             mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(world, borderData.getBorder()));
             sender.sendMessage(String.format("[Chunky] Added %s world border to %s with center %d, %d, and radius %s.",
@@ -130,6 +133,27 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                     .collect(Collectors.toList());
         }
         return Collections.emptyList();
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onWorldLoad(WorldLoadEvent e) {
+        String worldName = e.getWorld().getName();
+        Optional<org.popcraft.chunky.platform.World> world = getChunky().getPlatform().getServer().getWorld(worldName);
+        if (!world.isPresent()) {
+            return;
+        }
+        Shape border = borders.get(worldName).getBorder();
+        mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(world.get(), border));
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onWorldUnload(WorldUnloadEvent e) {
+        String worldName = e.getWorld().getName();
+        Optional<org.popcraft.chunky.platform.World> world = getChunky().getPlatform().getServer().getWorld(worldName);
+        if (!world.isPresent()) {
+            return;
+        }
+        mapIntegrations.forEach(mapIntegration -> mapIntegration.removeShapeMarker(world.get()));
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
@@ -315,7 +339,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     public boolean isCompatibleChunkyVersion() {
         try {
             Class.forName("org.popcraft.chunky.util.Version");
-            Version minimumRequiredVersion = new Version(1, 2, 12);
+            Version minimumRequiredVersion = new Version(1, 2, 14);
             Plugin chunkyPlugin = getServer().getPluginManager().getPlugin("Chunky");
             if (chunkyPlugin == null) {
                 return false;
@@ -327,8 +351,8 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         }
     }
 
-    public boolean isBorderChunkAligned() {
-        return getConfig().getBoolean("border-options.align-to-chunk", false);
+    public static boolean isChunkAligned() {
+        return alignToChunk;
     }
 
     public Optional<String> getBorderMessage() {

@@ -106,13 +106,13 @@
         <dependency>
             <groupId>org.popcraft</groupId>
             <artifactId>chunky-common</artifactId>
-            <version>1.2.12</version>
+            <version>1.2.14</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.popcraft</groupId>
             <artifactId>chunky-bukkit</artifactId>
-            <version>1.2.12</version>
+            <version>1.2.14</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

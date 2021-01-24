@@ -1,48 +1,27 @@
 package org.popcraft.chunkyborder;
 
 import org.bukkit.Bukkit;
-import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.Selection;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.ShapeFactory;
 
 public class BorderData {
-    private transient Shape border;
     private String world;
     private int centerX, centerZ;
     private int radiusX, radiusZ;
     private String shape;
+    private transient Shape border;
 
     public BorderData() {
     }
 
-    public BorderData(Selection selection, boolean alignToChunk) {
-        this.border = ShapeFactory.getShape(selection, alignToChunk);
+    public BorderData(Selection selection) {
         this.world = selection.world == null ? Bukkit.getWorlds().get(0).getName() : selection.world.getName();
         this.centerX = selection.centerX;
         this.centerZ = selection.centerZ;
         this.radiusX = selection.radiusX;
         this.radiusZ = selection.radiusZ;
         this.shape = selection.shape;
-    }
-
-    public void reinitializeBorder(Chunky chunky, boolean alignToChunk) {
-        Selection selection = new Selection(chunky);
-        selection.world = chunky.getPlatform().getServer().getWorld(world).orElse(null);
-        selection.centerX = this.centerX;
-        selection.centerZ = this.centerZ;
-        selection.radiusX = this.radiusX;
-        selection.radiusZ = this.radiusZ;
-        selection.shape = this.shape;
-        this.border = ShapeFactory.getShape(selection, alignToChunk);
-    }
-
-    public Shape getBorder() {
-        return border;
-    }
-
-    public void setBorder(Shape border) {
-        this.border = border;
     }
 
     public String getWorld() {
@@ -91,5 +70,22 @@ public class BorderData {
 
     public void setShape(String shape) {
         this.shape = shape;
+    }
+
+    public Shape getBorder() {
+        if (border == null) {
+            Selection selection = new Selection();
+            selection.centerX = centerX;
+            selection.centerZ = centerZ;
+            selection.radiusX = radiusX;
+            selection.radiusZ = radiusZ;
+            selection.shape = shape;
+            this.border = ShapeFactory.getShape(selection, ChunkyBorder.isChunkAligned());
+        }
+        return border;
+    }
+
+    public void setBorder(Shape border) {
+        this.border = border;
     }
 }
