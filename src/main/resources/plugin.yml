@@ -1,5 +1,5 @@
 name: ChunkyBorder
-version: ${project.version}
+version: ${projectVersion}
 main: org.popcraft.chunkyborder.ChunkyBorder
 api-version: "1.13"
 depend: [Chunky]

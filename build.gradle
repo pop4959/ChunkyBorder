@@ -1,0 +1,104 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
+}
+
+group = 'org.popcraft'
+
+def commitsSinceLastTag = {
+    def tagDescription = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'describe', '--tags'
+        standardOutput = tagDescription
+    }
+    tagDescription = tagDescription.toString()
+    if (tagDescription.indexOf('-') < 0) {
+        return 0;
+    }
+    return tagDescription.split('-')[1]
+}
+
+project.ext.majorVersion = '1'
+project.ext.minorVersion = '0'
+project.ext.patchVersion = commitsSinceLastTag()
+project.ext.fullVersion = project.ext.majorVersion + '.' + project.ext.minorVersion + '.' + project.ext.patchVersion
+version = project.ext.fullVersion
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://papermc.io/repo/repository/maven-public/'
+    }
+    maven {
+        url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+    }
+    maven {
+        url 'https://repo.codemc.io/repository/maven-public/'
+    }
+    maven {
+        url 'https://repo.mikeprimm.com/'
+    }
+    maven {
+        url 'https://repo.pl3x.net'
+    }
+    maven {
+        url 'https://jitpack.io'
+    }
+}
+
+dependencies {
+    compileOnly 'org.spigotmc:spigot-api:1.16.4-R0.1-SNAPSHOT'
+    implementation 'io.papermc:paperlib:1.0.6'
+    compileOnly 'org.popcraft:chunky-common:1.2.14'
+    compileOnly 'org.popcraft:chunky-bukkit:1.2.14'
+    compileOnly 'us.dynmap:dynmap-api:3.0'
+    compileOnly 'com.github.BlueMap-Minecraft:BlueMapAPI:v1.1.0'
+    compileOnly 'net.pl3x.map:pl3xmap-api:1.0.0-SNAPSHOT'
+}
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        expand 'projectVersion': project.ext.fullVersion
+        include 'plugin.yml'
+    }
+}
+
+shadowJar {
+    archiveFileName = "ChunkyBorder-${project.ext.fullVersion}.jar"
+    relocate 'io.papermc.lib', 'org.popcraft.chunkyborder.lib.paperlib'
+}
+
+artifacts {
+    archives shadowJar
+}
+
+publishing {
+    repositories {
+        if (project.hasProperty('mavenUsername') && project.hasProperty('mavenPassword'))
+            maven {
+                credentials {
+                    username = project.mavenUsername
+                    password = project.mavenPassword
+                }
+                def releasesRepoUrl = 'https://repo.codemc.io/repository/maven-releases/'
+                def snapshotsRepoUrl = 'https://repo.codemc.io/repository/maven-snapshots/'
+                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+            }
+    }
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.popcraft'
+            artifactId = 'chunkyborder'
+            version = project.ext.fullVersion
+            from components.java
+        }
+    }
+}
