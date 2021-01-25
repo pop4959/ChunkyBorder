@@ -10,6 +10,7 @@ public class BorderData {
     private int centerX, centerZ;
     private int radiusX, radiusZ;
     private String shape;
+    private boolean wrap;
     private transient Shape border;
 
     public BorderData() {
@@ -70,6 +71,14 @@ public class BorderData {
 
     public void setShape(String shape) {
         this.shape = shape;
+    }
+
+    public boolean isWrap() {
+        return wrap;
+    }
+
+    public void setWrap(boolean wrap) {
+        this.wrap = wrap;
     }
 
     public Shape getBorder() {

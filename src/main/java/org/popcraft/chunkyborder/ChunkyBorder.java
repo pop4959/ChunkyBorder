@@ -138,6 +138,10 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         final org.popcraft.chunky.platform.World world = selection.getWorld().orElse(senderWorld);
         if (args.length > 0 && "add".equalsIgnoreCase(args[0])) {
             BorderData borderData = new BorderData(selection);
+            BorderData currentBorder = borders.get(world.getName());
+            if (currentBorder != null) {
+                borderData.setWrap(currentBorder.isWrap());
+            }
             borders.put(world.getName(), borderData);
             mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(world, borderData.getBorder()));
             sender.sendMessage(String.format("[Chunky] Added %s world border to %s with center %d, %d, and radius %s.",
@@ -159,6 +163,15 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                 String radii = border.getRadiusX() == border.getRadiusZ() ? String.format("radius %d", border.getRadiusX()) : String.format("radii %d, %d", border.getRadiusX(), border.getRadiusZ());
                 sender.sendMessage(String.format("%s: %s with center %d, %d and %s", border.getWorld(), border.getShape(), border.getCenterX(), border.getCenterZ(), radii));
             });
+        } else if (args.length > 0 && "wrap".equalsIgnoreCase(args[0])) {
+            BorderData currentBorder = borders.get(world.getName());
+            if (currentBorder != null) {
+                currentBorder.setWrap(!currentBorder.isWrap());
+                sender.sendMessage(String.format("World border wrapping is now %s for %s", currentBorder.isWrap() ? "enabled" : "disabled", world.getName()));
+                saveBorders();
+            } else {
+                sender.sendMessage(String.format("No world border exists for %s", world.getName()));
+            }
         } else {
             sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&2chunkyborder <add|remove|list>&r - Add, remove, or list world borders"));
         }
@@ -168,7 +181,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            final List<String> suggestions = new ArrayList<>(Arrays.asList("add", "remove", "list"));
+            final List<String> suggestions = new ArrayList<>(Arrays.asList("add", "remove", "list", "wrap"));
             return suggestions.stream()
                     .filter(s -> s.toLowerCase().contains(args[args.length - 1].toLowerCase()))
                     .collect(Collectors.toList());
