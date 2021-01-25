@@ -201,9 +201,6 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     public void onPlayerTeleport(PlayerTeleportEvent e) {
         Player player = e.getPlayer();
         Location toLocation = e.getTo();
-        if (toLocation == null) {
-            return;
-        }
         World toWorld = toLocation.getWorld();
         if (toWorld == null || borders == null || !borders.containsKey(toWorld.getName())) {
             return;
