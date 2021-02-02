@@ -9,6 +9,7 @@ border-options:
   effect: ender_signal
   sound: entity_enderman_teleport
   prevent-mob-spawns: true
+  prevent-enderpearl: false
 map-options:
   enable:
     bluemap: true

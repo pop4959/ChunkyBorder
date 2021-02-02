@@ -231,6 +231,10 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             if (player.hasPermission("chunkyborder.bypass.move")) {
                 return;
             }
+            if (PlayerTeleportEvent.TeleportCause.ENDER_PEARL.equals(e.getCause()) && getConfig().getBoolean("border-options.prevent-enderpearl", false)) {
+                e.setCancelled(true);
+                return;
+            }
             double centerX = borderData.getCenterX();
             double centerZ = borderData.getCenterZ();
             double toX = to.getX();
