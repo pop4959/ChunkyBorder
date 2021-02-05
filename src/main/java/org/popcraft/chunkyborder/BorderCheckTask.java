@@ -29,15 +29,15 @@ public class BorderCheckTask implements Runnable {
             final Map<String, BorderData> borders = chunkyBorder.getBorders();
             final World world = player.getWorld();
             if (borders == null || !borders.containsKey(world.getName())) {
-                return;
+                continue;
             }
             final BorderData borderData = borders.get(world.getName());
             if (borderData == null) {
-                return;
+                continue;
             }
             final Shape border = borderData.getBorder();
             if (border == null) {
-                return;
+                continue;
             }
             final Location loc = player.getLocation();
             boolean currentLocationValid = border.isBounding(loc.getX(), loc.getZ());
@@ -50,7 +50,7 @@ public class BorderCheckTask implements Runnable {
                     if (lastLocationValid) {
                         chunkyBorder.sendBorderMessage(player);
                     }
-                    return;
+                    continue;
                 }
                 final Location newLoc;
                 if (borderData.isWrap()) {
