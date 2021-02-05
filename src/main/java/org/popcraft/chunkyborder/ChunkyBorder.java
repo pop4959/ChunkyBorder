@@ -196,7 +196,11 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         if (!world.isPresent()) {
             return;
         }
-        Shape border = borders.get(worldName).getBorder();
+        BorderData borderData = borders.get(worldName);
+        if (borderData == null) {
+            return;
+        }
+        Shape border = borderData.getBorder();
         mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(world.get(), border));
     }
 
