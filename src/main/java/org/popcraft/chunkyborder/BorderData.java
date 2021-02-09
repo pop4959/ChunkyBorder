@@ -90,6 +90,7 @@ public class BorderData {
             selection.radiusZ = radiusZ;
             selection.shape = shape;
             this.border = ShapeFactory.getShape(selection, ChunkyBorder.isChunkAligned());
+            this.shape = border.name();
         }
         return border;
     }
