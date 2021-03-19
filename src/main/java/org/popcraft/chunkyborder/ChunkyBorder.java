@@ -133,9 +133,8 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        Selection selection = getChunky().getSelection();
-        final org.popcraft.chunky.platform.World senderWorld = new BukkitWorld(sender instanceof Player ? ((Player) sender).getWorld() : getServer().getWorlds().get(0));
-        final org.popcraft.chunky.platform.World world = selection.getWorld().orElse(senderWorld);
+        Selection selection = getChunky().getSelection().build();
+        final org.popcraft.chunky.platform.World world = selection.world();
         if (args.length > 0 && "add".equalsIgnoreCase(args[0])) {
             BorderData borderData = new BorderData(selection);
             BorderData currentBorder = borders.get(world.getName());
@@ -145,11 +144,11 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             borders.put(world.getName(), borderData);
             mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(world, borderData.getBorder()));
             sender.sendMessage(String.format("[Chunky] Added %s world border to %s with center %d, %d, and radius %s.",
-                    selection.shape,
+                    selection.shape(),
                     world.getName(),
-                    selection.centerX,
-                    selection.centerZ,
-                    selection.radiusX == selection.radiusZ ? String.valueOf(selection.radiusX) : String.format("%d, %d", selection.radiusX, selection.radiusZ)
+                    selection.centerX(),
+                    selection.centerZ(),
+                    selection.radiusX() == selection.radiusZ() ? String.valueOf(selection.radiusX()) : String.format("%d, %d", selection.radiusX(), selection.radiusZ())
             ));
             saveBorders();
         } else if (args.length > 0 && "remove".equalsIgnoreCase(args[0])) {
@@ -398,7 +397,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     public boolean isCompatibleChunkyVersion() {
         try {
             Class.forName("org.popcraft.chunky.util.Version");
-            Version minimumRequiredVersion = new Version(1, 2, 14);
+            Version minimumRequiredVersion = new Version(1, 2, 41);
             Plugin chunkyPlugin = getServer().getPluginManager().getPlugin("Chunky");
             if (chunkyPlugin == null) {
                 return false;

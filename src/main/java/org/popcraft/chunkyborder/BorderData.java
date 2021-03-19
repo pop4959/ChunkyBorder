@@ -17,12 +17,12 @@ public class BorderData {
     }
 
     public BorderData(Selection selection) {
-        this.world = selection.world == null ? Bukkit.getWorlds().get(0).getName() : selection.world.getName();
-        this.centerX = selection.centerX;
-        this.centerZ = selection.centerZ;
-        this.radiusX = selection.radiusX;
-        this.radiusZ = selection.radiusZ;
-        this.shape = selection.shape;
+        this.world = selection.world().getName();
+        this.centerX = selection.centerX();
+        this.centerZ = selection.centerZ();
+        this.radiusX = selection.radiusX();
+        this.radiusZ = selection.radiusZ();
+        this.shape = selection.shape();
     }
 
     public String getWorld() {
@@ -83,12 +83,8 @@ public class BorderData {
 
     public Shape getBorder() {
         if (border == null) {
-            Selection selection = new Selection();
-            selection.centerX = centerX;
-            selection.centerZ = centerZ;
-            selection.radiusX = radiusX;
-            selection.radiusZ = radiusZ;
-            selection.shape = shape;
+            Selection selection = Selection.builder(null).center(centerX, centerZ)
+                    .radiusX(radiusX).radiusZ(radiusZ).shape(shape).build();
             this.border = ShapeFactory.getShape(selection, ChunkyBorder.isChunkAligned());
             this.shape = border.name();
         }
