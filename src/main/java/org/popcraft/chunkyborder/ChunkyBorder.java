@@ -113,7 +113,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                 Map<String, Integer> map = new HashMap<>();
                 if (borders != null) {
                     borders.values().forEach(border -> {
-                        String shape = border.getShape();
+                        String shape = border.getShape().toLowerCase();
                         map.put(shape, map.getOrDefault(shape, 0) + 1);
                     });
                 }
