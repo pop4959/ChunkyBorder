@@ -397,7 +397,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     public boolean isCompatibleChunkyVersion() {
         try {
             Class.forName("org.popcraft.chunky.util.Version");
-            Version minimumRequiredVersion = new Version(1, 2, 41);
+            Version minimumRequiredVersion = new Version(1, 2, 47);
             Plugin chunkyPlugin = getServer().getPluginManager().getPlugin("Chunky");
             if (chunkyPlugin == null) {
                 return false;

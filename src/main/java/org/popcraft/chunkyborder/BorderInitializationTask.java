@@ -3,6 +3,7 @@ package org.popcraft.chunkyborder;
 import net.pl3x.map.api.Pl3xMap;
 import net.pl3x.map.api.Pl3xMapProvider;
 import org.dynmap.DynmapAPI;
+import org.popcraft.chunky.integration.BlueMapIntegration;
 import org.popcraft.chunky.integration.DynmapIntegration;
 import org.popcraft.chunky.integration.MapIntegration;
 import org.popcraft.chunky.integration.Pl3xMapIntegration;
@@ -27,11 +28,8 @@ public class BorderInitializationTask implements Runnable {
         final int weight = chunkyBorder.getConfig().getInt("map-options.weight", 3);
         final List<MapIntegration> mapIntegrations = chunkyBorder.getMapIntegrations();
         if (chunkyBorder.getConfig().getBoolean("map-options.enable.bluemap", true)) {
-            try {
-                Class.forName("de.bluecolored.bluemap.api.BlueMapAPIListener");
-                BlueMapWorkaround.load(chunkyBorder, mapIntegrations);
-            } catch (ClassNotFoundException ignored) {
-            }
+            Optional.ofNullable(chunkyBorder.getServer().getPluginManager().getPlugin("BlueMap"))
+                    .ifPresent(blueMap -> mapIntegrations.add(new BlueMapIntegration()));
         }
         if (chunkyBorder.getConfig().getBoolean("map-options.enable.dynmap", true)) {
             Optional.ofNullable(chunkyBorder.getServer().getPluginManager().getPlugin("dynmap"))
