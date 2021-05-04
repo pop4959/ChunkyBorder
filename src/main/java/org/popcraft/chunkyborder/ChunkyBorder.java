@@ -323,7 +323,12 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             return;
         }
         Shape border = borderData.getBorder();
-        if (border != null && !border.isBounding(location.getX(), location.getZ()) && !e.getPlayer().hasPermission("chunkyborder.bypass.place")) {
+        if (border == null) {
+            return;
+        }
+        double blockX = location.getBlockX() + 0.5;
+        double blockZ = location.getBlockZ() + 0.5;
+        if (!border.isBounding(blockX, blockZ) && !e.getPlayer().hasPermission("chunkyborder.bypass.place")) {
             e.setCancelled(true);
         }
     }
