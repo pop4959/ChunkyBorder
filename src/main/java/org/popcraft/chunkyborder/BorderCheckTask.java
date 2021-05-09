@@ -79,10 +79,10 @@ public class BorderCheckTask implements Runnable {
         switch (borderData.getShape()) {
             case "square":
             case "rectangle":
-                int minX = borderData.getCenterX() - borderData.getRadiusX();
-                int maxX = borderData.getCenterX() + borderData.getRadiusX();
-                int minZ = borderData.getCenterZ() - borderData.getRadiusZ();
-                int maxZ = borderData.getCenterZ() + borderData.getRadiusZ();
+                double minX = borderData.getCenterX() - borderData.getRadiusX();
+                double maxX = borderData.getCenterX() + borderData.getRadiusX();
+                double minZ = borderData.getCenterZ() - borderData.getRadiusZ();
+                double maxZ = borderData.getCenterZ() + borderData.getRadiusZ();
                 if (loc.getX() <= minX) {
                     newLoc.setX(maxX - 3);
                 } else if (loc.getX() >= maxX) {

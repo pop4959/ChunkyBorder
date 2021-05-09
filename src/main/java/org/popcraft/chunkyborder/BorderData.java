@@ -7,8 +7,8 @@ import org.popcraft.chunky.shape.ShapeFactory;
 
 public class BorderData {
     private String world;
-    private int centerX, centerZ;
-    private int radiusX, radiusZ;
+    private double centerX, centerZ;
+    private double radiusX, radiusZ;
     private String shape;
     private boolean wrap;
     private transient Shape border;
@@ -33,35 +33,35 @@ public class BorderData {
         this.world = world;
     }
 
-    public int getCenterX() {
+    public double getCenterX() {
         return centerX;
     }
 
-    public void setCenterX(int centerX) {
+    public void setCenterX(double centerX) {
         this.centerX = centerX;
     }
 
-    public int getCenterZ() {
+    public double getCenterZ() {
         return centerZ;
     }
 
-    public void setCenterZ(int centerZ) {
+    public void setCenterZ(double centerZ) {
         this.centerZ = centerZ;
     }
 
-    public int getRadiusX() {
+    public double getRadiusX() {
         return radiusX;
     }
 
-    public void setRadiusX(int radiusX) {
+    public void setRadiusX(double radiusX) {
         this.radiusX = radiusX;
     }
 
-    public int getRadiusZ() {
+    public double getRadiusZ() {
         return radiusZ;
     }
 
-    public void setRadiusZ(int radiusZ) {
+    public void setRadiusZ(double radiusZ) {
         this.radiusZ = radiusZ;
     }
 
