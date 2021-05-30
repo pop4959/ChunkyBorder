@@ -6,11 +6,13 @@ import com.google.gson.reflect.TypeToken;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.lang.Validate;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.WorldBorder;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -60,7 +62,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     private Map<UUID, Location> lastKnownLocation;
     private Map<UUID, Boolean> lastLocationValid;
     private List<MapIntegration> mapIntegrations;
-    private static boolean alignToChunk;
+    private static boolean alignToChunk, syncVanilla;
 
     @Override
     public void onEnable() {
@@ -81,6 +83,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         final long checkInterval = getConfig().getLong("border-options.check-interval", 20);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new BorderCheckTask(this), checkInterval, checkInterval);
         alignToChunk = getConfig().getBoolean("border-options.align-to-chunk", false);
+        syncVanilla = getConfig().getBoolean("border-options.sync-vanilla", false);
         Metrics metrics = new Metrics(this, 8953);
         if (metrics.isEnabled()) {
             metrics.addCustomChart(new Metrics.AdvancedPie("mapIntegration", () -> {
@@ -143,6 +146,14 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             }
             borders.put(world.getName(), borderData);
             mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(world, borderData.getBorder()));
+            if (syncVanilla && "square".equalsIgnoreCase(selection.shape())) {
+                World toSync = Bukkit.getWorld(world.getName());
+                if (toSync != null) {
+                    WorldBorder worldBorder = toSync.getWorldBorder();
+                    worldBorder.setCenter(selection.centerX(), selection.centerZ());
+                    worldBorder.setSize(selection.radiusX() * 2d);
+                }
+            }
             sender.sendMessage(String.format("[Chunky] Added %s world border to %s with center %s, %s, and radius %s.",
                     selection.shape(),
                     world.getName(),
