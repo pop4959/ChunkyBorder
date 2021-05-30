@@ -182,6 +182,19 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             } else {
                 sender.sendMessage(String.format("No world border exists for %s", world.getName()));
             }
+        } else if (args.length > 0 && "load".equalsIgnoreCase(args[0])) {
+            BorderData currentBorder = borders.get(world.getName());
+            if (currentBorder != null) {
+                Selection.Builder newSelection = getChunky().getSelection();
+                newSelection.world(world);
+                newSelection.shape(currentBorder.getShape());
+                newSelection.center(currentBorder.getCenterX(), currentBorder.getCenterZ());
+                newSelection.radiusX(currentBorder.getRadiusX());
+                newSelection.radiusZ(currentBorder.getRadiusZ());
+                sender.sendMessage(String.format("Selection loaded from world border for %s", world.getName()));
+            } else {
+                sender.sendMessage(String.format("No world border exists for %s", world.getName()));
+            }
         } else {
             sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&2chunkyborder <add|remove|list>&r - Add, remove, or list world borders"));
         }
@@ -191,7 +204,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            final List<String> suggestions = new ArrayList<>(Arrays.asList("add", "remove", "list", "wrap"));
+            final List<String> suggestions = new ArrayList<>(Arrays.asList("add", "remove", "list", "load", "wrap"));
             return suggestions.stream()
                     .filter(s -> s.toLowerCase().contains(args[args.length - 1].toLowerCase()))
                     .collect(Collectors.toList());
