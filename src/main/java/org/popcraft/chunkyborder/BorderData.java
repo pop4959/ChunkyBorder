@@ -2,8 +2,12 @@ package org.popcraft.chunkyborder;
 
 import org.bukkit.Bukkit;
 import org.popcraft.chunky.Selection;
+import org.popcraft.chunky.platform.BukkitWorld;
+import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.ShapeFactory;
+
+import java.util.Optional;
 
 public class BorderData {
     private String world;
@@ -83,9 +87,7 @@ public class BorderData {
 
     public Shape getBorder() {
         if (border == null) {
-            Selection selection = Selection.builder(null).center(centerX, centerZ)
-                    .radiusX(radiusX).radiusZ(radiusZ).shape(shape).build();
-            this.border = ShapeFactory.getShape(selection, ChunkyBorder.isChunkAligned());
+            this.border = ShapeFactory.getShape(asSelection().build(), ChunkyBorder.isChunkAligned());
             this.shape = border.name();
         }
         return border;
@@ -93,5 +95,10 @@ public class BorderData {
 
     public void setBorder(Shape border) {
         this.border = border;
+    }
+
+    public Selection.Builder asSelection() {
+        final World borderWorld = Optional.ofNullable(Bukkit.getWorld(world)).map(BukkitWorld::new).orElse(null);
+        return Selection.builder(borderWorld).center(centerX, centerZ).radiusX(radiusX).radiusZ(radiusZ).shape(shape);
     }
 }

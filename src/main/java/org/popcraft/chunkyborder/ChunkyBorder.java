@@ -36,11 +36,11 @@ import org.popcraft.chunky.integration.BlueMapIntegration;
 import org.popcraft.chunky.integration.DynmapIntegration;
 import org.popcraft.chunky.integration.MapIntegration;
 import org.popcraft.chunky.integration.Pl3xMapIntegration;
-import org.popcraft.chunky.platform.BukkitWorld;
 import org.popcraft.chunky.shape.AbstractEllipse;
 import org.popcraft.chunky.shape.AbstractPolygon;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.ShapeUtil;
+import org.popcraft.chunky.util.Formatting;
 import org.popcraft.chunky.util.Version;
 
 import java.io.File;
@@ -157,9 +157,9 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             sender.sendMessage(String.format("[Chunky] Added %s world border to %s with center %s, %s, and radius %s.",
                     selection.shape(),
                     world.getName(),
-                    selection.centerX(),
-                    selection.centerZ(),
-                    selection.radiusX() == selection.radiusZ() ? String.format("%s", selection.radiusX()) : String.format("%s, %s", selection.radiusX(), selection.radiusZ())
+                    Formatting.number(selection.centerX()),
+                    Formatting.number(selection.centerZ()),
+                    Formatting.radius(selection)
             ));
             saveBorders();
         } else if (args.length > 0 && "remove".equalsIgnoreCase(args[0])) {
@@ -170,8 +170,8 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         } else if (args.length > 0 && "list".equalsIgnoreCase(args[0])) {
             sender.sendMessage("Border List");
             borders.values().forEach(border -> {
-                String radii = border.getRadiusX() == border.getRadiusZ() ? String.format("radius %s", border.getRadiusX()) : String.format("radii %s, %s", border.getRadiusX(), border.getRadiusZ());
-                sender.sendMessage(String.format("%s: %s with center %s, %s and %s", border.getWorld(), border.getShape(), border.getCenterX(), border.getCenterZ(), radii));
+                Selection borderSelection = border.asSelection().build();
+                sender.sendMessage(String.format("%s: %s with center %s, %s and radius %s", border.getWorld(), border.getShape(), Formatting.number(border.getCenterX()), Formatting.number(border.getCenterZ()), Formatting.radius(borderSelection)));
             });
         } else if (args.length > 0 && "wrap".equalsIgnoreCase(args[0])) {
             BorderData currentBorder = borders.get(world.getName());
@@ -426,7 +426,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     public boolean isCompatibleChunkyVersion() {
         try {
             Class.forName("org.popcraft.chunky.util.Version");
-            Version minimumRequiredVersion = new Version(1, 2, 64);
+            Version minimumRequiredVersion = new Version(1, 2, 70);
             Plugin chunkyPlugin = getServer().getPluginManager().getPlugin("Chunky");
             if (chunkyPlugin == null) {
                 return false;

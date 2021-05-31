@@ -57,8 +57,8 @@ repositories {
 dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.16.4-R0.1-SNAPSHOT'
     implementation 'io.papermc:paperlib:1.0.6'
-    compileOnly 'org.popcraft:chunky-common:1.2.64'
-    compileOnly 'org.popcraft:chunky-bukkit:1.2.64'
+    compileOnly 'org.popcraft:chunky-common:1.2.70'
+    compileOnly 'org.popcraft:chunky-bukkit:1.2.70'
     compileOnly 'us.dynmap:dynmap-api:3.0'
     compileOnly 'com.github.BlueMap-Minecraft:BlueMapAPI:v1.3.0'
     compileOnly 'net.pl3x.map:pl3xmap-api:1.0.0-SNAPSHOT'
