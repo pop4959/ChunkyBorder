@@ -59,16 +59,14 @@ import java.util.stream.Collectors;
 
 public final class ChunkyBorder extends JavaPlugin implements Listener {
     private Map<String, BorderData> borders;
-    private Map<UUID, Location> lastKnownLocation;
-    private Map<UUID, Boolean> lastLocationValid;
+    private Map<UUID, PlayerData> players;
     private List<MapIntegration> mapIntegrations;
     private static boolean alignToChunk, syncVanilla;
 
     @Override
     public void onEnable() {
         this.borders = loadBorders();
-        this.lastKnownLocation = new HashMap<>();
-        this.lastLocationValid = new HashMap<>();
+        this.players = new HashMap<>();
         this.mapIntegrations = new ArrayList<>();
         if (!isCompatibleChunkyVersion()) {
             getLogger().severe("Chunky needs to be updated in order to use ChunkyBorder!");
@@ -195,6 +193,20 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             } else {
                 sender.sendMessage(String.format("No world border exists for %s", world.getName()));
             }
+        } else if (args.length > 0 && "bypass".equalsIgnoreCase(args[0])) {
+            final Player target;
+            if (sender instanceof Player && args.length == 1) {
+                target = (Player) sender;
+            } else {
+                target = args.length > 1 ? Bukkit.getPlayer(args[1]) : null;
+            }
+            if (target == null) {
+                sender.sendMessage("No player is online with the given name!");
+            } else {
+                final PlayerData playerData = getPlayerData(target);
+                playerData.setBypassing(!playerData.isBypassing());
+                sender.sendMessage(String.format("Temporary border bypass %s for player %s", playerData.isBypassing() ? "granted" : "revoked", target.getName()));
+            }
         } else {
             sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&2chunkyborder <add|remove|list>&r - Add, remove, or list world borders"));
         }
@@ -204,7 +216,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            final List<String> suggestions = new ArrayList<>(Arrays.asList("add", "remove", "list", "load", "wrap"));
+            final List<String> suggestions = new ArrayList<>(Arrays.asList("add", "bypass", "remove", "list", "load", "wrap"));
             return suggestions.stream()
                     .filter(s -> s.toLowerCase().contains(args[args.length - 1].toLowerCase()))
                     .collect(Collectors.toList());
@@ -310,7 +322,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             final int yOffset = Version.getCurrentMinecraftVersion().isHigherThanOrEqualTo(Version.v1_15_0) ? 1 : 0;
             insideBorder.setY(toWorld.getHighestBlockYAt(insideBorder) + yOffset);
             sendBorderMessage(player);
-            lastKnownLocation.put(player.getUniqueId(), insideBorder);
+            getPlayerData(player).setLastLocation(insideBorder);
             e.setTo(insideBorder);
         }
     }
@@ -359,8 +371,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent e) {
-        this.lastKnownLocation.remove(e.getPlayer().getUniqueId());
-        this.lastLocationValid.remove(e.getPlayer().getUniqueId());
+        this.players.remove(e.getPlayer().getUniqueId());
     }
 
     public void sendBorderMessage(Player player) {
@@ -403,12 +414,10 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         return borders;
     }
 
-    public Map<UUID, Location> getLastKnownLocation() {
-        return lastKnownLocation;
-    }
-
-    public Map<UUID, Boolean> getLastLocationValid() {
-        return lastLocationValid;
+    public PlayerData getPlayerData(final Player player) {
+        final UUID uuid = player.getUniqueId();
+        this.players.computeIfAbsent(uuid, x -> new PlayerData(player));
+        return players.get(uuid);
     }
 
     public List<MapIntegration> getMapIntegrations() {

@@ -41,12 +41,12 @@ public class BorderCheckTask implements Runnable {
             }
             final Location loc = player.getLocation();
             boolean currentLocationValid = border.isBounding(loc.getX(), loc.getZ());
-            boolean lastLocationValid = chunkyBorder.getLastLocationValid().getOrDefault(player.getUniqueId(), true);
-            chunkyBorder.getLastLocationValid().put(player.getUniqueId(), currentLocationValid);
+            boolean lastLocationValid = chunkyBorder.getPlayerData(player).isLastLocationValid();
+            chunkyBorder.getPlayerData(player).setLastLocationValid(currentLocationValid);
             if (currentLocationValid) {
-                chunkyBorder.getLastKnownLocation().put(player.getUniqueId(), loc);
+                chunkyBorder.getPlayerData(player).setLastLocation(loc);
             } else {
-                if (player.hasPermission("chunkyborder.bypass.move")) {
+                if (player.hasPermission("chunkyborder.bypass.move") || chunkyBorder.getPlayerData(player).isBypassing()) {
                     if (lastLocationValid) {
                         chunkyBorder.sendBorderMessage(player);
                     }
@@ -55,9 +55,9 @@ public class BorderCheckTask implements Runnable {
                 final Location newLoc;
                 if (borderData.isWrap()) {
                     newLoc = wrap(borderData, player);
-                    chunkyBorder.getLastKnownLocation().put(player.getUniqueId(), newLoc);
+                    chunkyBorder.getPlayerData(player).setLastLocation(newLoc);
                 } else {
-                    newLoc = chunkyBorder.getLastKnownLocation().getOrDefault(player.getUniqueId(), world.getSpawnLocation());
+                    newLoc = chunkyBorder.getPlayerData(player).getLastLocation().orElse(world.getSpawnLocation());
                     newLoc.setYaw(loc.getYaw());
                     newLoc.setPitch(loc.getPitch());
                 }
@@ -93,7 +93,7 @@ public class BorderCheckTask implements Runnable {
                     newLoc.setZ(minZ + 3);
                 }
                 if (!borderData.getBorder().isBounding(newLoc.getX(), newLoc.getZ())) {
-                    return chunkyBorder.getLastKnownLocation().getOrDefault(player.getUniqueId(), loc.getWorld().getSpawnLocation());
+                    return chunkyBorder.getPlayerData(player).getLastLocation().orElse(loc.getWorld().getSpawnLocation());
                 }
                 newLoc.setYaw(loc.getYaw());
                 newLoc.setPitch(loc.getPitch());
@@ -120,7 +120,7 @@ public class BorderCheckTask implements Runnable {
                     intersections.add(ShapeUtil.pointOnEllipse(centerX, centerZ, radii[0], radii[1], angle));
                 }
                 if (intersections.isEmpty()) {
-                    return chunkyBorder.getLastKnownLocation().getOrDefault(player.getUniqueId(), loc.getWorld().getSpawnLocation());
+                    return chunkyBorder.getPlayerData(player).getLastLocation().orElse(loc.getWorld().getSpawnLocation());
                 }
                 Vector centerDirection = new Vector(fromX - centerX, 0, fromZ - centerZ).normalize().multiply(3);
                 double closestX = intersections.get(0)[0];
@@ -138,7 +138,7 @@ public class BorderCheckTask implements Runnable {
                     }
                 }
                 if (longestDistance == Double.MIN_VALUE) {
-                    return chunkyBorder.getLastKnownLocation().getOrDefault(player.getUniqueId(), loc.getWorld().getSpawnLocation());
+                    return chunkyBorder.getPlayerData(player).getLastLocation().orElse(loc.getWorld().getSpawnLocation());
                 }
                 newLoc = new Location(loc.getWorld(), closestX, fromY, closestZ);
                 newLoc.add(centerDirection);
