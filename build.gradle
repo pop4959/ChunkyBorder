@@ -65,9 +65,8 @@ dependencies {
 }
 
 processResources {
-    from(sourceSets.main.resources.srcDirs) {
+    filesMatching("plugin.yml") {
         expand 'projectVersion': project.ext.fullVersion
-        include 'plugin.yml'
     }
 }
 
