@@ -227,7 +227,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldLoad(WorldLoadEvent e) {
         String worldName = e.getWorld().getName();
-        Optional<org.popcraft.chunky.platform.World> world = getChunky().getPlatform().getServer().getWorld(worldName);
+        Optional<org.popcraft.chunky.platform.World> world = getChunky().getServer().getWorld(worldName);
         if (!world.isPresent()) {
             return;
         }
@@ -242,7 +242,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldUnload(WorldUnloadEvent e) {
         String worldName = e.getWorld().getName();
-        Optional<org.popcraft.chunky.platform.World> world = getChunky().getPlatform().getServer().getWorld(worldName);
+        Optional<org.popcraft.chunky.platform.World> world = getChunky().getServer().getWorld(worldName);
         if (!world.isPresent()) {
             return;
         }
@@ -435,7 +435,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     public boolean isCompatibleChunkyVersion() {
         try {
             Class.forName("org.popcraft.chunky.util.Version");
-            Version minimumRequiredVersion = new Version(1, 2, 70);
+            Version minimumRequiredVersion = new Version(1, 2, 98);
             Plugin chunkyPlugin = getServer().getPluginManager().getPlugin("Chunky");
             if (chunkyPlugin == null) {
                 return false;

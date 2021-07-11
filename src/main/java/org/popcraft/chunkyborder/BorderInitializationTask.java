@@ -60,7 +60,7 @@ public class BorderInitializationTask implements Runnable {
             if (border.getWorld() == null) {
                 continue;
             }
-            Optional<World> world = chunkyBorder.getChunky().getPlatform().getServer().getWorld(border.getWorld());
+            Optional<World> world = chunkyBorder.getChunky().getServer().getWorld(border.getWorld());
             if (!world.isPresent()) {
                 continue;
             }
