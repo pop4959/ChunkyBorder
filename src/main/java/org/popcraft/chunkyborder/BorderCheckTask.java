@@ -5,6 +5,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.util.Vector;
 import org.popcraft.chunky.shape.AbstractEllipse;
 import org.popcraft.chunky.shape.AbstractPolygon;
@@ -65,7 +66,8 @@ public class BorderCheckTask implements Runnable {
                 chunkyBorder.getBorderEffect().ifPresent(effect -> player.getWorld().playEffect(loc, effect, 0));
                 chunkyBorder.getBorderSound().ifPresent(sound -> player.getWorld().playSound(loc, sound, 2f, 1f));
                 final Entity vehicle = player.getVehicle();
-                PaperLib.teleportAsync(player, newLoc);
+                player.setMetadata("NPC", new FixedMetadataValue(chunkyBorder, false));
+                PaperLib.teleportAsync(player, newLoc).thenRun(() -> player.removeMetadata("NPC", chunkyBorder));
                 if (vehicle != null) {
                     PaperLib.teleportAsync(vehicle, newLoc);
                 }
