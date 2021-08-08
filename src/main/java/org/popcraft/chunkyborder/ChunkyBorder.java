@@ -40,6 +40,7 @@ import org.popcraft.chunky.shape.AbstractEllipse;
 import org.popcraft.chunky.shape.AbstractPolygon;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.ShapeUtil;
+import org.popcraft.chunky.shape.Square;
 import org.popcraft.chunky.util.Formatting;
 import org.popcraft.chunky.util.Version;
 
@@ -144,12 +145,19 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             }
             borders.put(world.getName(), borderData);
             mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(world, borderData.getBorder()));
-            if (syncVanilla && "square".equalsIgnoreCase(selection.shape())) {
-                World toSync = Bukkit.getWorld(world.getName());
-                if (toSync != null) {
-                    WorldBorder worldBorder = toSync.getWorldBorder();
-                    worldBorder.setCenter(selection.centerX(), selection.centerZ());
-                    worldBorder.setSize(selection.radiusX() * 2d);
+            if (syncVanilla) {
+                Shape border = borderData.getBorder();
+                if (border instanceof Square) {
+                    Square square = (Square) border;
+                    World toSync = Bukkit.getWorld(world.getName());
+                    if (toSync != null) {
+                        double[] center = square.getCenter();
+                        double[] points = square.pointsX();
+                        double size = Math.abs(points[1] - points[0]);
+                        WorldBorder worldBorder = toSync.getWorldBorder();
+                        worldBorder.setCenter(center[0], center[1]);
+                        worldBorder.setSize(size);
+                    }
                 }
             }
             sender.sendMessage(String.format("[Chunky] Added %s world border to %s with center %s, %s, and radius %s.",
