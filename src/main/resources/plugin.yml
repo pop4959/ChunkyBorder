@@ -1,13 +1,13 @@
 name: ChunkyBorder
-version: ${projectVersion}
-main: org.popcraft.chunkyborder.ChunkyBorder
+version: ${version}
+main: ${group}.chunkyborder.ChunkyBorder
 api-version: "1.13"
 depend: [Chunky]
 softdepend: [dynmap, BlueMap, Pl3xMap]
 load: POSTWORLD
-authors: [pop4959]
-description: Add a world border to your Chunky world
-website: https://github.com/pop4959/ChunkyBorder
+authors: [${author}]
+description: ${description}
+website: https://www.spigotmc.org/resources/chunkyborder.84278/
 commands:
   chunkyborder:
     description: Set a border
