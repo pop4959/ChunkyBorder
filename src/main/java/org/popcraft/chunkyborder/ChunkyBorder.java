@@ -3,11 +3,11 @@ package org.popcraft.chunkyborder;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Sound;
@@ -56,6 +56,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public final class ChunkyBorder extends JavaPlugin implements Listener {
@@ -464,7 +466,21 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         if (message == null) {
             return Optional.empty();
         }
-        return Optional.of(ChatColor.translateAlternateColorCodes('&', message));
+        return Optional.of(getColoredMessage(message));
+    }
+
+    public static final Pattern RGB_PATTERN = Pattern.compile("&#[0-9a-fA-F]{6}");
+
+    public String getColoredMessage(String message) {
+        Matcher rgbMatcher = RGB_PATTERN.matcher(message);
+        while (rgbMatcher.find()) {
+            final ChatColor rgbColor = ChatColor.of(rgbMatcher.group().substring(1));
+            final String messageStart = message.substring(0, rgbMatcher.start());
+            final String messageEnd = message.substring(rgbMatcher.end());
+            message = messageStart + rgbColor + messageEnd;
+            rgbMatcher = RGB_PATTERN.matcher(message);
+        }
+        return ChatColor.translateAlternateColorCodes('&', message);
     }
 
     public Optional<Effect> getBorderEffect() {
