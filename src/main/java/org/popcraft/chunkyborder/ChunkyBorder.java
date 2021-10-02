@@ -169,16 +169,25 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             ));
             saveBorders();
         } else if (args.length > 0 && "remove".equalsIgnoreCase(args[0])) {
-            borders.remove(world.getName());
-            mapIntegrations.forEach(mapIntegration -> mapIntegration.removeShapeMarker(world));
-            sender.sendMessage(String.format("[Chunky] Removed world border from %s.", world.getName()));
-            saveBorders();
+            BorderData currentBorder = borders.get(world.getName());
+            if (currentBorder != null) {
+                borders.remove(world.getName());
+                mapIntegrations.forEach(mapIntegration -> mapIntegration.removeShapeMarker(world));
+                sender.sendMessage(String.format("[Chunky] Removed world border from %s.", world.getName()));
+                saveBorders();
+            } else {
+                sender.sendMessage(String.format("No world border exists for %s", world.getName()));
+            }
         } else if (args.length > 0 && "list".equalsIgnoreCase(args[0])) {
-            sender.sendMessage("Border List");
-            borders.values().forEach(border -> {
-                Selection borderSelection = border.asSelection().build();
-                sender.sendMessage(String.format("%s: %s with center %s, %s and radius %s", border.getWorld(), border.getShape(), Formatting.number(border.getCenterX()), Formatting.number(border.getCenterZ()), Formatting.radius(borderSelection)));
-            });
+            if (!borders.isEmpty()) {
+                sender.sendMessage("Border List");
+                borders.values().forEach(border -> {
+                    Selection borderSelection = border.asSelection().build();
+                    sender.sendMessage(String.format("%s: %s with center %s, %s and radius %s", border.getWorld(), border.getShape(), Formatting.number(border.getCenterX()), Formatting.number(border.getCenterZ()), Formatting.radius(borderSelection)));
+                });
+            } else {
+                sender.sendMessage("There are no world borders.");
+            }
         } else if (args.length > 0 && "wrap".equalsIgnoreCase(args[0])) {
             BorderData currentBorder = borders.get(world.getName());
             if (currentBorder != null) {
