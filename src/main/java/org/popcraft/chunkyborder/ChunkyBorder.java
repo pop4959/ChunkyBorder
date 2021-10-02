@@ -478,16 +478,29 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         return Optional.of(getColoredMessage(message));
     }
 
-    public static final Pattern RGB_PATTERN = Pattern.compile("&#[0-9a-fA-F]{6}");
+    private static final Pattern RGB_PATTERN = Pattern.compile("&#[0-9a-fA-F]{6}");
+    private static final boolean RGB_COLORS_SUPPORTED;
+    static {
+        boolean rgbSupported;
+        try {
+            ChatColor.class.getMethod("of", String.class);
+            rgbSupported = true;
+        } catch (NoSuchMethodException e) {
+            rgbSupported = false;
+        }
+        RGB_COLORS_SUPPORTED = rgbSupported;
+    }
 
-    public String getColoredMessage(String message) {
-        Matcher rgbMatcher = RGB_PATTERN.matcher(message);
-        while (rgbMatcher.find()) {
-            final ChatColor rgbColor = ChatColor.of(rgbMatcher.group().substring(1));
-            final String messageStart = message.substring(0, rgbMatcher.start());
-            final String messageEnd = message.substring(rgbMatcher.end());
-            message = messageStart + rgbColor + messageEnd;
-            rgbMatcher = RGB_PATTERN.matcher(message);
+    private String getColoredMessage(String message) {
+        if (RGB_COLORS_SUPPORTED) {
+            Matcher rgbMatcher = RGB_PATTERN.matcher(message);
+            while (rgbMatcher.find()) {
+                final ChatColor rgbColor = ChatColor.of(rgbMatcher.group().substring(1));
+                final String messageStart = message.substring(0, rgbMatcher.start());
+                final String messageEnd = message.substring(rgbMatcher.end());
+                message = messageStart + rgbColor + messageEnd;
+                rgbMatcher = RGB_PATTERN.matcher(message);
+            }
         }
         return ChatColor.translateAlternateColorCodes('&', message);
     }
