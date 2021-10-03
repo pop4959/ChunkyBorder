@@ -42,6 +42,7 @@ import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.ShapeUtil;
 import org.popcraft.chunky.shape.Square;
 import org.popcraft.chunky.util.Formatting;
+import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunky.util.Version;
 
 import java.io.File;
@@ -60,6 +61,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.popcraft.chunky.util.Translator.translate;
+import static org.popcraft.chunky.util.Translator.translateKey;
+
 public final class ChunkyBorder extends JavaPlugin implements Listener {
     private Map<String, BorderData> borders;
     private Map<UUID, PlayerData> players;
@@ -72,7 +76,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         this.players = new HashMap<>();
         this.mapIntegrations = new ArrayList<>();
         if (!isCompatibleChunkyVersion()) {
-            getLogger().severe("Chunky needs to be updated in order to use ChunkyBorder!");
+            getLogger().severe(() -> translate(TranslationKey.BORDER_DEPENDENCY_UPDATE));
             this.setEnabled(false);
             return;
         }
@@ -162,42 +166,51 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                     }
                 }
             }
-            sender.sendMessage(String.format("[Chunky] Added %s world border to %s with center %s, %s, and radius %s.",
+            sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_ADD, true,
                     selection.shape(),
                     world.getName(),
                     Formatting.number(selection.centerX()),
                     Formatting.number(selection.centerZ()),
-                    Formatting.radius(selection)
-            ));
+                    Formatting.radius(selection))
+            );
             saveBorders();
         } else if (args.length > 0 && "remove".equalsIgnoreCase(args[0])) {
             BorderData currentBorder = borders.get(world.getName());
             if (currentBorder != null) {
                 borders.remove(world.getName());
                 mapIntegrations.forEach(mapIntegration -> mapIntegration.removeShapeMarker(world));
-                sender.sendMessage(String.format("[Chunky] Removed world border from %s.", world.getName()));
+                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_REMOVE, true, world.getName()));
                 saveBorders();
             } else {
-                sender.sendMessage(String.format("No world border exists for %s", world.getName()));
+                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_NO_BORDER, true, world.getName()));
             }
         } else if (args.length > 0 && "list".equalsIgnoreCase(args[0])) {
             if (!borders.isEmpty()) {
-                sender.sendMessage("Border List");
+                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_LIST, true));
                 borders.values().forEach(border -> {
                     Selection borderSelection = border.asSelection().build();
-                    sender.sendMessage(String.format("%s: %s with center %s, %s and radius %s", border.getWorld(), border.getShape(), Formatting.number(border.getCenterX()), Formatting.number(border.getCenterZ()), Formatting.radius(borderSelection)));
+                    sender.sendMessage(translate(TranslationKey.FORMAT_BORDER_LIST_BORDER,
+                            border.getWorld(),
+                            border.getShape(),
+                            Formatting.number(border.getCenterX()),
+                            Formatting.number(border.getCenterZ()),
+                            Formatting.radius(borderSelection))
+                    );
                 });
             } else {
-                sender.sendMessage("There are no world borders.");
+                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_LIST_NONE, true));
             }
         } else if (args.length > 0 && "wrap".equalsIgnoreCase(args[0])) {
             BorderData currentBorder = borders.get(world.getName());
             if (currentBorder != null) {
                 currentBorder.setWrap(!currentBorder.isWrap());
-                sender.sendMessage(String.format("World border wrapping is now %s for %s", currentBorder.isWrap() ? "enabled" : "disabled", world.getName()));
+                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_WRAP, true,
+                        translate(currentBorder.isWrap() ? TranslationKey.ENABLED : TranslationKey.DISABLED),
+                        world.getName())
+                );
                 saveBorders();
             } else {
-                sender.sendMessage(String.format("No world border exists for %s", world.getName()));
+                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_NO_BORDER, true, world.getName()));
             }
         } else if (args.length > 0 && "load".equalsIgnoreCase(args[0])) {
             BorderData currentBorder = borders.get(world.getName());
@@ -208,9 +221,9 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                 newSelection.center(currentBorder.getCenterX(), currentBorder.getCenterZ());
                 newSelection.radiusX(currentBorder.getRadiusX());
                 newSelection.radiusZ(currentBorder.getRadiusZ());
-                sender.sendMessage(String.format("Selection loaded from world border for %s", world.getName()));
+                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_LOAD, true, world.getName()));
             } else {
-                sender.sendMessage(String.format("No world border exists for %s", world.getName()));
+                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_NO_BORDER, true, world.getName()));
             }
         } else if (args.length > 0 && "bypass".equalsIgnoreCase(args[0])) {
             final Player target;
@@ -220,14 +233,17 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                 target = args.length > 1 ? Bukkit.getPlayer(args[1]) : null;
             }
             if (target == null) {
-                sender.sendMessage("No player is online with the given name!");
+                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_BYPASS_NO_TARGET, true, args[1]));
             } else {
                 final PlayerData playerData = getPlayerData(target);
                 playerData.setBypassing(!playerData.isBypassing());
-                sender.sendMessage(String.format("Temporary border bypass %s for player %s", playerData.isBypassing() ? "granted" : "revoked", target.getName()));
+                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_BYPASS, true,
+                        translate(playerData.isBypassing() ? TranslationKey.ENABLED : TranslationKey.DISABLED),
+                        target.getName())
+                );
             }
         } else {
-            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&2chunkyborder <add|remove|list>&r - Add, remove, or list world borders"));
+            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', translate(TranslationKey.HELP_BORDER, label)));
         }
         return true;
     }
@@ -413,7 +429,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
                 return loadedBorders;
             }
         } catch (IOException e) {
-            getLogger().warning("No saved borders found");
+            getLogger().warning(() -> translate(TranslationKey.BORDER_LOAD_FAILED));
         }
         return new HashMap<>();
     }
@@ -425,7 +441,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         try (FileWriter fileWriter = new FileWriter(new File(this.getDataFolder(), "borders.json"))) {
             fileWriter.write(new GsonBuilder().setPrettyPrinting().create().toJson(borders));
         } catch (IOException e) {
-            getLogger().warning("Unable to save borders");
+            getLogger().warning(() -> translate(TranslationKey.BORDER_SAVE_FAILED));
         }
     }
 
@@ -454,7 +470,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     public boolean isCompatibleChunkyVersion() {
         try {
             Class.forName("org.popcraft.chunky.util.Version");
-            Version minimumRequiredVersion = new Version(1, 2, 98);
+            Version minimumRequiredVersion = new Version(1, 2, 128);
             Plugin chunkyPlugin = getServer().getPluginManager().getPlugin("Chunky");
             if (chunkyPlugin == null) {
                 return false;
