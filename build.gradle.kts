@@ -84,8 +84,8 @@ repositories {
 
 dependencies {
     compileOnly(group = "org.spigotmc", name = "spigot-api", version = "1.16.4-R0.1-SNAPSHOT")
-    compileOnly(group = "org.popcraft", name = "chunky-common", version = "1.2.98")
-    compileOnly(group = "org.popcraft", name = "chunky-bukkit", version = "1.2.98")
+    compileOnly(group = "org.popcraft", name = "chunky-common", version = "1.2.128")
+    compileOnly(group = "org.popcraft", name = "chunky-bukkit", version = "1.2.128")
     compileOnly(group = "us.dynmap", name = "dynmap-api", version = "3.0")
     compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "v1.3.0")
     compileOnly(group = "net.pl3x.map", name = "pl3xmap-api", version = "1.0.0-SNAPSHOT")
