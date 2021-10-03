@@ -90,6 +90,7 @@ dependencies {
     compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "v1.3.0")
     compileOnly(group = "net.pl3x.map", name = "pl3xmap-api", version = "1.0.0-SNAPSHOT")
     implementation(group = "io.papermc", name = "paperlib", version = "1.0.6")
+    implementation(group = "org.bstats", name = "bstats-bukkit", version = "2.2.1")
 }
 
 tasks {
@@ -104,6 +105,8 @@ tasks {
         }
     }
     shadowJar {
+        minimize()
         relocate("io.papermc.lib", "${project.group}.${rootProject.name}.lib.paperlib")
+        relocate("org.bstats", "${project.group}.${rootProject.name}.lib.bstats")
     }
 }

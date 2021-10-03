@@ -7,6 +7,8 @@ import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.lang.Validate;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.AdvancedPie;
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Location;
@@ -90,44 +92,42 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         alignToChunk = getConfig().getBoolean("border-options.align-to-chunk", false);
         syncVanilla = getConfig().getBoolean("border-options.sync-vanilla", false);
         Metrics metrics = new Metrics(this, 8953);
-        if (metrics.isEnabled()) {
-            metrics.addCustomChart(new Metrics.AdvancedPie("mapIntegration", () -> {
-                Map<String, Integer> map = new HashMap<>();
-                mapIntegrations.forEach(mapIntegration -> {
-                    if (mapIntegration instanceof BlueMapIntegration) {
-                        map.put("BlueMap", 1);
-                    } else if (mapIntegration instanceof DynmapIntegration) {
-                        map.put("Dynmap", 1);
-                    } else if (mapIntegration instanceof Pl3xMapIntegration) {
-                        map.put("Pl3xMap", 1);
-                    }
+        metrics.addCustomChart(new AdvancedPie("mapIntegration", () -> {
+            Map<String, Integer> map = new HashMap<>();
+            mapIntegrations.forEach(mapIntegration -> {
+                if (mapIntegration instanceof BlueMapIntegration) {
+                    map.put("BlueMap", 1);
+                } else if (mapIntegration instanceof DynmapIntegration) {
+                    map.put("Dynmap", 1);
+                } else if (mapIntegration instanceof Pl3xMapIntegration) {
+                    map.put("Pl3xMap", 1);
+                }
+            });
+            if (map.isEmpty()) {
+                map.put("None", 1);
+            }
+            return map;
+        }));
+        metrics.addCustomChart(new AdvancedPie("borderSize", () -> {
+            Map<String, Integer> map = new HashMap<>();
+            if (borders != null) {
+                borders.values().forEach(border -> {
+                    String size = String.valueOf((int) Math.max(border.getRadiusX(), border.getRadiusZ()));
+                    map.put(size, map.getOrDefault(size, 0) + 1);
                 });
-                if (map.isEmpty()) {
-                    map.put("None", 1);
-                }
-                return map;
-            }));
-            metrics.addCustomChart(new Metrics.AdvancedPie("borderSize", () -> {
-                Map<String, Integer> map = new HashMap<>();
-                if (borders != null) {
-                    borders.values().forEach(border -> {
-                        String size = String.valueOf((int) Math.max(border.getRadiusX(), border.getRadiusZ()));
-                        map.put(size, map.getOrDefault(size, 0) + 1);
-                    });
-                }
-                return map;
-            }));
-            metrics.addCustomChart(new Metrics.AdvancedPie("borderShape", () -> {
-                Map<String, Integer> map = new HashMap<>();
-                if (borders != null) {
-                    borders.values().forEach(border -> {
-                        String shape = border.getShape().toLowerCase();
-                        map.put(shape, map.getOrDefault(shape, 0) + 1);
-                    });
-                }
-                return map;
-            }));
-        }
+            }
+            return map;
+        }));
+        metrics.addCustomChart(new AdvancedPie("borderShape", () -> {
+            Map<String, Integer> map = new HashMap<>();
+            if (borders != null) {
+                borders.values().forEach(border -> {
+                    String shape = border.getShape().toLowerCase();
+                    map.put(shape, map.getOrDefault(shape, 0) + 1);
+                });
+            }
+            return map;
+        }));
     }
 
     @Override
