@@ -225,7 +225,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
             final int yOffset = Version.getCurrentMinecraftVersion().isHigherThanOrEqualTo(Version.v1_15_0) ? 1 : 0;
             insideBorder.setY(toWorld.getHighestBlockYAt(insideBorder) + yOffset);
             sendBorderMessage(player);
-            getPlayerData(player).setLastLocation(insideBorder);
+            getPlayerData(player.getUniqueId()).setLastLocation(insideBorder);
             e.setTo(insideBorder);
         }
     }
@@ -317,9 +317,8 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         return borders;
     }
 
-    public PlayerData getPlayerData(final Player player) {
-        final UUID uuid = player.getUniqueId();
-        this.players.computeIfAbsent(uuid, x -> new PlayerData(player));
+    public PlayerData getPlayerData(final UUID uuid) {
+        this.players.computeIfAbsent(uuid, x -> new PlayerData(uuid));
         return players.get(uuid);
     }
 
@@ -338,7 +337,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
     public boolean isCompatibleChunkyVersion() {
         try {
             Class.forName("org.popcraft.chunky.util.Version");
-            Version minimumRequiredVersion = new Version(1, 2, 128);
+            Version minimumRequiredVersion = new Version(1, 2, 133);
             Plugin chunkyPlugin = getServer().getPluginManager().getPlugin("Chunky");
             if (chunkyPlugin == null) {
                 return false;

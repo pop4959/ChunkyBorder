@@ -42,12 +42,13 @@ public class BorderCheckTask implements Runnable {
             }
             final Location loc = player.getLocation();
             boolean currentLocationValid = border.isBounding(loc.getX(), loc.getZ());
-            boolean lastLocationValid = chunkyBorder.getPlayerData(player).isLastLocationValid();
-            chunkyBorder.getPlayerData(player).setLastLocationValid(currentLocationValid);
+            final PlayerData playerData = chunkyBorder.getPlayerData(player.getUniqueId());
+            boolean lastLocationValid = playerData.isLastLocationValid();
+            playerData.setLastLocationValid(currentLocationValid);
             if (currentLocationValid) {
-                chunkyBorder.getPlayerData(player).setLastLocation(loc);
+                playerData.setLastLocation(loc);
             } else {
-                if (player.hasPermission("chunkyborder.bypass.move") || chunkyBorder.getPlayerData(player).isBypassing()) {
+                if (player.hasPermission("chunkyborder.bypass.move") || playerData.isBypassing()) {
                     if (lastLocationValid) {
                         chunkyBorder.sendBorderMessage(player);
                     }
@@ -56,9 +57,9 @@ public class BorderCheckTask implements Runnable {
                 final Location newLoc;
                 if (borderData.isWrap()) {
                     newLoc = wrap(borderData, player);
-                    chunkyBorder.getPlayerData(player).setLastLocation(newLoc);
+                    playerData.setLastLocation(newLoc);
                 } else {
-                    newLoc = chunkyBorder.getPlayerData(player).getLastLocation().orElse(world.getSpawnLocation());
+                    newLoc = playerData.getLastLocation().orElse(world.getSpawnLocation());
                     newLoc.setYaw(loc.getYaw());
                     newLoc.setPitch(loc.getPitch());
                 }
@@ -78,6 +79,7 @@ public class BorderCheckTask implements Runnable {
     private Location wrap(BorderData borderData, Player player) {
         Location loc = player.getLocation();
         Location newLoc = new Location(loc.getWorld(), loc.getX(), loc.getY(), loc.getZ());
+        final PlayerData playerData = chunkyBorder.getPlayerData(player.getUniqueId());
         switch (borderData.getShape()) {
             case "square":
             case "rectangle":
@@ -95,7 +97,7 @@ public class BorderCheckTask implements Runnable {
                     newLoc.setZ(minZ + 3);
                 }
                 if (!borderData.getBorder().isBounding(newLoc.getX(), newLoc.getZ())) {
-                    return chunkyBorder.getPlayerData(player).getLastLocation().orElse(loc.getWorld().getSpawnLocation());
+                    return playerData.getLastLocation().orElse(loc.getWorld().getSpawnLocation());
                 }
                 newLoc.setYaw(loc.getYaw());
                 newLoc.setPitch(loc.getPitch());
@@ -122,7 +124,7 @@ public class BorderCheckTask implements Runnable {
                     intersections.add(ShapeUtil.pointOnEllipse(centerX, centerZ, radii[0], radii[1], angle));
                 }
                 if (intersections.isEmpty()) {
-                    return chunkyBorder.getPlayerData(player).getLastLocation().orElse(loc.getWorld().getSpawnLocation());
+                    return playerData.getLastLocation().orElse(loc.getWorld().getSpawnLocation());
                 }
                 Vector centerDirection = new Vector(fromX - centerX, 0, fromZ - centerZ).normalize().multiply(3);
                 double closestX = intersections.get(0)[0];
@@ -140,7 +142,7 @@ public class BorderCheckTask implements Runnable {
                     }
                 }
                 if (longestDistance == Double.MIN_VALUE) {
-                    return chunkyBorder.getPlayerData(player).getLastLocation().orElse(loc.getWorld().getSpawnLocation());
+                    return playerData.getLastLocation().orElse(loc.getWorld().getSpawnLocation());
                 }
                 newLoc = new Location(loc.getWorld(), closestX, fromY, closestZ);
                 newLoc.add(centerDirection);

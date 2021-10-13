@@ -1,22 +1,22 @@
 package org.popcraft.chunkyborder;
 
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
 
 import java.util.Optional;
+import java.util.UUID;
 
 public class PlayerData {
-    private final Player player;
+    private final UUID playerId;
     private Location lastLocation;
     private boolean lastLocationValid = true;
     private boolean bypassing;
 
-    public PlayerData(final Player player) {
-        this.player = player;
+    public PlayerData(final UUID playerId) {
+        this.playerId = playerId;
     }
 
-    public Player getPlayer() {
-        return player;
+    public UUID getPlayerId() {
+        return playerId;
     }
 
     public Optional<Location> getLastLocation() {
