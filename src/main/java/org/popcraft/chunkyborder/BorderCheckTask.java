@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 public class BorderCheckTask implements Runnable {
-    private ChunkyBorder chunkyBorder;
+    private final ChunkyBorder chunkyBorder;
 
     public BorderCheckTask(ChunkyBorder chunkyBorder) {
         this.chunkyBorder = chunkyBorder;

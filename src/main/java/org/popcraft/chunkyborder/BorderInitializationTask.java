@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class BorderInitializationTask implements Runnable {
-    private ChunkyBorder chunkyBorder;
+    private final ChunkyBorder chunkyBorder;
 
     public BorderInitializationTask(ChunkyBorder chunkyBorder) {
         this.chunkyBorder = chunkyBorder;

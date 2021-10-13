@@ -8,16 +8,7 @@ load: POSTWORLD
 authors: [${author}]
 description: ${description}
 website: https://www.spigotmc.org/resources/chunkyborder.84278/
-commands:
-  chunkyborder:
-    description: Set a border
-    aliases: [cb]
-    permission: chunkyborder.chunkyborder
-    usage: /chunkyborder <add|remove>
 permissions:
-  chunkyborder.chunkyborder:
-    description: Set a border
-    default: op
   chunkyborder.bypass.move:
     description: Bypass border movement checks
     default: false

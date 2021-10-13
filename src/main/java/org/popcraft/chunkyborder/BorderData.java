@@ -87,7 +87,7 @@ public class BorderData {
 
     public Shape getBorder() {
         if (border == null) {
-            this.border = ShapeFactory.getShape(asSelection().build(), ChunkyBorder.isChunkAligned());
+            this.border = ShapeFactory.getShape(asSelection().build(), false);
             this.shape = border.name();
         }
         return border;

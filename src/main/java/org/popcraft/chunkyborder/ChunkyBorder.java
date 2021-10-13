@@ -9,14 +9,10 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.lang.Validate;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.AdvancedPie;
-import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.World;
-import org.bukkit.WorldBorder;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -33,7 +29,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.ChunkyBukkit;
-import org.popcraft.chunky.Selection;
 import org.popcraft.chunky.integration.BlueMapIntegration;
 import org.popcraft.chunky.integration.DynmapIntegration;
 import org.popcraft.chunky.integration.MapIntegration;
@@ -42,18 +37,15 @@ import org.popcraft.chunky.shape.AbstractEllipse;
 import org.popcraft.chunky.shape.AbstractPolygon;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.ShapeUtil;
-import org.popcraft.chunky.shape.Square;
-import org.popcraft.chunky.util.Formatting;
 import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunky.util.Version;
+import org.popcraft.chunkyborder.command.BorderCommand;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,16 +53,13 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static org.popcraft.chunky.util.Translator.translate;
-import static org.popcraft.chunky.util.Translator.translateKey;
 
 public final class ChunkyBorder extends JavaPlugin implements Listener {
     private Map<String, BorderData> borders;
     private Map<UUID, PlayerData> players;
     private List<MapIntegration> mapIntegrations;
-    private static boolean alignToChunk, syncVanilla;
 
     @Override
     public void onEnable() {
@@ -89,8 +78,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         getServer().getScheduler().scheduleSyncDelayedTask(this, new BorderInitializationTask(this));
         final long checkInterval = getConfig().getLong("border-options.check-interval", 20);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new BorderCheckTask(this), checkInterval, checkInterval);
-        alignToChunk = getConfig().getBoolean("border-options.align-to-chunk", false);
-        syncVanilla = getConfig().getBoolean("border-options.sync-vanilla", false);
+        getChunky().getCommands().put("border", new BorderCommand(this));
         Metrics metrics = new Metrics(this, 8953);
         metrics.addCustomChart(new AdvancedPie("mapIntegration", () -> {
             Map<String, Integer> map = new HashMap<>();
@@ -137,126 +125,6 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         getServer().getScheduler().cancelTasks(this);
         mapIntegrations.forEach(MapIntegration::removeAllShapeMarkers);
         mapIntegrations.clear();
-    }
-
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        Selection selection = getChunky().getSelection().build();
-        final org.popcraft.chunky.platform.World world = selection.world();
-        if (args.length > 0 && "add".equalsIgnoreCase(args[0])) {
-            BorderData borderData = new BorderData(selection);
-            BorderData currentBorder = borders.get(world.getName());
-            if (currentBorder != null) {
-                borderData.setWrap(currentBorder.isWrap());
-            }
-            borders.put(world.getName(), borderData);
-            mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(world, borderData.getBorder()));
-            if (syncVanilla) {
-                Shape border = borderData.getBorder();
-                if (border instanceof Square) {
-                    Square square = (Square) border;
-                    World toSync = Bukkit.getWorld(world.getName());
-                    if (toSync != null) {
-                        double[] center = square.getCenter();
-                        double[] points = square.pointsX();
-                        double size = Math.abs(points[1] - points[0]);
-                        WorldBorder worldBorder = toSync.getWorldBorder();
-                        worldBorder.setCenter(center[0], center[1]);
-                        worldBorder.setSize(size);
-                    }
-                }
-            }
-            sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_ADD, true,
-                    selection.shape(),
-                    world.getName(),
-                    Formatting.number(selection.centerX()),
-                    Formatting.number(selection.centerZ()),
-                    Formatting.radius(selection))
-            );
-            saveBorders();
-        } else if (args.length > 0 && "remove".equalsIgnoreCase(args[0])) {
-            BorderData currentBorder = borders.get(world.getName());
-            if (currentBorder != null) {
-                borders.remove(world.getName());
-                mapIntegrations.forEach(mapIntegration -> mapIntegration.removeShapeMarker(world));
-                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_REMOVE, true, world.getName()));
-                saveBorders();
-            } else {
-                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_NO_BORDER, true, world.getName()));
-            }
-        } else if (args.length > 0 && "list".equalsIgnoreCase(args[0])) {
-            if (!borders.isEmpty()) {
-                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_LIST, true));
-                borders.values().forEach(border -> {
-                    Selection borderSelection = border.asSelection().build();
-                    sender.sendMessage(translate(TranslationKey.FORMAT_BORDER_LIST_BORDER,
-                            border.getWorld(),
-                            border.getShape(),
-                            Formatting.number(border.getCenterX()),
-                            Formatting.number(border.getCenterZ()),
-                            Formatting.radius(borderSelection))
-                    );
-                });
-            } else {
-                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_LIST_NONE, true));
-            }
-        } else if (args.length > 0 && "wrap".equalsIgnoreCase(args[0])) {
-            BorderData currentBorder = borders.get(world.getName());
-            if (currentBorder != null) {
-                currentBorder.setWrap(!currentBorder.isWrap());
-                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_WRAP, true,
-                        translate(currentBorder.isWrap() ? TranslationKey.ENABLED : TranslationKey.DISABLED),
-                        world.getName())
-                );
-                saveBorders();
-            } else {
-                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_NO_BORDER, true, world.getName()));
-            }
-        } else if (args.length > 0 && "load".equalsIgnoreCase(args[0])) {
-            BorderData currentBorder = borders.get(world.getName());
-            if (currentBorder != null) {
-                Selection.Builder newSelection = getChunky().getSelection();
-                newSelection.world(world);
-                newSelection.shape(currentBorder.getShape());
-                newSelection.center(currentBorder.getCenterX(), currentBorder.getCenterZ());
-                newSelection.radiusX(currentBorder.getRadiusX());
-                newSelection.radiusZ(currentBorder.getRadiusZ());
-                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_LOAD, true, world.getName()));
-            } else {
-                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_NO_BORDER, true, world.getName()));
-            }
-        } else if (args.length > 0 && "bypass".equalsIgnoreCase(args[0])) {
-            final Player target;
-            if (sender instanceof Player && args.length == 1) {
-                target = (Player) sender;
-            } else {
-                target = args.length > 1 ? Bukkit.getPlayer(args[1]) : null;
-            }
-            if (target == null) {
-                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_BYPASS_NO_TARGET, true, args[1]));
-            } else {
-                final PlayerData playerData = getPlayerData(target);
-                playerData.setBypassing(!playerData.isBypassing());
-                sender.sendMessage(translateKey(TranslationKey.FORMAT_BORDER_BYPASS, true,
-                        translate(playerData.isBypassing() ? TranslationKey.ENABLED : TranslationKey.DISABLED),
-                        target.getName())
-                );
-            }
-        } else {
-            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', translate(TranslationKey.HELP_BORDER, label)));
-        }
-        return true;
-    }
-
-    @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (args.length == 1) {
-            final List<String> suggestions = new ArrayList<>(Arrays.asList("add", "bypass", "remove", "list", "load", "wrap"));
-            return suggestions.stream()
-                    .filter(s -> s.toLowerCase().contains(args[args.length - 1].toLowerCase()))
-                    .collect(Collectors.toList());
-        }
-        return Collections.emptyList();
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -421,7 +289,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         }
     }
 
-    private Map<String, BorderData> loadBorders() {
+    public Map<String, BorderData> loadBorders() {
         try (FileReader fileReader = new FileReader(new File(this.getDataFolder(), "borders.json"))) {
             Map<String, BorderData> loadedBorders = new Gson().fromJson(fileReader, new TypeToken<Map<String, BorderData>>() {
             }.getType());
@@ -434,7 +302,7 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         return new HashMap<>();
     }
 
-    private void saveBorders() {
+    public void saveBorders() {
         if (borders == null) {
             return;
         }
@@ -480,10 +348,6 @@ public final class ChunkyBorder extends JavaPlugin implements Listener {
         } catch (ClassNotFoundException e) {
             return false;
         }
-    }
-
-    public static boolean isChunkAligned() {
-        return alignToChunk;
     }
 
     public Optional<String> getBorderMessage() {

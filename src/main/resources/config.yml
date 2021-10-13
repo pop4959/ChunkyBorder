@@ -3,7 +3,6 @@
 version: 1
 border-options:
   check-interval: 20
-  align-to-chunk: false
   message: "&cYou have reached the edge of this world."
   use-action-bar: true
   effect: ender_signal
