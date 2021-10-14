@@ -1,13 +1,13 @@
 package org.popcraft.chunkyborder.command;
 
-import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.bukkit.WorldBorder;
 import org.popcraft.chunky.Selection;
 import org.popcraft.chunky.command.ChunkyCommand;
+import org.popcraft.chunky.platform.Border;
 import org.popcraft.chunky.platform.Sender;
+import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.Square;
+import org.popcraft.chunky.util.Coordinate;
 import org.popcraft.chunky.util.Formatting;
 import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunkyborder.BorderData;
@@ -26,7 +26,7 @@ public class AddCommand extends ChunkyCommand {
     @Override
     public void execute(Sender sender, String[] args) {
         Selection selection = chunky.getSelection().build();
-        final org.popcraft.chunky.platform.World world = selection.world();
+        final World world = selection.world();
         BorderData borderData = new BorderData(selection);
         Map<String, BorderData> borders = chunkyBorder.getBorders();
         BorderData currentBorder = borders.get(world.getName());
@@ -40,14 +40,13 @@ public class AddCommand extends ChunkyCommand {
             Shape border = borderData.getBorder();
             if (border instanceof Square) {
                 Square square = (Square) border;
-                World toSync = Bukkit.getWorld(world.getName());
+                Border toSync = world.getWorldBorder();
                 if (toSync != null) {
                     double[] center = square.getCenter();
                     double[] points = square.pointsX();
-                    double size = Math.abs(points[1] - points[0]);
-                    WorldBorder worldBorder = toSync.getWorldBorder();
-                    worldBorder.setCenter(center[0], center[1]);
-                    worldBorder.setSize(size);
+                    double radius = Math.abs(center[0] - points[0]);
+                    toSync.setCenter(new Coordinate(center[0], center[1]));
+                    toSync.setRadiusX(radius);
                 }
             }
         }
