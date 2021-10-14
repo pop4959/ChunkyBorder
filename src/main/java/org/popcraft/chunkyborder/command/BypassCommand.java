@@ -1,6 +1,5 @@
 package org.popcraft.chunkyborder.command;
 
-import org.bukkit.entity.Player;
 import org.popcraft.chunky.command.ChunkyCommand;
 import org.popcraft.chunky.platform.Sender;
 import org.popcraft.chunky.util.TranslationKey;
@@ -48,7 +47,7 @@ public class BypassCommand extends ChunkyCommand {
     @Override
     public List<String> tabSuggestions(String[] args) {
         if (args.length == 3) {
-            return chunkyBorder.getServer().getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList());
+            return chunky.getServer().getPlayers().stream().map(Sender::getName).collect(Collectors.toList());
         } else {
             return Collections.emptyList();
         }
