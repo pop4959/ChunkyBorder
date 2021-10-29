@@ -1,6 +1,7 @@
 package org.popcraft.chunkyborder.command;
 
 import org.popcraft.chunky.command.ChunkyCommand;
+import org.popcraft.chunky.platform.Player;
 import org.popcraft.chunky.platform.Sender;
 import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunkyborder.ChunkyBorder;
@@ -25,7 +26,7 @@ public class BypassCommand extends ChunkyCommand {
     public void execute(Sender sender, String[] args) {
         final Sender target;
         if (args.length > 2) {
-            Optional<Sender> player = chunky.getServer().getPlayer(args[2]);
+            Optional<Player> player = chunky.getServer().getPlayer(args[2]);
             if (!player.isPresent()) {
                 sender.sendMessagePrefixed(TranslationKey.FORMAT_BORDER_BYPASS_NO_TARGET, args[2]);
                 return;
@@ -34,14 +35,15 @@ public class BypassCommand extends ChunkyCommand {
         } else {
             target = sender;
         }
-        target.getUUID().ifPresent(uuid -> {
-            final PlayerData playerData = chunkyBorder.getPlayerData(uuid);
+        if (target instanceof Player) {
+            final Player player = (Player) target;
+            final PlayerData playerData = chunkyBorder.getPlayerData(player.getUUID());
             playerData.setBypassing(!playerData.isBypassing());
             sender.sendMessagePrefixed(TranslationKey.FORMAT_BORDER_BYPASS,
                     translate(playerData.isBypassing() ? TranslationKey.ENABLED : TranslationKey.DISABLED),
                     target.getName()
             );
-        });
+        }
     }
 
     @Override

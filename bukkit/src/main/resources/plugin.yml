@@ -1,6 +1,6 @@
 name: ChunkyBorder
 version: ${version}
-main: ${group}.chunkyborder.ChunkyBorder
+main: ${group}.chunkyborder.ChunkyBorderBukkit
 api-version: "1.13"
 depend: [Chunky]
 softdepend: [dynmap, BlueMap, Pl3xMap]

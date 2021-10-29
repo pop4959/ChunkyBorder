@@ -1,6 +1,6 @@
 package org.popcraft.chunkyborder;
 
-import org.bukkit.Location;
+import org.popcraft.chunky.platform.util.Location;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -8,7 +8,6 @@ import java.util.UUID;
 public class PlayerData {
     private final UUID playerId;
     private Location lastLocation;
-    private boolean lastLocationValid = true;
     private boolean bypassing;
 
     public PlayerData(final UUID playerId) {
@@ -25,14 +24,6 @@ public class PlayerData {
 
     public void setLastLocation(final Location lastLocation) {
         this.lastLocation = lastLocation;
-    }
-
-    public boolean isLastLocationValid() {
-        return lastLocationValid;
-    }
-
-    public void setLastLocationValid(final boolean lastLocationValid) {
-        this.lastLocationValid = lastLocationValid;
     }
 
     public boolean isBypassing() {

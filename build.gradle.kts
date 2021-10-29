@@ -6,13 +6,24 @@ plugins {
     id("com.github.johnrengelman.shadow") version "6.1.0"
 }
 
-allprojects {
+subprojects {
     plugins.apply("java-library")
     plugins.apply("maven-publish")
     plugins.apply("com.github.johnrengelman.shadow")
 
     group = "${project.property("group")}"
     version = "${project.property("version")}.${commitsSinceLastTag()}"
+
+    repositories {
+        mavenCentral()
+        maven("https://repo.codemc.io/repository/maven-public/")
+    }
+
+    dependencies {
+        compileOnly(group = "org.apache.logging.log4j", name = "log4j-api", version = "2.14.1")
+        compileOnly(group = "com.google.code.gson", name = "gson", version = "2.8.7")
+        compileOnly(group = "org.popcraft", name = "chunky-common", version = "${project.property("target")}")
+    }
 
     java {
         toolchain {
@@ -70,43 +81,4 @@ fun commitsSinceLastTag(): String {
         return "0"
     }
     return tagDescription.toString().split('-')[1]
-}
-
-repositories {
-    mavenCentral()
-    maven("https://papermc.io/repo/repository/maven-public")
-    maven("https://repo.codemc.io/repository/maven-public/")
-    maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
-    maven("https://repo.mikeprimm.com")
-    maven("https://repo.pl3x.net")
-    maven("https://jitpack.io")
-}
-
-dependencies {
-    compileOnly(group = "org.spigotmc", name = "spigot-api", version = "1.16.4-R0.1-SNAPSHOT")
-    compileOnly(group = "org.popcraft", name = "chunky-common", version = "1.2.135")
-    compileOnly(group = "org.popcraft", name = "chunky-bukkit", version = "1.2.135")
-    compileOnly(group = "us.dynmap", name = "dynmap-api", version = "3.0")
-    compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "v1.3.0")
-    compileOnly(group = "net.pl3x.map", name = "pl3xmap-api", version = "1.0.0-SNAPSHOT")
-    implementation(group = "io.papermc", name = "paperlib", version = "1.0.6")
-    implementation(group = "org.bstats", name = "bstats-bukkit", version = "2.2.1")
-}
-
-tasks {
-    processResources {
-        filesMatching("plugin.yml") {
-            expand(
-                "version" to project.version,
-                "group" to project.group,
-                "author" to project.property("author"),
-                "description" to project.property("description")
-            )
-        }
-    }
-    shadowJar {
-        minimize()
-        relocate("io.papermc.lib", "${project.group}.${rootProject.name}.lib.paperlib")
-        relocate("org.bstats", "${project.group}.${rootProject.name}.lib.bstats")
-    }
 }
