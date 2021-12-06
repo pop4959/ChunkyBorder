@@ -13,8 +13,8 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
-          distribution: 'adopt'
-          java-version: '16'
+          distribution: 'temurin'
+          java-version: '17'
       - uses: actions/cache@v2
         with:
           path: |
@@ -25,8 +25,8 @@ jobs:
             ${{ runner.os }}-gradle-
       - name: Build
         run: ./gradlew build
-      - name: Upload ChunkyBorder
+      - name: Upload Bukkit
         uses: actions/upload-artifact@v2
         with:
-          name: ChunkyBorder
-          path: "build/libs/ChunkyBorder-*.jar"
+          name: Bukkit
+          path: "bukkit/build/libs/ChunkyBorder-*.jar"
