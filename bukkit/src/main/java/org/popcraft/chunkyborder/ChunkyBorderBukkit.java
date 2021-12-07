@@ -40,6 +40,10 @@ import static org.popcraft.chunky.util.Translator.translate;
 
 public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
     private ChunkyBorder chunkyBorder;
+    
+    public ChunkyBorder getChunkyBorder() {
+        return this.chunkyBorder;
+    }
 
     @Override
     public void onEnable() {
