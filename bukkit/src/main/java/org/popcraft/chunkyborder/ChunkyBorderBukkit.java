@@ -7,6 +7,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.ChunkyBukkit;
@@ -105,6 +106,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
             }
             return map;
         }));
+        getServer().getServicesManager().register(ChunkyBorder.class, chunkyBorder, this, ServicePriority.Normal);
     }
 
     @Override
@@ -112,6 +114,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         chunkyBorder.saveBorders();
         HandlerList.unregisterAll((Plugin) this);
         getServer().getScheduler().cancelTasks(this);
+        getServer().getServicesManager().unregisterAll(this);
         List<MapIntegration> mapIntegrations = chunkyBorder.getMapIntegrations();
         mapIntegrations.forEach(MapIntegration::removeAllShapeMarkers);
         mapIntegrations.clear();
