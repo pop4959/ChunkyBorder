@@ -1,20 +1,20 @@
 package org.popcraft.chunkyborder;
 
-import net.pl3x.map.api.Pl3xMap;
-import net.pl3x.map.api.Pl3xMapProvider;
 import org.bukkit.plugin.PluginManager;
 import org.dynmap.DynmapAPI;
 import org.popcraft.chunky.integration.BlueMapIntegration;
 import org.popcraft.chunky.integration.DynmapIntegration;
-import org.popcraft.chunky.integration.Pl3xMapIntegration;
+import org.popcraft.chunky.integration.SquaremapIntegration;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
+import xyz.jpenilla.squaremap.api.Squaremap;
+import xyz.jpenilla.squaremap.api.SquaremapProvider;
 
 import java.util.Optional;
 
 public class BukkitMapIntegrationLoader implements MapIntegrationLoader {
     private static final String BLUEMAP = "BlueMap";
     private static final String DYNMAP = "dynmap";
-    private static final String PL3XMAP = "Pl3xMap";
+    private static final String SQUAREMAP = "squaremap";
     private final ChunkyBorderBukkit chunkyBorderBukkit;
 
     public BukkitMapIntegrationLoader(ChunkyBorderBukkit chunkyBorderBukkit) {
@@ -45,16 +45,16 @@ public class BukkitMapIntegrationLoader implements MapIntegrationLoader {
     }
 
     @Override
-    public Optional<Pl3xMapIntegration> loadPl3xMap() {
+    public Optional<SquaremapIntegration> loadSquaremap() {
         final PluginManager pluginManager = chunkyBorderBukkit.getServer().getPluginManager();
-        if (!pluginManager.isPluginEnabled(PL3XMAP)) {
+        if (!pluginManager.isPluginEnabled(SQUAREMAP)) {
             return Optional.empty();
         }
-        return Optional.ofNullable(pluginManager.getPlugin(PL3XMAP))
-                .map(pl3xMap -> {
+        return Optional.ofNullable(pluginManager.getPlugin(SQUAREMAP))
+                .map(squaremap -> {
                     try {
-                        Pl3xMap pl3xMapAPI = Pl3xMapProvider.get();
-                        return new Pl3xMapIntegration(pl3xMapAPI);
+                        Squaremap squaremapAPI = SquaremapProvider.get();
+                        return new SquaremapIntegration(squaremapAPI);
                     } catch (IllegalStateException ignored) {
                         return null;
                     }
