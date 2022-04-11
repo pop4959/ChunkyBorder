@@ -1,9 +1,10 @@
 package org.popcraft.chunkyborder;
 
 import org.bukkit.plugin.PluginManager;
-import org.dynmap.DynmapAPI;
+import org.dynmap.DynmapCommonAPI;
 import org.popcraft.chunky.integration.BlueMapIntegration;
 import org.popcraft.chunky.integration.DynmapIntegration;
+import org.popcraft.chunky.integration.MapIntegration;
 import org.popcraft.chunky.integration.SquaremapIntegration;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
 import xyz.jpenilla.squaremap.api.Squaremap;
@@ -22,7 +23,7 @@ public class BukkitMapIntegrationLoader implements MapIntegrationLoader {
     }
 
     @Override
-    public Optional<BlueMapIntegration> loadBlueMap() {
+    public Optional<MapIntegration> loadBlueMap() {
         final PluginManager pluginManager = chunkyBorderBukkit.getServer().getPluginManager();
         if (!pluginManager.isPluginEnabled(BLUEMAP)) {
             return Optional.empty();
@@ -32,20 +33,20 @@ public class BukkitMapIntegrationLoader implements MapIntegrationLoader {
     }
 
     @Override
-    public Optional<DynmapIntegration> loadDynmap() {
+    public Optional<MapIntegration> loadDynmap() {
         final PluginManager pluginManager = chunkyBorderBukkit.getServer().getPluginManager();
         if (!pluginManager.isPluginEnabled(DYNMAP)) {
             return Optional.empty();
         }
         return Optional.ofNullable(chunkyBorderBukkit.getServer().getPluginManager().getPlugin(DYNMAP))
                 .map(dynmap -> {
-                    DynmapAPI dynmapAPI = (DynmapAPI) dynmap;
+                    DynmapCommonAPI dynmapAPI = (DynmapCommonAPI) dynmap;
                     return dynmapAPI.markerAPIInitialized() ? new DynmapIntegration(dynmapAPI) : null;
                 });
     }
 
     @Override
-    public Optional<SquaremapIntegration> loadSquaremap() {
+    public Optional<MapIntegration> loadSquaremap() {
         final PluginManager pluginManager = chunkyBorderBukkit.getServer().getPluginManager();
         if (!pluginManager.isPluginEnabled(SQUAREMAP)) {
             return Optional.empty();

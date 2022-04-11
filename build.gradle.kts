@@ -3,7 +3,7 @@ import java.io.ByteArrayOutputStream
 plugins {
     id("java-library")
     id("maven-publish")
-    id("com.github.johnrengelman.shadow") version "6.1.0"
+    id("com.github.johnrengelman.shadow") version "7.0.0"
 }
 
 subprojects {
@@ -21,7 +21,7 @@ subprojects {
 
     dependencies {
         compileOnly(group = "org.apache.logging.log4j", name = "log4j-api", version = "2.14.1")
-        compileOnly(group = "com.google.code.gson", name = "gson", version = "2.8.7")
+        compileOnly(group = "com.google.code.gson", name = "gson", version = "2.8.9")
         compileOnly(group = "org.popcraft", name = "chunky-common", version = "${project.property("target")}")
     }
 
