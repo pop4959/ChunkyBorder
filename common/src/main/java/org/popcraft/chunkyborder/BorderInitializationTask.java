@@ -1,7 +1,7 @@
 package org.popcraft.chunkyborder;
 
-import org.popcraft.chunky.integration.MapIntegration;
 import org.popcraft.chunky.platform.World;
+import org.popcraft.chunkyborder.integration.MapIntegration;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
 
 import java.util.List;

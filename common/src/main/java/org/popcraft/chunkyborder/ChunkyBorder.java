@@ -7,7 +7,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.event.EventBus;
-import org.popcraft.chunky.integration.MapIntegration;
 import org.popcraft.chunky.platform.Player;
 import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.platform.util.Location;
@@ -24,6 +23,7 @@ import org.popcraft.chunkyborder.event.PlayerQuitEvent;
 import org.popcraft.chunkyborder.event.PlayerTeleportEvent;
 import org.popcraft.chunkyborder.event.WorldLoadEvent;
 import org.popcraft.chunkyborder.event.WorldUnloadEvent;
+import org.popcraft.chunkyborder.integration.MapIntegration;
 import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
 
@@ -60,6 +60,15 @@ public class ChunkyBorder {
         this.version = loadVersion();
         this.targetVersion = loadTargetVersion();
         subscribeEvents();
+        ChunkyBorderProvider.register(this);
+    }
+
+    public void disable() {
+        final List<MapIntegration> maps = getMapIntegrations();
+        maps.forEach(MapIntegration::removeAllShapeMarkers);
+        maps.clear();
+        saveBorders();
+        ChunkyBorderProvider.unregister();
     }
 
     private void subscribeEvents() {
@@ -144,6 +153,12 @@ public class ChunkyBorder {
                     .orElse(false));
         });
         eventBus.subscribe(PlayerQuitEvent.class, e -> players.remove(e.getPlayer().getUUID()));
+    }
+
+    public boolean hasCompatibleChunkyVersion() {
+        final Version currentVersion = chunky.getVersion();
+        final Version requiredVersion = getTargetVersion();
+        return currentVersion.isValid() && requiredVersion.isValid() && currentVersion.isHigherThanOrEqualTo(requiredVersion);
     }
 
     private Version loadVersion() {

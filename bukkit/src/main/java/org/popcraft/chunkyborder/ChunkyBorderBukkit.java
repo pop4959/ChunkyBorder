@@ -10,11 +10,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.popcraft.chunky.Chunky;
-import org.popcraft.chunky.ChunkyBukkit;
-import org.popcraft.chunky.integration.BlueMapIntegration;
-import org.popcraft.chunky.integration.DynmapIntegration;
-import org.popcraft.chunky.integration.MapIntegration;
-import org.popcraft.chunky.integration.SquaremapIntegration;
+import org.popcraft.chunky.ChunkyProvider;
 import org.popcraft.chunky.platform.BukkitPlayer;
 import org.popcraft.chunky.platform.BukkitWorld;
 import org.popcraft.chunky.platform.Player;
@@ -22,7 +18,6 @@ import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.platform.util.Location;
 import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunky.util.Translator;
-import org.popcraft.chunky.util.Version;
 import org.popcraft.chunkyborder.command.BorderCommand;
 import org.popcraft.chunkyborder.event.BlockPlaceEvent;
 import org.popcraft.chunkyborder.event.CreatureSpawnEvent;
@@ -30,11 +25,13 @@ import org.popcraft.chunkyborder.event.PlayerQuitEvent;
 import org.popcraft.chunkyborder.event.PlayerTeleportEvent;
 import org.popcraft.chunkyborder.event.WorldLoadEvent;
 import org.popcraft.chunkyborder.event.WorldUnloadEvent;
+import org.popcraft.chunkyborder.integration.BlueMapIntegration;
+import org.popcraft.chunkyborder.integration.DynmapIntegration;
+import org.popcraft.chunkyborder.integration.SquaremapIntegration;
 import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.popcraft.chunky.util.Translator.translate;
@@ -47,17 +44,12 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         getConfig().options().copyDefaults(true);
         getConfig().options().copyHeader(true);
         saveConfig();
-        final ChunkyBukkit chunkyBukkit = (ChunkyBukkit) getServer().getPluginManager().getPlugin("Chunky");
-        if (chunkyBukkit == null) {
-            throw new IllegalStateException("Dependency Chunky is missing");
-        }
-        final Chunky chunky = chunkyBukkit.getChunky();
+        final Chunky chunky = ChunkyProvider.get();
         final Config config = new BukkitConfig(this);
         final MapIntegrationLoader mapIntegrationLoader = new BukkitMapIntegrationLoader(this);
         this.chunkyBorder = new ChunkyBorder(chunky, config, mapIntegrationLoader);
-        final Version chunkyVersion = chunky.getVersion();
-        final Version targetVersion = chunkyBorder.getTargetVersion();
-        if (!chunkyVersion.isValid() || !targetVersion.isValid() || chunkyVersion.isLowerThan(targetVersion)) {
+        getServer().getServicesManager().register(ChunkyBorder.class, chunkyBorder, this, ServicePriority.Normal);
+        if (!chunkyBorder.hasCompatibleChunkyVersion()) {
             getLogger().severe(() -> translate(TranslationKey.BORDER_DEPENDENCY_UPDATE));
             this.setEnabled(false);
             return;
@@ -68,7 +60,11 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         final long checkInterval = chunkyBorder.getConfig().checkInterval();
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new BorderCheckTask(chunkyBorder), checkInterval, checkInterval);
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
-        Metrics metrics = new Metrics(this, 8953);
+        startMetrics();
+    }
+
+    private void startMetrics() {
+        final Metrics metrics = new Metrics(this, 8953);
         metrics.addCustomChart(new AdvancedPie("mapIntegration", () -> {
             Map<String, Integer> map = new HashMap<>();
             chunkyBorder.getMapIntegrations().forEach(mapIntegration -> {
@@ -85,7 +81,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
             }
             return map;
         }));
-        Map<String, BorderData> borders = chunkyBorder.getBorders();
+        final Map<String, BorderData> borders = chunkyBorder.getBorders();
         metrics.addCustomChart(new AdvancedPie("borderSize", () -> {
             Map<String, Integer> map = new HashMap<>();
             if (borders != null) {
@@ -106,18 +102,14 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
             }
             return map;
         }));
-        getServer().getServicesManager().register(ChunkyBorder.class, chunkyBorder, this, ServicePriority.Normal);
     }
 
     @Override
     public void onDisable() {
-        chunkyBorder.saveBorders();
         HandlerList.unregisterAll((Plugin) this);
         getServer().getScheduler().cancelTasks(this);
         getServer().getServicesManager().unregisterAll(this);
-        List<MapIntegration> mapIntegrations = chunkyBorder.getMapIntegrations();
-        mapIntegrations.forEach(MapIntegration::removeAllShapeMarkers);
-        mapIntegrations.clear();
+        chunkyBorder.disable();
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
