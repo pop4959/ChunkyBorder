@@ -30,3 +30,8 @@ jobs:
         with:
           name: Bukkit
           path: "bukkit/build/libs/ChunkyBorder-*.jar"
+      - name: Upload Fabric
+        uses: actions/upload-artifact@v2
+        with:
+          name: Fabric
+          path: "fabric/build/libs/ChunkyBorder-*.jar"
