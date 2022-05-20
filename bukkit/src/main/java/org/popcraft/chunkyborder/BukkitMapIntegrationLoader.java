@@ -2,10 +2,10 @@ package org.popcraft.chunkyborder;
 
 import org.bukkit.plugin.PluginManager;
 import org.dynmap.DynmapCommonAPI;
-import org.popcraft.chunky.integration.BlueMapIntegration;
-import org.popcraft.chunky.integration.DynmapIntegration;
-import org.popcraft.chunky.integration.MapIntegration;
-import org.popcraft.chunky.integration.SquaremapIntegration;
+import org.popcraft.chunkyborder.integration.BlueMapIntegration;
+import org.popcraft.chunkyborder.integration.DynmapIntegration;
+import org.popcraft.chunkyborder.integration.MapIntegration;
+import org.popcraft.chunkyborder.integration.SquaremapIntegration;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
 import xyz.jpenilla.squaremap.api.Squaremap;
 import xyz.jpenilla.squaremap.api.SquaremapProvider;
