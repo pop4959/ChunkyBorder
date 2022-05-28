@@ -93,6 +93,6 @@ public class BorderData {
     }
 
     public Selection.Builder asSelection() {
-        return Selection.builder(null).center(centerX, centerZ).radiusX(radiusX).radiusZ(radiusZ).shape(shape);
+        return Selection.builder(null, null).center(centerX, centerZ).radiusX(radiusX).radiusZ(radiusZ).shape(shape);
     }
 }
