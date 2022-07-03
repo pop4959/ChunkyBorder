@@ -15,7 +15,7 @@ public class BorderData {
     public BorderData() {
     }
 
-    public BorderData(Selection selection) {
+    public BorderData(final Selection selection) {
         this.world = selection.world().getName();
         this.centerX = selection.centerX();
         this.centerZ = selection.centerZ();
@@ -28,7 +28,7 @@ public class BorderData {
         return world;
     }
 
-    public void setWorld(String world) {
+    public void setWorld(final String world) {
         this.world = world;
     }
 
@@ -36,7 +36,7 @@ public class BorderData {
         return centerX;
     }
 
-    public void setCenterX(double centerX) {
+    public void setCenterX(final double centerX) {
         this.centerX = centerX;
     }
 
@@ -44,7 +44,7 @@ public class BorderData {
         return centerZ;
     }
 
-    public void setCenterZ(double centerZ) {
+    public void setCenterZ(final double centerZ) {
         this.centerZ = centerZ;
     }
 
@@ -52,7 +52,7 @@ public class BorderData {
         return radiusX;
     }
 
-    public void setRadiusX(double radiusX) {
+    public void setRadiusX(final double radiusX) {
         this.radiusX = radiusX;
     }
 
@@ -60,7 +60,7 @@ public class BorderData {
         return radiusZ;
     }
 
-    public void setRadiusZ(double radiusZ) {
+    public void setRadiusZ(final double radiusZ) {
         this.radiusZ = radiusZ;
     }
 
@@ -68,7 +68,7 @@ public class BorderData {
         return shape;
     }
 
-    public void setShape(String shape) {
+    public void setShape(final String shape) {
         this.shape = shape;
     }
 
@@ -76,7 +76,7 @@ public class BorderData {
         return wrap;
     }
 
-    public void setWrap(boolean wrap) {
+    public void setWrap(final boolean wrap) {
         this.wrap = wrap;
     }
 
@@ -88,7 +88,7 @@ public class BorderData {
         return border;
     }
 
-    public void setBorder(Shape border) {
+    public void setBorder(final Shape border) {
         this.border = border;
     }
 

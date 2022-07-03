@@ -13,18 +13,18 @@ import java.util.Map;
 public class ListCommand extends ChunkyCommand {
     private final ChunkyBorder chunkyBorder;
 
-    public ListCommand(ChunkyBorder chunkyBorder) {
+    public ListCommand(final ChunkyBorder chunkyBorder) {
         super(chunkyBorder.getChunky());
         this.chunkyBorder = chunkyBorder;
     }
 
     @Override
-    public void execute(Sender sender, String[] args) {
-        Map<String, BorderData> borders = chunkyBorder.getBorders();
+    public void execute(final Sender sender, final String[] args) {
+        final Map<String, BorderData> borders = chunkyBorder.getBorders();
         if (!borders.isEmpty()) {
             sender.sendMessagePrefixed(TranslationKey.FORMAT_BORDER_LIST);
             borders.values().forEach(border -> {
-                Selection borderSelection = border.asSelection().build();
+                final Selection borderSelection = border.asSelection().build();
                 sender.sendMessage(TranslationKey.FORMAT_BORDER_LIST_BORDER,
                         border.getWorld(),
                         border.getShape(),

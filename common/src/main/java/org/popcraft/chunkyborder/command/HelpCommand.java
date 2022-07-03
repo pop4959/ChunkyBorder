@@ -6,12 +6,12 @@ import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunkyborder.ChunkyBorder;
 
 public class HelpCommand extends ChunkyCommand {
-    public HelpCommand(ChunkyBorder chunkyBorder) {
+    public HelpCommand(final ChunkyBorder chunkyBorder) {
         super(chunkyBorder.getChunky());
     }
 
     @Override
-    public void execute(Sender sender, String[] args) {
+    public void execute(final Sender sender, final String[] args) {
         sender.sendMessage(TranslationKey.HELP_BORDER);
     }
 }

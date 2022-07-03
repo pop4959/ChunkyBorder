@@ -144,7 +144,7 @@ public class FabricConfig implements Config {
             return version;
         }
 
-        public void setVersion(Integer version) {
+        public void setVersion(final Integer version) {
             this.version = version;
         }
 
@@ -152,7 +152,7 @@ public class FabricConfig implements Config {
             return borderOptions;
         }
 
-        public void setBorderOptions(BorderOptions borderOptions) {
+        public void setBorderOptions(final BorderOptions borderOptions) {
             this.borderOptions = borderOptions;
         }
 
@@ -160,7 +160,7 @@ public class FabricConfig implements Config {
             return mapOptions;
         }
 
-        public void setMapOptions(MapOptions mapOptions) {
+        public void setMapOptions(final MapOptions mapOptions) {
             this.mapOptions = mapOptions;
         }
     }
@@ -179,7 +179,7 @@ public class FabricConfig implements Config {
             return checkInterval;
         }
 
-        public void setCheckInterval(Integer checkInterval) {
+        public void setCheckInterval(final Integer checkInterval) {
             this.checkInterval = checkInterval;
         }
 
@@ -187,7 +187,7 @@ public class FabricConfig implements Config {
             return message;
         }
 
-        public void setMessage(String message) {
+        public void setMessage(final String message) {
             this.message = message;
         }
 
@@ -195,7 +195,7 @@ public class FabricConfig implements Config {
             return useActionBar;
         }
 
-        public void setUseActionBar(Boolean useActionBar) {
+        public void setUseActionBar(final Boolean useActionBar) {
             this.useActionBar = useActionBar;
         }
 
@@ -203,7 +203,7 @@ public class FabricConfig implements Config {
             return effect;
         }
 
-        public void setEffect(String effect) {
+        public void setEffect(final String effect) {
             this.effect = effect;
         }
 
@@ -211,7 +211,7 @@ public class FabricConfig implements Config {
             return sound;
         }
 
-        public void setSound(String sound) {
+        public void setSound(final String sound) {
             this.sound = sound;
         }
 
@@ -219,7 +219,7 @@ public class FabricConfig implements Config {
             return preventMobSpawns;
         }
 
-        public void setPreventMobSpawns(Boolean preventMobSpawns) {
+        public void setPreventMobSpawns(final Boolean preventMobSpawns) {
             this.preventMobSpawns = preventMobSpawns;
         }
 
@@ -227,7 +227,7 @@ public class FabricConfig implements Config {
             return preventEnderpearl;
         }
 
-        public void setPreventEnderpearl(Boolean preventEnderpearl) {
+        public void setPreventEnderpearl(final Boolean preventEnderpearl) {
             this.preventEnderpearl = preventEnderpearl;
         }
     }
@@ -254,7 +254,7 @@ public class FabricConfig implements Config {
             return enable;
         }
 
-        public void setEnable(Map<String, Boolean> enable) {
+        public void setEnable(final Map<String, Boolean> enable) {
             this.enable = enable;
         }
 
@@ -262,7 +262,7 @@ public class FabricConfig implements Config {
             return label;
         }
 
-        public void setLabel(String label) {
+        public void setLabel(final String label) {
             this.label = label;
         }
 
@@ -270,7 +270,7 @@ public class FabricConfig implements Config {
             return hideByDefault;
         }
 
-        public void setHideByDefault(Boolean hideByDefault) {
+        public void setHideByDefault(final Boolean hideByDefault) {
             this.hideByDefault = hideByDefault;
         }
 
@@ -278,7 +278,7 @@ public class FabricConfig implements Config {
             return color;
         }
 
-        public void setColor(String color) {
+        public void setColor(final String color) {
             this.color = color;
         }
 
@@ -286,7 +286,7 @@ public class FabricConfig implements Config {
             return weight;
         }
 
-        public void setWeight(Integer weight) {
+        public void setWeight(final Integer weight) {
             this.weight = weight;
         }
 
@@ -294,7 +294,7 @@ public class FabricConfig implements Config {
             return priority;
         }
 
-        public void setPriority(Integer priority) {
+        public void setPriority(final Integer priority) {
             this.priority = priority;
         }
     }

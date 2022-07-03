@@ -12,7 +12,7 @@ public class PlayerTeleportEvent extends Cancellable {
     private final boolean usingEnderpearl;
     private Location redirect;
 
-    public PlayerTeleportEvent(Player player, Location location, boolean usingEnderpearl) {
+    public PlayerTeleportEvent(final Player player, final Location location, final boolean usingEnderpearl) {
         this.player = player;
         this.location = location;
         this.usingEnderpearl = usingEnderpearl;
@@ -34,7 +34,7 @@ public class PlayerTeleportEvent extends Cancellable {
         return Optional.ofNullable(redirect);
     }
 
-    public void redirect(Location redirect) {
+    public void redirect(final Location redirect) {
         this.redirect = redirect;
     }
 }

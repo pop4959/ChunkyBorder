@@ -7,7 +7,7 @@ import java.nio.file.Path;
 public class BukkitConfig implements Config {
     private final ChunkyBorderBukkit chunkyBorderBukkit;
 
-    public BukkitConfig(ChunkyBorderBukkit chunkyBorderBukkit) {
+    public BukkitConfig(final ChunkyBorderBukkit chunkyBorderBukkit) {
         this.chunkyBorderBukkit = chunkyBorderBukkit;
     }
 

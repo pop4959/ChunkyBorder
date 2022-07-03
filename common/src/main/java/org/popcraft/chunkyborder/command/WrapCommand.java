@@ -15,17 +15,17 @@ import static org.popcraft.chunky.util.Translator.translate;
 public class WrapCommand extends ChunkyCommand {
     private final ChunkyBorder chunkyBorder;
 
-    public WrapCommand(ChunkyBorder chunkyBorder) {
+    public WrapCommand(final ChunkyBorder chunkyBorder) {
         super(chunkyBorder.getChunky());
         this.chunkyBorder = chunkyBorder;
     }
 
     @Override
-    public void execute(Sender sender, String[] args) {
-        Map<String, BorderData> borders = chunkyBorder.getBorders();
-        Selection selection = chunky.getSelection().build();
+    public void execute(final Sender sender, final String[] args) {
+        final Map<String, BorderData> borders = chunkyBorder.getBorders();
+        final Selection selection = chunky.getSelection().build();
         final World world = selection.world();
-        BorderData currentBorder = borders.get(world.getName());
+        final BorderData currentBorder = borders.get(world.getName());
         if (currentBorder != null) {
             currentBorder.setWrap(!currentBorder.isWrap());
             sender.sendMessagePrefixed(TranslationKey.FORMAT_BORDER_WRAP,

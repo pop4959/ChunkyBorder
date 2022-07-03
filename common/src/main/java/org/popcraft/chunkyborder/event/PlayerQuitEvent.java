@@ -6,7 +6,7 @@ import org.popcraft.chunky.platform.Player;
 public class PlayerQuitEvent implements Event {
     private final Player player;
 
-    public PlayerQuitEvent(Player player) {
+    public PlayerQuitEvent(final Player player) {
         this.player = player;
     }
 

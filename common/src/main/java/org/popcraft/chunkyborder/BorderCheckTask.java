@@ -16,7 +16,7 @@ import java.util.List;
 public class BorderCheckTask implements Runnable {
     private final ChunkyBorder chunkyBorder;
 
-    public BorderCheckTask(ChunkyBorder chunkyBorder) {
+    public BorderCheckTask(final ChunkyBorder chunkyBorder) {
         this.chunkyBorder = chunkyBorder;
     }
 
@@ -53,7 +53,7 @@ public class BorderCheckTask implements Runnable {
         }
     }
 
-    private Location wrap(BorderData borderData, Player player) {
+    private Location wrap(final BorderData borderData, final Player player) {
         final Location location = player.getLocation();
         if (ShapeType.SQUARE.equals(borderData.getShape()) || ShapeType.RECTANGLE.equals(borderData.getShape())) {
             final double minX = borderData.getCenterX() - borderData.getRadiusX();

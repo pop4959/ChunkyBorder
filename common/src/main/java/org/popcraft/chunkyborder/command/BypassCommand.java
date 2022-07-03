@@ -17,16 +17,16 @@ import static org.popcraft.chunky.util.Translator.translate;
 public class BypassCommand extends ChunkyCommand {
     private final ChunkyBorder chunkyBorder;
 
-    public BypassCommand(ChunkyBorder chunkyBorder) {
+    public BypassCommand(final ChunkyBorder chunkyBorder) {
         super(chunkyBorder.getChunky());
         this.chunkyBorder = chunkyBorder;
     }
 
     @Override
-    public void execute(Sender sender, String[] args) {
+    public void execute(final Sender sender, final String[] args) {
         final Sender target;
         if (args.length > 2) {
-            Optional<Player> player = chunky.getServer().getPlayer(args[2]);
+            final Optional<Player> player = chunky.getServer().getPlayer(args[2]);
             if (!player.isPresent()) {
                 sender.sendMessagePrefixed(TranslationKey.FORMAT_BORDER_BYPASS_NO_TARGET, args[2]);
                 return;
@@ -47,7 +47,7 @@ public class BypassCommand extends ChunkyCommand {
     }
 
     @Override
-    public List<String> tabSuggestions(String[] args) {
+    public List<String> tabSuggestions(final String[] args) {
         if (args.length == 3) {
             return chunky.getServer().getPlayers().stream().map(Sender::getName).collect(Collectors.toList());
         } else {

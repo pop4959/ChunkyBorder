@@ -10,7 +10,7 @@ import java.util.Optional;
 public class BorderInitializationTask implements Runnable {
     private final ChunkyBorder chunkyBorder;
 
-    public BorderInitializationTask(ChunkyBorder chunkyBorder) {
+    public BorderInitializationTask(final ChunkyBorder chunkyBorder) {
         this.chunkyBorder = chunkyBorder;
     }
 
@@ -39,7 +39,7 @@ public class BorderInitializationTask implements Runnable {
             if (border.getWorld() == null) {
                 continue;
             }
-            Optional<World> world = chunkyBorder.getChunky().getServer().getWorld(border.getWorld());
+            final Optional<World> world = chunkyBorder.getChunky().getServer().getWorld(border.getWorld());
             if (!world.isPresent()) {
                 continue;
             }

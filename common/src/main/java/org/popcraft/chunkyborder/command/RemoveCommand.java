@@ -13,17 +13,17 @@ import java.util.Map;
 public class RemoveCommand extends ChunkyCommand {
     private final ChunkyBorder chunkyBorder;
 
-    public RemoveCommand(ChunkyBorder chunkyBorder) {
+    public RemoveCommand(final ChunkyBorder chunkyBorder) {
         super(chunkyBorder.getChunky());
         this.chunkyBorder = chunkyBorder;
     }
 
     @Override
-    public void execute(Sender sender, String[] args) {
-        Map<String, BorderData> borders = chunkyBorder.getBorders();
-        Selection selection = chunky.getSelection().build();
+    public void execute(final Sender sender, final String[] args) {
+        final Map<String, BorderData> borders = chunkyBorder.getBorders();
+        final Selection selection = chunky.getSelection().build();
         final World world = selection.world();
-        BorderData currentBorder = borders.get(world.getName());
+        final BorderData currentBorder = borders.get(world.getName());
         if (currentBorder != null) {
             borders.remove(world.getName());
             chunkyBorder.getMapIntegrations().forEach(mapIntegration -> mapIntegration.removeShapeMarker(world));

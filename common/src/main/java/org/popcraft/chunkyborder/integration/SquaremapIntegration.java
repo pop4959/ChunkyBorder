@@ -39,7 +39,7 @@ public class SquaremapIntegration extends AbstractMapIntegration {
     @Override
     public void addShapeMarker(final World world, final Shape shape) {
         getWorldIdentifier(world).flatMap(squaremap::getWorldIfEnabled).ifPresent(squaremapWorld -> {
-            Registry<LayerProvider> layerRegistry = squaremapWorld.layerRegistry();
+            final Registry<LayerProvider> layerRegistry = squaremapWorld.layerRegistry();
             if (layerRegistry.hasEntry(WORLDBORDER_KEY)) {
                 defaultProviders.put(squaremapWorld.identifier().asString(), layerRegistry.get(WORLDBORDER_KEY));
                 layerRegistry.unregister(WORLDBORDER_KEY);
@@ -51,7 +51,7 @@ public class SquaremapIntegration extends AbstractMapIntegration {
                         .zIndex(priority)
                         .build());
             }
-            SimpleLayerProvider chunkyLayerProvider = (SimpleLayerProvider) layerRegistry.get(CHUNKY_KEY);
+            final SimpleLayerProvider chunkyLayerProvider = (SimpleLayerProvider) layerRegistry.get(CHUNKY_KEY);
             chunkyLayerProvider.clearMarkers();
             final Marker marker;
             if (shape instanceof AbstractPolygon) {
@@ -73,7 +73,7 @@ public class SquaremapIntegration extends AbstractMapIntegration {
             } else {
                 return;
             }
-            MarkerOptions markerOptions = MarkerOptions.builder()
+            final MarkerOptions markerOptions = MarkerOptions.builder()
                     .stroke(true)
                     .strokeColor(new Color(this.color))
                     .strokeWeight(this.weight)
@@ -95,10 +95,10 @@ public class SquaremapIntegration extends AbstractMapIntegration {
         squaremap.mapWorlds().forEach(this::unregisterLayer);
     }
 
-    private void unregisterLayer(MapWorld mapWorld) {
-        Registry<LayerProvider> layerRegistry = mapWorld.layerRegistry();
+    private void unregisterLayer(final MapWorld mapWorld) {
+        final Registry<LayerProvider> layerRegistry = mapWorld.layerRegistry();
         if (!layerRegistry.hasEntry(WORLDBORDER_KEY)) {
-            LayerProvider defaultProvider = defaultProviders.get(mapWorld.identifier().asString());
+            final LayerProvider defaultProvider = defaultProviders.get(mapWorld.identifier().asString());
             if (defaultProvider != null) {
                 layerRegistry.register(WORLDBORDER_KEY, defaultProvider);
             }
@@ -110,19 +110,19 @@ public class SquaremapIntegration extends AbstractMapIntegration {
     }
 
     @Override
-    public void setOptions(String label, String color, boolean hideByDefault, int priority, int weight) {
+    public void setOptions(final String label, final String color, final boolean hideByDefault, final int priority, final int weight) {
         super.setOptions(label, color, hideByDefault, priority, weight);
         this.hideByDefault = hideByDefault;
         this.priority = priority;
     }
 
-    private Marker ellipse(Point center, double radiusX, double radiusZ) {
-        int numPoints = 360;
-        Point[] points = new Point[numPoints + 1];
-        double segmentAngle = 2 * Math.PI / numPoints;
+    private Marker ellipse(final Point center, final double radiusX, final double radiusZ) {
+        final int numPoints = 360;
+        final Point[] points = new Point[numPoints + 1];
+        final double segmentAngle = 2 * Math.PI / numPoints;
         for (int i = 0; i < numPoints; ++i) {
-            double pointX = center.x() + Math.sin(segmentAngle * i) * radiusX;
-            double pointZ = center.z() + Math.cos(segmentAngle * i) * radiusZ;
+            final double pointX = center.x() + Math.sin(segmentAngle * i) * radiusX;
+            final double pointZ = center.z() + Math.cos(segmentAngle * i) * radiusZ;
             points[i] = Point.of(pointX, pointZ);
         }
         points[numPoints] = Point.of(center.x(), center.z() + radiusZ);

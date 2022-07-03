@@ -13,7 +13,7 @@ import java.util.Map;
 public class BorderCommand extends ChunkyCommand {
     private final Map<String, ChunkyCommand> subCommands = new HashMap<>();
 
-    public BorderCommand(ChunkyBorder chunkyBorder) {
+    public BorderCommand(final ChunkyBorder chunkyBorder) {
         super(chunkyBorder.getChunky());
         subCommands.put("add", new AddCommand(chunkyBorder));
         subCommands.put("bypass", new BypassCommand(chunkyBorder));
@@ -25,7 +25,7 @@ public class BorderCommand extends ChunkyCommand {
     }
 
     @Override
-    public void execute(Sender sender, String[] args) {
+    public void execute(final Sender sender, final String[] args) {
         if (args.length > 1) {
             final String subCommand = args[1].toLowerCase();
             if (subCommands.containsKey(subCommand)) {
@@ -38,7 +38,7 @@ public class BorderCommand extends ChunkyCommand {
     }
 
     @Override
-    public List<String> tabSuggestions(String[] args) {
+    public List<String> tabSuggestions(final String[] args) {
         final List<String> suggestions = new ArrayList<>();
         if (args.length == 2) {
             suggestions.addAll(subCommands.keySet());

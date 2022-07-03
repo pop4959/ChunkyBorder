@@ -13,19 +13,19 @@ import java.util.Map;
 public class LoadCommand extends ChunkyCommand {
     private final ChunkyBorder chunkyBorder;
 
-    public LoadCommand(ChunkyBorder chunkyBorder) {
+    public LoadCommand(final ChunkyBorder chunkyBorder) {
         super(chunkyBorder.getChunky());
         this.chunkyBorder = chunkyBorder;
     }
 
     @Override
-    public void execute(Sender sender, String[] args) {
-        Map<String, BorderData> borders = chunkyBorder.getBorders();
-        Selection selection = chunky.getSelection().build();
+    public void execute(final Sender sender, final String[] args) {
+        final Map<String, BorderData> borders = chunkyBorder.getBorders();
+        final Selection selection = chunky.getSelection().build();
         final World world = selection.world();
-        BorderData currentBorder = borders.get(world.getName());
+        final BorderData currentBorder = borders.get(world.getName());
         if (currentBorder != null) {
-            Selection.Builder newSelection = chunky.getSelection();
+            final Selection.Builder newSelection = chunky.getSelection();
             newSelection.world(world);
             newSelection.shape(currentBorder.getShape());
             newSelection.center(currentBorder.getCenterX(), currentBorder.getCenterZ());

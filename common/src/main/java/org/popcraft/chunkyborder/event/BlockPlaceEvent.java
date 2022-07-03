@@ -8,7 +8,7 @@ public class BlockPlaceEvent extends Cancellable {
     private final Player player;
     private final Location location;
 
-    public BlockPlaceEvent(Player player, Location location) {
+    public BlockPlaceEvent(final Player player, final Location location) {
         this.player = player;
         this.location = location;
     }

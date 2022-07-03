@@ -66,7 +66,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
     private void startMetrics() {
         final Metrics metrics = new Metrics(this, 8953);
         metrics.addCustomChart(new AdvancedPie("mapIntegration", () -> {
-            Map<String, Integer> map = new HashMap<>();
+            final Map<String, Integer> map = new HashMap<>();
             chunkyBorder.getMapIntegrations().forEach(mapIntegration -> {
                 if (mapIntegration instanceof BlueMapIntegration) {
                     map.put("BlueMap", 1);
@@ -83,20 +83,20 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         }));
         final Map<String, BorderData> borders = chunkyBorder.getBorders();
         metrics.addCustomChart(new AdvancedPie("borderSize", () -> {
-            Map<String, Integer> map = new HashMap<>();
+            final Map<String, Integer> map = new HashMap<>();
             if (borders != null) {
                 borders.values().forEach(border -> {
-                    String size = String.valueOf((int) Math.max(border.getRadiusX(), border.getRadiusZ()));
+                    final String size = String.valueOf((int) Math.max(border.getRadiusX(), border.getRadiusZ()));
                     map.put(size, map.getOrDefault(size, 0) + 1);
                 });
             }
             return map;
         }));
         metrics.addCustomChart(new AdvancedPie("borderShape", () -> {
-            Map<String, Integer> map = new HashMap<>();
+            final Map<String, Integer> map = new HashMap<>();
             if (borders != null) {
                 borders.values().forEach(border -> {
-                    String shape = border.getShape().toLowerCase();
+                    final String shape = border.getShape().toLowerCase();
                     map.put(shape, map.getOrDefault(shape, 0) + 1);
                 });
             }
@@ -113,17 +113,17 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onWorldLoad(org.bukkit.event.world.WorldLoadEvent e) {
+    public void onWorldLoad(final org.bukkit.event.world.WorldLoadEvent e) {
         chunkyBorder.getChunky().getEventBus().call(new WorldLoadEvent(new BukkitWorld(e.getWorld())));
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onWorldUnload(org.bukkit.event.world.WorldUnloadEvent e) {
+    public void onWorldUnload(final org.bukkit.event.world.WorldUnloadEvent e) {
         chunkyBorder.getChunky().getEventBus().call(new WorldUnloadEvent(new BukkitWorld(e.getWorld())));
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    public void onPlayerTeleport(org.bukkit.event.player.PlayerTeleportEvent e) {
+    public void onPlayerTeleport(final org.bukkit.event.player.PlayerTeleportEvent e) {
         if (e.getTo() == null || e.getTo().getWorld() == null) {
             return;
         }
@@ -142,7 +142,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    public void onCreatureSpawn(org.bukkit.event.entity.CreatureSpawnEvent e) {
+    public void onCreatureSpawn(final org.bukkit.event.entity.CreatureSpawnEvent e) {
         if (!chunkyBorder.getConfig().preventMobSpawns()) {
             return;
         }
@@ -158,7 +158,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    public void onBlockPlace(org.bukkit.event.block.BlockPlaceEvent e) {
+    public void onBlockPlace(final org.bukkit.event.block.BlockPlaceEvent e) {
         final org.bukkit.World bukkitWorld = e.getPlayer().getWorld();
         final org.bukkit.Location bukkitLocation = e.getBlockPlaced().getLocation();
         final World world = new BukkitWorld(bukkitWorld);
@@ -172,7 +172,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onPlayerQuit(org.bukkit.event.player.PlayerQuitEvent e) {
+    public void onPlayerQuit(final org.bukkit.event.player.PlayerQuitEvent e) {
         chunkyBorder.getChunky().getEventBus().call(new PlayerQuitEvent(new BukkitPlayer(e.getPlayer())));
     }
 }

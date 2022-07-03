@@ -13,12 +13,12 @@ public class DynmapCommonAPIProvider extends DynmapCommonAPIListener {
     }
 
     @Override
-    public synchronized void apiEnabled(DynmapCommonAPI dynmapCommonAPI) {
+    public synchronized void apiEnabled(final DynmapCommonAPI dynmapCommonAPI) {
         instance = dynmapCommonAPI;
     }
 
     @Override
-    public synchronized void apiDisabled(DynmapCommonAPI api) {
+    public synchronized void apiDisabled(final DynmapCommonAPI api) {
         instance = null;
     }
 

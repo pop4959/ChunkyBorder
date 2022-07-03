@@ -52,7 +52,7 @@ public class ChunkyBorder {
     private final Map<UUID, PlayerData> players = new HashMap<>();
     private final Version version, targetVersion;
 
-    public ChunkyBorder(Chunky chunky, Config config, MapIntegrationLoader mapIntegrationLoader) {
+    public ChunkyBorder(final Chunky chunky, final Config config, final MapIntegrationLoader mapIntegrationLoader) {
         this.chunky = chunky;
         this.config = config;
         this.mapIntegrationLoader = mapIntegrationLoader;
@@ -146,8 +146,8 @@ public class ChunkyBorder {
             e.setCancelled(getBorder(location.getWorld().getName())
                     .map(BorderData::getBorder)
                     .map(border -> {
-                        double x = ((int) location.getX()) + 0.5;
-                        double z = ((int) location.getZ()) + 0.5;
+                        final double x = ((int) location.getX()) + 0.5;
+                        final double z = ((int) location.getZ()) + 0.5;
                         return !border.isBounding(x, z) && !e.getPlayer().hasPermission("chunkyborder.bypass.place");
                     })
                     .orElse(false));
@@ -197,7 +197,7 @@ public class ChunkyBorder {
         return mapIntegrations;
     }
 
-    public Optional<BorderData> getBorder(String world) {
+    public Optional<BorderData> getBorder(final String world) {
         return Optional.ofNullable(borders.get(world));
     }
 
@@ -224,7 +224,7 @@ public class ChunkyBorder {
 
     public Map<String, BorderData> loadBorders() {
         try (FileReader fileReader = new FileReader(new File(config.getDirectory().toFile(), "borders.json"))) {
-            Map<String, BorderData> loadedBorders = new Gson().fromJson(fileReader, new TypeToken<Map<String, BorderData>>() {
+            final Map<String, BorderData> loadedBorders = new Gson().fromJson(fileReader, new TypeToken<Map<String, BorderData>>() {
             }.getType());
             if (loadedBorders != null) {
                 return loadedBorders;
@@ -239,7 +239,7 @@ public class ChunkyBorder {
         if (borders == null) {
             return;
         }
-        try (FileWriter fileWriter = new FileWriter(new File(config.getDirectory().toFile(), "borders.json"))) {
+        try (final FileWriter fileWriter = new FileWriter(new File(config.getDirectory().toFile(), "borders.json"))) {
             fileWriter.write(new GsonBuilder().setPrettyPrinting().create().toJson(borders));
         } catch (IOException e) {
             LOGGER.warn(() -> translate(TranslationKey.BORDER_SAVE_FAILED));

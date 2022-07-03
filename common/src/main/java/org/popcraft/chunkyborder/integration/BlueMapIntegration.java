@@ -48,12 +48,12 @@ public class BlueMapIntegration extends AbstractMapIntegration {
         }
         final MarkerSet markerSet = markerAPI.createMarkerSet(MARKERSET_ID);
         markerSet.setLabel(this.label);
-        de.bluecolored.bluemap.api.marker.Shape blueShape;
+        final de.bluecolored.bluemap.api.marker.Shape blueShape;
         if (shape instanceof AbstractPolygon) {
             final AbstractPolygon polygon = (AbstractPolygon) shape;
             final List<Vector2> polygonPoints = polygon.points();
             final int size = polygonPoints.size();
-            Vector2d[] points = new Vector2d[size];
+            final Vector2d[] points = new Vector2d[size];
             for (int i = 0; i < size; ++i) {
                 final Vector2 p = polygonPoints.get(i);
                 points[i] = Vector2d.from(p.getX(), p.getZ());
@@ -69,7 +69,7 @@ public class BlueMapIntegration extends AbstractMapIntegration {
             return;
         }
         findBlueMapWorldFromPath(blueMapAPI, world).ifPresent(blueWorld -> blueWorld.getMaps().forEach(map -> {
-            ShapeMarker marker = markerSet.createShapeMarker(world.getName(), map, blueShape, world.getSeaLevel());
+            final ShapeMarker marker = markerSet.createShapeMarker(world.getName(), map, blueShape, world.getSeaLevel());
             marker.setColors(new Color(this.color), new Color(0, true));
             marker.setLabel(this.label);
             marker.setLineWidth(this.weight);

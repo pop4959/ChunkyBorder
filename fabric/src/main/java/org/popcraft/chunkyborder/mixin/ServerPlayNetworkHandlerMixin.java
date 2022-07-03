@@ -31,7 +31,7 @@ public class ServerPlayNetworkHandlerMixin {
             method = "requestTeleport(DDDFFLjava/util/Set;Z)V",
             at = @At("HEAD")
     )
-    private void requestTeleport(double x, double y, double z, float yaw, float pitch, Set<PlayerPositionLookS2CPacket.Flag> flags, boolean shouldDismount, CallbackInfo ci) {
+    private void requestTeleport(final double x, final double y, final double z, final float yaw, final float pitch, final Set<PlayerPositionLookS2CPacket.Flag> flags, final boolean shouldDismount, final CallbackInfo ci) {
         final FabricPlayer fabricPlayer = new FabricPlayer(this.player);
         final FabricWorld world = new FabricWorld(this.player.getWorld());
         final Location location = new Location(world, x, y, z, yaw, pitch);
@@ -47,7 +47,7 @@ public class ServerPlayNetworkHandlerMixin {
             argsOnly = true,
             index = 1
     )
-    private double requestTeleportX(double x) {
+    private double requestTeleportX(final double x) {
         return redirect == null ? x : redirect.getX();
     }
 
@@ -57,7 +57,7 @@ public class ServerPlayNetworkHandlerMixin {
             argsOnly = true,
             index = 3
     )
-    private double requestTeleportY(double y) {
+    private double requestTeleportY(final double y) {
         return redirect == null ? y : redirect.getY();
     }
 
@@ -67,7 +67,7 @@ public class ServerPlayNetworkHandlerMixin {
             argsOnly = true,
             index = 5
     )
-    private double requestTeleportZ(double z) {
+    private double requestTeleportZ(final double z) {
         return redirect == null ? z : redirect.getZ();
     }
 
@@ -77,7 +77,7 @@ public class ServerPlayNetworkHandlerMixin {
             argsOnly = true,
             index = 7
     )
-    private float requestTeleportYaw(float yaw) {
+    private float requestTeleportYaw(final float yaw) {
         return redirect == null ? yaw : redirect.getYaw();
     }
 
@@ -87,7 +87,7 @@ public class ServerPlayNetworkHandlerMixin {
             argsOnly = true,
             index = 8
     )
-    private float requestTeleportPitch(float pitch) {
+    private float requestTeleportPitch(final float pitch) {
         return redirect == null ? pitch : redirect.getPitch();
     }
 }

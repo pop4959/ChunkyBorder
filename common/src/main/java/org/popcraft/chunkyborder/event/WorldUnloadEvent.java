@@ -5,7 +5,7 @@ import org.popcraft.chunky.platform.World;
 public class WorldUnloadEvent {
     final World world;
 
-    public WorldUnloadEvent(World world) {
+    public WorldUnloadEvent(final World world) {
         this.world = world;
     }
 

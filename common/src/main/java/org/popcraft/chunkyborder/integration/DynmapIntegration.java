@@ -19,13 +19,13 @@ public class DynmapIntegration extends AbstractMapIntegration {
     private final MarkerSet markerSet;
     private final Map<String, MarkerDescription> markers;
 
-    public DynmapIntegration(DynmapCommonAPI dynmapAPI) {
+    public DynmapIntegration(final DynmapCommonAPI dynmapAPI) {
         this.markerSet = dynmapAPI.getMarkerAPI().createMarkerSet("chunky.markerset", this.label, null, false);
         this.markers = new HashMap<>();
     }
 
     @Override
-    public void addShapeMarker(World world, Shape shape) {
+    public void addShapeMarker(final World world, final Shape shape) {
         removeShapeMarker(world);
         final String dynmapWorldName = adaptWorldName(world.getName());
         if (shape instanceof AbstractPolygon) {
@@ -55,8 +55,8 @@ public class DynmapIntegration extends AbstractMapIntegration {
     }
 
     @Override
-    public void removeShapeMarker(World world) {
-        MarkerDescription marker = markers.remove(world.getName());
+    public void removeShapeMarker(final World world) {
+        final MarkerDescription marker = markers.remove(world.getName());
         if (marker != null) {
             marker.deleteMarker();
         }
@@ -71,7 +71,7 @@ public class DynmapIntegration extends AbstractMapIntegration {
     }
 
     @Override
-    public void setOptions(String label, String color, boolean hideByDefault, int priority, int weight) {
+    public void setOptions(final String label, final String color, final boolean hideByDefault, final int priority, final int weight) {
         super.setOptions(label, color, hideByDefault, priority, weight);
         if (markerSet != null) {
             markerSet.setHideByDefault(hideByDefault);

@@ -18,7 +18,7 @@ public class BukkitMapIntegrationLoader implements MapIntegrationLoader {
     private static final String SQUAREMAP = "squaremap";
     private final ChunkyBorderBukkit chunkyBorderBukkit;
 
-    public BukkitMapIntegrationLoader(ChunkyBorderBukkit chunkyBorderBukkit) {
+    public BukkitMapIntegrationLoader(final ChunkyBorderBukkit chunkyBorderBukkit) {
         this.chunkyBorderBukkit = chunkyBorderBukkit;
     }
 
@@ -40,7 +40,7 @@ public class BukkitMapIntegrationLoader implements MapIntegrationLoader {
         }
         return Optional.ofNullable(chunkyBorderBukkit.getServer().getPluginManager().getPlugin(DYNMAP))
                 .map(dynmap -> {
-                    DynmapCommonAPI dynmapAPI = (DynmapCommonAPI) dynmap;
+                    final DynmapCommonAPI dynmapAPI = (DynmapCommonAPI) dynmap;
                     return dynmapAPI.markerAPIInitialized() ? new DynmapIntegration(dynmapAPI) : null;
                 });
     }
@@ -54,7 +54,7 @@ public class BukkitMapIntegrationLoader implements MapIntegrationLoader {
         return Optional.ofNullable(pluginManager.getPlugin(SQUAREMAP))
                 .map(squaremap -> {
                     try {
-                        Squaremap squaremapAPI = SquaremapProvider.get();
+                        final Squaremap squaremapAPI = SquaremapProvider.get();
                         return new SquaremapIntegration(squaremapAPI);
                     } catch (IllegalStateException ignored) {
                         return null;

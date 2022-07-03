@@ -7,7 +7,7 @@ public abstract class AbstractMapIntegration implements MapIntegration {
     protected int weight = 3;
 
     @Override
-    public void setOptions(String label, String color, boolean hideByDefault, int priority, int weight) {
+    public void setOptions(final String label, final String color, final boolean hideByDefault, final int priority, final int weight) {
         if (label != null && !label.isEmpty()) {
             this.label = label;
         }
