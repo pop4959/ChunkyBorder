@@ -10,7 +10,6 @@ import org.popcraft.chunkyborder.PlayerData;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.popcraft.chunky.util.Translator.translate;
 
@@ -27,7 +26,7 @@ public class BypassCommand extends ChunkyCommand {
         final Sender target;
         if (args.length > 2) {
             final Optional<Player> player = chunky.getServer().getPlayer(args[2]);
-            if (!player.isPresent()) {
+            if (player.isEmpty()) {
                 sender.sendMessagePrefixed(TranslationKey.FORMAT_BORDER_BYPASS_NO_TARGET, args[2]);
                 return;
             }
@@ -35,8 +34,7 @@ public class BypassCommand extends ChunkyCommand {
         } else {
             target = sender;
         }
-        if (target instanceof Player) {
-            final Player player = (Player) target;
+        if (target instanceof final Player player) {
             final PlayerData playerData = chunkyBorder.getPlayerData(player.getUUID());
             playerData.setBypassing(!playerData.isBypassing());
             sender.sendMessagePrefixed(TranslationKey.FORMAT_BORDER_BYPASS,
@@ -49,7 +47,7 @@ public class BypassCommand extends ChunkyCommand {
     @Override
     public List<String> tabSuggestions(final String[] args) {
         if (args.length == 3) {
-            return chunky.getServer().getPlayers().stream().map(Sender::getName).collect(Collectors.toList());
+            return chunky.getServer().getPlayers().stream().map(Sender::getName).toList();
         } else {
             return Collections.emptyList();
         }

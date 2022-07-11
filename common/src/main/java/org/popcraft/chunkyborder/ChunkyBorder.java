@@ -85,18 +85,16 @@ public class ChunkyBorder {
                         final Vector3 locationVector = e.getLocation().toVector();
                         final Vector2 to = Vector2.of(locationVector.getX(), locationVector.getZ());
                         final List<Vector2> intersections = new ArrayList<>();
-                        if (border instanceof AbstractPolygon) {
-                            final AbstractPolygon polygonBorder = (AbstractPolygon) border;
-                            final List<Vector2> points = polygonBorder.points();
+                        if (border instanceof final AbstractPolygon polygon) {
+                            final List<Vector2> points = polygon.points();
                             final int size = points.size();
                             for (int i = 0; i < size; ++i) {
                                 final Vector2 p1 = points.get(i);
                                 final Vector2 p2 = points.get(i == size - 1 ? 0 : i + 1);
                                 ShapeUtil.intersection(center.getX(), center.getZ(), to.getX(), to.getZ(), p1.getX(), p1.getZ(), p2.getX(), p2.getZ()).ifPresent(intersections::add);
                             }
-                        } else if (border instanceof AbstractEllipse) {
-                            final AbstractEllipse ellipticalBorder = (AbstractEllipse) border;
-                            final Vector2 radii = ellipticalBorder.radii();
+                        } else if (border instanceof final AbstractEllipse ellipse) {
+                            final Vector2 radii = ellipse.radii();
                             final double angle = Math.atan2(to.getZ() - center.getX(), to.getX() - center.getZ());
                             intersections.add(ShapeUtil.pointOnEllipse(center.getX(), center.getZ(), radii.getX(), radii.getZ(), angle));
                         }
@@ -131,12 +129,12 @@ public class ChunkyBorder {
                     })
                     .orElse(null));
         });
-        eventBus.subscribe(WorldLoadEvent.class, e -> getBorder(e.getWorld().getName())
+        eventBus.subscribe(WorldLoadEvent.class, e -> getBorder(e.world().getName())
                 .map(BorderData::getBorder)
-                .ifPresent(border -> mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(e.getWorld(), border))));
-        eventBus.subscribe(WorldUnloadEvent.class, e -> getBorder(e.getWorld().getName())
+                .ifPresent(border -> mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(e.world(), border))));
+        eventBus.subscribe(WorldUnloadEvent.class, e -> getBorder(e.world().getName())
                 .map(BorderData::getBorder)
-                .ifPresent(border -> mapIntegrations.forEach(mapIntegration -> mapIntegration.removeShapeMarker(e.getWorld()))));
+                .ifPresent(border -> mapIntegrations.forEach(mapIntegration -> mapIntegration.removeShapeMarker(e.world()))));
         eventBus.subscribe(CreatureSpawnEvent.class, e -> e.setCancelled(getBorder(e.getLocation().getWorld().getName())
                 .map(BorderData::getBorder)
                 .map(border -> !border.isBounding(e.getLocation().getX(), e.getLocation().getZ()))
@@ -152,7 +150,7 @@ public class ChunkyBorder {
                     })
                     .orElse(false));
         });
-        eventBus.subscribe(PlayerQuitEvent.class, e -> players.remove(e.getPlayer().getUUID()));
+        eventBus.subscribe(PlayerQuitEvent.class, e -> players.remove(e.player().getUUID()));
     }
 
     public boolean hasCompatibleChunkyVersion() {

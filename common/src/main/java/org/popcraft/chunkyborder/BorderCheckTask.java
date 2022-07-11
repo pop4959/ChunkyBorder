@@ -74,18 +74,16 @@ public class BorderCheckTask implements Runnable {
             final Vector2 from = Vector2.of(location.getX(), location.getZ());
             final Shape border = borderData.getBorder();
             final List<Vector2> intersections = new ArrayList<>();
-            if (border instanceof AbstractPolygon) {
-                final AbstractPolygon polygonBorder = (AbstractPolygon) border;
-                final List<Vector2> points = polygonBorder.points();
+            if (border instanceof final AbstractPolygon polygon) {
+                final List<Vector2> points = polygon.points();
                 final int size = points.size();
                 for (int i = 0; i < size; ++i) {
                     final Vector2 p1 = points.get(i);
                     final Vector2 p2 = points.get(i == size - 1 ? 0 : i + 1);
                     ShapeUtil.intersection(center.getX(), center.getZ(), from.getX(), from.getZ(), p1.getX(), p1.getZ(), p2.getX(), p2.getZ()).ifPresent(intersections::add);
                 }
-            } else if (border instanceof AbstractEllipse) {
-                final AbstractEllipse ellipticalBorder = (AbstractEllipse) border;
-                final Vector2 radii = ellipticalBorder.radii();
+            } else if (border instanceof final AbstractEllipse ellipse) {
+                final Vector2 radii = ellipse.radii();
                 final double angle = Math.PI + Math.atan2(from.getZ() - center.getX(), from.getX() - center.getZ());
                 intersections.add(ShapeUtil.pointOnEllipse(center.getX(), center.getZ(), radii.getX(), radii.getZ(), angle));
             }

@@ -4,7 +4,9 @@ import org.popcraft.chunky.Selection;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.ShapeFactory;
 
-public class BorderData {
+import java.io.Serializable;
+
+public class BorderData implements Serializable {
     private String world;
     private double centerX, centerZ;
     private double radiusX, radiusZ;

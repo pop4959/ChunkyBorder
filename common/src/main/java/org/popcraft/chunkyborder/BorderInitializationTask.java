@@ -40,7 +40,7 @@ public class BorderInitializationTask implements Runnable {
                 continue;
             }
             final Optional<World> world = chunkyBorder.getChunky().getServer().getWorld(border.getWorld());
-            if (!world.isPresent()) {
+            if (world.isEmpty()) {
                 continue;
             }
             mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(world.get(), border.getBorder()));

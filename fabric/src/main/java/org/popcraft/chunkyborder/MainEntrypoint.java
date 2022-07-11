@@ -10,6 +10,7 @@ public class MainEntrypoint implements ModInitializer {
             Class.forName("org.dynmap.DynmapCommonAPI");
             new DynmapCommonAPIProvider();
         } catch (ClassNotFoundException ignored) {
+            // Dynmap is not installed
         }
     }
 }

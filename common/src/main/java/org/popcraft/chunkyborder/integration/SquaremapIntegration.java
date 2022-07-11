@@ -54,14 +54,12 @@ public class SquaremapIntegration extends AbstractMapIntegration {
             final SimpleLayerProvider chunkyLayerProvider = (SimpleLayerProvider) layerRegistry.get(CHUNKY_KEY);
             chunkyLayerProvider.clearMarkers();
             final Marker marker;
-            if (shape instanceof AbstractPolygon) {
-                final AbstractPolygon polygon = (AbstractPolygon) shape;
+            if (shape instanceof final AbstractPolygon polygon) {
                 final List<Point> points = polygon.points().stream().map(point -> Point.of(point.getX(), point.getZ())).collect(Collectors.toList());
                 final Vector2 lastPoint = polygon.points().get(0);
                 points.add(Point.of(lastPoint.getX(), lastPoint.getZ()));
                 marker = Marker.polyline(points);
-            } else if (shape instanceof AbstractEllipse) {
-                final AbstractEllipse ellipse = (AbstractEllipse) shape;
+            } else if (shape instanceof final AbstractEllipse ellipse) {
                 final Vector2 center = ellipse.center();
                 final Vector2 radii = ellipse.radii();
                 final Point centerPoint = Point.of(center.getX(), center.getZ());

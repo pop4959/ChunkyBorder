@@ -49,8 +49,7 @@ public class BlueMapIntegration extends AbstractMapIntegration {
         final MarkerSet markerSet = markerAPI.createMarkerSet(MARKERSET_ID);
         markerSet.setLabel(this.label);
         final de.bluecolored.bluemap.api.marker.Shape blueShape;
-        if (shape instanceof AbstractPolygon) {
-            final AbstractPolygon polygon = (AbstractPolygon) shape;
+        if (shape instanceof final AbstractPolygon polygon) {
             final List<Vector2> polygonPoints = polygon.points();
             final int size = polygonPoints.size();
             final Vector2d[] points = new Vector2d[size];
@@ -59,8 +58,7 @@ public class BlueMapIntegration extends AbstractMapIntegration {
                 points[i] = Vector2d.from(p.getX(), p.getZ());
             }
             blueShape = new de.bluecolored.bluemap.api.marker.Shape(points);
-        } else if (shape instanceof AbstractEllipse) {
-            final AbstractEllipse ellipse = (AbstractEllipse) shape;
+        } else if (shape instanceof final AbstractEllipse ellipse) {
             final Vector2 center = ellipse.center();
             final Vector2 radii = ellipse.radii();
             final Vector2d centerPos = Vector2d.from(center.getX(), center.getZ());
@@ -76,7 +74,8 @@ public class BlueMapIntegration extends AbstractMapIntegration {
         }));
         try {
             markerAPI.save();
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -90,7 +89,8 @@ public class BlueMapIntegration extends AbstractMapIntegration {
             final MarkerSet markerSet = markerAPI.createMarkerSet(MARKERSET_ID);
             findBlueMapWorldFromPath(blueMapAPI, world).ifPresent(blueWorld -> blueWorld.getMaps().forEach(map -> markerSet.removeMarker(world.getName())));
             markerAPI.save();
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -104,7 +104,8 @@ public class BlueMapIntegration extends AbstractMapIntegration {
             if (markerAPI.removeMarkerSet(MARKERSET_ID)) {
                 markerAPI.save();
             }
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

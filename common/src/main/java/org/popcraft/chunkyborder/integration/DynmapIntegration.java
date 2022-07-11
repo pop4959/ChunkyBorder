@@ -28,8 +28,7 @@ public class DynmapIntegration extends AbstractMapIntegration {
     public void addShapeMarker(final World world, final Shape shape) {
         removeShapeMarker(world);
         final String dynmapWorldName = adaptWorldName(world.getName());
-        if (shape instanceof AbstractPolygon) {
-            final AbstractPolygon polygon = (AbstractPolygon) shape;
+        if (shape instanceof final AbstractPolygon polygon) {
             final List<Vector2> points = polygon.points();
             final int size = points.size();
             final double[] pointsX = new double[size];
@@ -43,8 +42,7 @@ public class DynmapIntegration extends AbstractMapIntegration {
             marker.setLineStyle(this.weight, 1f, color);
             marker.setFillStyle(0f, 0x000000);
             markers.put(world.getName(), marker);
-        } else if (shape instanceof AbstractEllipse) {
-            final AbstractEllipse ellipse = (AbstractEllipse) shape;
+        } else if (shape instanceof final AbstractEllipse ellipse) {
             final Vector2 center = ellipse.center();
             final Vector2 radii = ellipse.radii();
             final CircleMarker marker = markerSet.createCircleMarker(null, this.label, false, dynmapWorldName, center.getX(), world.getSeaLevel(), center.getZ(), radii.getX(), radii.getZ(), false);
@@ -80,15 +78,11 @@ public class DynmapIntegration extends AbstractMapIntegration {
     }
 
     private String adaptWorldName(final String worldName) {
-        switch (worldName) {
-            case "minecraft:overworld":
-                return "world";
-            case "minecraft:the_nether":
-                return "DIM-1";
-            case "minecraft:the_end":
-                return "DIM1";
-            default:
-                return worldName.indexOf(':') < 0 ? worldName : worldName.replace(':', '_');
-        }
+        return switch (worldName) {
+            case "minecraft:overworld" -> "world";
+            case "minecraft:the_nether" -> "DIM-1";
+            case "minecraft:the_end" -> "DIM1";
+            default -> worldName.indexOf(':') < 0 ? worldName : worldName.replace(':', '_');
+        };
     }
 }

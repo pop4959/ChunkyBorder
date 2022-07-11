@@ -1,15 +1,7 @@
 package org.popcraft.chunkyborder.event;
 
+import org.popcraft.chunky.event.Event;
 import org.popcraft.chunky.platform.World;
 
-public class WorldUnloadEvent {
-    final World world;
-
-    public WorldUnloadEvent(final World world) {
-        this.world = world;
-    }
-
-    public World getWorld() {
-        return world;
-    }
+public record WorldUnloadEvent(World world) implements Event {
 }
