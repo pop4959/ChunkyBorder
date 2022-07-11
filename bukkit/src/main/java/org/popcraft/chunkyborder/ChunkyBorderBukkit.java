@@ -2,6 +2,7 @@ package org.popcraft.chunkyborder;
 
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.AdvancedPie;
+import org.bukkit.configuration.file.FileConfigurationOptions;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
@@ -31,18 +32,27 @@ import org.popcraft.chunkyborder.integration.SquaremapIntegration;
 import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.popcraft.chunky.util.Translator.translate;
 
 public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
+    private static final List<String> HEADER = Arrays.asList("ChunkyBorder Configuration", "https://github.com/pop4959/ChunkyBorder/wiki/Configuration");
     private ChunkyBorder chunkyBorder;
 
     @Override
     public void onEnable() {
-        getConfig().options().copyDefaults(true);
-        getConfig().options().copyHeader(true);
+        final FileConfigurationOptions options = getConfig().options();
+        options.copyDefaults(true);
+        try {
+            FileConfigurationOptions.class.getMethod("header", String.class).invoke(options, String.join("\n", HEADER));
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            options.setHeader(HEADER);
+        }
         saveConfig();
         final Chunky chunky = ChunkyProvider.get();
         final Config config = new BukkitConfig(this);
