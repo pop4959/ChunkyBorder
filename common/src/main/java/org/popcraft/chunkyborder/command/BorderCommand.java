@@ -1,6 +1,7 @@
 package org.popcraft.chunkyborder.command;
 
 import org.popcraft.chunky.command.ChunkyCommand;
+import org.popcraft.chunky.command.CommandArguments;
 import org.popcraft.chunky.command.CommandLiteral;
 import org.popcraft.chunky.platform.Sender;
 import org.popcraft.chunkyborder.ChunkyBorder;
@@ -10,11 +11,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BorderCommand extends ChunkyCommand {
+public class BorderCommand implements ChunkyCommand {
     private final Map<String, ChunkyCommand> subCommands = new HashMap<>();
 
     public BorderCommand(final ChunkyBorder chunkyBorder) {
-        super(chunkyBorder.getChunky());
         subCommands.put("add", new AddCommand(chunkyBorder));
         subCommands.put("bypass", new BypassCommand(chunkyBorder));
         subCommands.put("help", new HelpCommand(chunkyBorder));
@@ -25,28 +25,28 @@ public class BorderCommand extends ChunkyCommand {
     }
 
     @Override
-    public void execute(final Sender sender, final String[] args) {
-        if (args.length > 1) {
-            final String subCommand = args[1].toLowerCase();
-            if (subCommands.containsKey(subCommand)) {
-                subCommands.get(subCommand).execute(sender, args);
-                return;
-            }
+    public void execute(final Sender sender, final CommandArguments arguments) {
+        final ChunkyCommand subCommand = arguments.next()
+                .map(String::toLowerCase)
+                .map(subCommands::get)
+                .orElse(null);
+        if (subCommand == null) {
+            subCommands.get(CommandLiteral.HELP).execute(sender, CommandArguments.empty());
+            return;
         }
-        final String label = String.join(" ", args);
-        subCommands.get(CommandLiteral.HELP).execute(sender, new String[]{label});
+        subCommand.execute(sender, arguments);
     }
 
     @Override
-    public List<String> tabSuggestions(final String[] args) {
+    public List<String> suggestions(final CommandArguments arguments) {
         final List<String> suggestions = new ArrayList<>();
-        if (args.length == 2) {
+        if (arguments.size() == 1) {
             suggestions.addAll(subCommands.keySet());
-        } else if (args.length > 2) {
-            final String subCommand = args[1].toLowerCase();
-            if (subCommands.containsKey(subCommand)) {
-                suggestions.addAll(subCommands.get(subCommand).tabSuggestions(args));
-            }
+        } else if (arguments.size() > 1) {
+            arguments.next()
+                    .map(String::toLowerCase)
+                    .map(subCommands::get)
+                    .ifPresent(subCommand -> suggestions.addAll(subCommand.suggestions(arguments)));
         }
         return suggestions;
     }

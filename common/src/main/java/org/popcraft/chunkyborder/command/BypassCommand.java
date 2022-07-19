@@ -1,6 +1,7 @@
 package org.popcraft.chunkyborder.command;
 
 import org.popcraft.chunky.command.ChunkyCommand;
+import org.popcraft.chunky.command.CommandArguments;
 import org.popcraft.chunky.platform.Player;
 import org.popcraft.chunky.platform.Sender;
 import org.popcraft.chunky.util.TranslationKey;
@@ -13,26 +14,26 @@ import java.util.Optional;
 
 import static org.popcraft.chunky.util.Translator.translate;
 
-public class BypassCommand extends ChunkyCommand {
+public class BypassCommand implements ChunkyCommand {
     private final ChunkyBorder chunkyBorder;
 
     public BypassCommand(final ChunkyBorder chunkyBorder) {
-        super(chunkyBorder.getChunky());
         this.chunkyBorder = chunkyBorder;
     }
 
     @Override
-    public void execute(final Sender sender, final String[] args) {
+    public void execute(final Sender sender, final CommandArguments arguments) {
+        final Optional<String> argument = arguments.next();
         final Sender target;
-        if (args.length > 2) {
-            final Optional<Player> player = chunky.getServer().getPlayer(args[2]);
-            if (player.isEmpty()) {
-                sender.sendMessagePrefixed(TranslationKey.FORMAT_BORDER_BYPASS_NO_TARGET, args[2]);
+        if (argument.isEmpty()) {
+            target = sender;
+        } else {
+            final String playerName = argument.get();
+            target = chunkyBorder.getChunky().getServer().getPlayer(playerName).orElse(null);
+            if (target == null) {
+                sender.sendMessagePrefixed(TranslationKey.FORMAT_BORDER_BYPASS_NO_TARGET, playerName);
                 return;
             }
-            target = player.get();
-        } else {
-            target = sender;
         }
         if (target instanceof final Player player) {
             final PlayerData playerData = chunkyBorder.getPlayerData(player.getUUID());
@@ -45,9 +46,9 @@ public class BypassCommand extends ChunkyCommand {
     }
 
     @Override
-    public List<String> tabSuggestions(final String[] args) {
-        if (args.length == 3) {
-            return chunky.getServer().getPlayers().stream().map(Sender::getName).toList();
+    public List<String> suggestions(final CommandArguments arguments) {
+        if (arguments.size() == 2) {
+            return chunkyBorder.getChunky().getServer().getPlayers().stream().map(Sender::getName).toList();
         } else {
             return Collections.emptyList();
         }

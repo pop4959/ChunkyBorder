@@ -2,6 +2,7 @@ package org.popcraft.chunkyborder.command;
 
 import org.popcraft.chunky.Selection;
 import org.popcraft.chunky.command.ChunkyCommand;
+import org.popcraft.chunky.command.CommandArguments;
 import org.popcraft.chunky.platform.Sender;
 import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.util.Formatting;
@@ -9,19 +10,19 @@ import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunkyborder.BorderData;
 import org.popcraft.chunkyborder.ChunkyBorder;
 
+import java.util.List;
 import java.util.Map;
 
-public class AddCommand extends ChunkyCommand {
+public class AddCommand implements ChunkyCommand {
     private final ChunkyBorder chunkyBorder;
 
     public AddCommand(final ChunkyBorder chunkyBorder) {
-        super(chunkyBorder.getChunky());
         this.chunkyBorder = chunkyBorder;
     }
 
     @Override
-    public void execute(final Sender sender, final String[] args) {
-        final Selection selection = chunky.getSelection().build();
+    public void execute(final Sender sender, final CommandArguments arguments) {
+        final Selection selection = chunkyBorder.getChunky().getSelection().build();
         final World world = selection.world();
         final BorderData borderData = new BorderData(selection);
         final Map<String, BorderData> borders = chunkyBorder.getBorders();
@@ -39,5 +40,10 @@ public class AddCommand extends ChunkyCommand {
                 Formatting.radius(selection)
         );
         chunkyBorder.saveBorders();
+    }
+
+    @Override
+    public List<String> suggestions(final CommandArguments commandArguments) {
+        return List.of();
     }
 }
