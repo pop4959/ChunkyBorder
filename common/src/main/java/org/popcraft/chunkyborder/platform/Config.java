@@ -21,6 +21,8 @@ public interface Config {
 
     boolean preventEnderpearl();
 
+    boolean preventChorusFruit();
+
     boolean blueMapEnabled();
 
     boolean dynmapEnabled();

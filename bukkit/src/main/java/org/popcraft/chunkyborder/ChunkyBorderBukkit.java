@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.popcraft.chunky.util.Translator.translate;
 
@@ -140,14 +141,17 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         final Player player = new BukkitPlayer(e.getPlayer());
         final World world = new BukkitWorld(e.getTo().getWorld());
         final Location location = new Location(world, e.getTo().getX(), e.getTo().getY(), e.getTo().getZ(), e.getTo().getYaw(), e.getTo().getPitch());
-        final boolean usingEnderpearl = org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.ENDER_PEARL.equals(e.getCause());
-        final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(player, location, usingEnderpearl);
+        final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(player, location);
         chunkyBorder.getChunky().getEventBus().call(playerTeleportEvent);
-        playerTeleportEvent.redirect()
-                .map(redirect -> new org.bukkit.Location(e.getTo().getWorld(), redirect.getX(), redirect.getY(), redirect.getZ(), redirect.getYaw(), redirect.getPitch()))
-                .ifPresent(e::setTo);
-        if (playerTeleportEvent.isCancelled()) {
-            e.setCancelled(true);
+        final Optional<Location> redirect = playerTeleportEvent.redirect();
+        if (redirect.isPresent()) {
+            if ((chunkyBorder.getConfig().preventEnderpearl() && org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.ENDER_PEARL.equals(e.getCause()))
+                    || (chunkyBorder.getConfig().preventChorusFruit() && org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.CHORUS_FRUIT.equals(e.getCause()))) {
+                e.setCancelled(true);
+            } else {
+                redirect.map(r -> new org.bukkit.Location(e.getTo().getWorld(), r.getX(), r.getY(), r.getZ(), r.getYaw(), r.getPitch()))
+                        .ifPresent(e::setTo);
+            }
         }
     }
 

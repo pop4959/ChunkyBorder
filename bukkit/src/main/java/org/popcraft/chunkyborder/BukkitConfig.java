@@ -57,6 +57,11 @@ public class BukkitConfig implements Config {
     }
 
     @Override
+    public boolean preventChorusFruit() {
+        return chunkyBorderBukkit.getConfig().getBoolean("border-options.prevent-chorus-fruit", false);
+    }
+
+    @Override
     public boolean blueMapEnabled() {
         return chunkyBorderBukkit.getConfig().getBoolean("map-options.enable.bluemap", true);
     }

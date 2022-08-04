@@ -9,6 +9,7 @@ border-options:
   sound: entity_enderman_teleport
   prevent-mob-spawns: false
   prevent-enderpearl: false
+  prevent-chorus-fruit: false
 map-options:
   enable:
     bluemap: true

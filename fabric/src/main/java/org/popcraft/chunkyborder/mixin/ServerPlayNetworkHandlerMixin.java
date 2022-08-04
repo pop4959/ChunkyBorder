@@ -35,7 +35,7 @@ public class ServerPlayNetworkHandlerMixin {
         final FabricPlayer fabricPlayer = new FabricPlayer(this.player);
         final FabricWorld world = new FabricWorld(this.player.getWorld());
         final Location location = new Location(world, x, y, z, yaw, pitch);
-        final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(fabricPlayer, location, false);
+        final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(fabricPlayer, location);
         ChunkyProvider.get().getEventBus().call(playerTeleportEvent);
         final Optional<Location> optionalLocation = playerTeleportEvent.redirect();
         optionalLocation.ifPresentOrElse(redirectLocation -> redirect = redirectLocation, () -> redirect = null);

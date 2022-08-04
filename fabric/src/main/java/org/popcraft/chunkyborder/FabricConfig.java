@@ -74,6 +74,11 @@ public class FabricConfig implements Config {
     }
 
     @Override
+    public boolean preventChorusFruit() {
+        return Optional.ofNullable(configModel.borderOptions.preventChorusFruit).orElse(false);
+    }
+
+    @Override
     public boolean blueMapEnabled() {
         return configModel.mapOptions.enable.getOrDefault("bluemap", true);
     }
@@ -174,6 +179,7 @@ public class FabricConfig implements Config {
         private String sound = "entity.enderman.teleport";
         private Boolean preventMobSpawns = false;
         private Boolean preventEnderpearl = false;
+        private Boolean preventChorusFruit = false;
 
         public Integer getCheckInterval() {
             return checkInterval;
@@ -229,6 +235,14 @@ public class FabricConfig implements Config {
 
         public void setPreventEnderpearl(final Boolean preventEnderpearl) {
             this.preventEnderpearl = preventEnderpearl;
+        }
+
+        public Boolean getPreventChorusFruit() {
+            return preventChorusFruit;
+        }
+
+        public void setPreventChorusFruit(final Boolean preventChorusFruit) {
+            this.preventChorusFruit = preventChorusFruit;
         }
     }
 

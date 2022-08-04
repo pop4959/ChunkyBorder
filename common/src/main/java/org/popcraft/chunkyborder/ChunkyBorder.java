@@ -79,7 +79,6 @@ public class ChunkyBorder {
                     .filter(border -> !border.isBounding(e.getLocation().getX(), e.getLocation().getZ()))
                     .filter(border -> !e.getPlayer().hasPermission("chunkyborder.bypass.move"))
                     .map(border -> {
-                        e.setCancelled(e.isUsingEnderpearl() && config.preventEnderpearl());
                         final Vector2 center = Vector2.of(borderData.get().getCenterX(), borderData.get().getCenterZ());
                         final World world = e.getLocation().getWorld();
                         final Vector3 locationVector = e.getLocation().toVector();
