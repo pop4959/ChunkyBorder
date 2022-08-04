@@ -17,7 +17,7 @@ public class ChunkyBorderFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         final Chunky chunky = ChunkyProvider.get();
-        final Path configPath = FabricLoader.getInstance().getConfigDir().resolve("chunkyborder/chunkyborder.json");
+        final Path configPath = FabricLoader.getInstance().getConfigDir().resolve("chunkyborder/config.json");
         final Config config = new FabricConfig(configPath);
         final MapIntegrationLoader mapIntegrationLoader = new FabricMapIntegrationLoader();
         final ChunkyBorder chunkyBorder = new ChunkyBorder(chunky, config, mapIntegrationLoader);
