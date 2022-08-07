@@ -21,11 +21,7 @@ public class FabricConfig implements Config {
 
     public FabricConfig(final Path savePath) {
         this.savePath = savePath;
-        if (Files.exists(this.savePath)) {
-            load();
-        } else {
-            saveConfig();
-        }
+        reload();
     }
 
     @Override
@@ -118,7 +114,11 @@ public class FabricConfig implements Config {
         return Optional.ofNullable(configModel.mapOptions.priority).orElse(0);
     }
 
-    public void load() {
+    @Override
+    public void reload() {
+        if (!Files.exists(this.savePath)) {
+            save();
+        }
         try (final Reader reader = Files.newBufferedReader(savePath)) {
             configModel = GSON.fromJson(reader, ConfigModel.class);
         } catch (IOException e) {
@@ -126,7 +126,7 @@ public class FabricConfig implements Config {
         }
     }
 
-    private void saveConfig() {
+    private void save() {
         try {
             Files.createDirectories(savePath.getParent());
         } catch (IOException e) {

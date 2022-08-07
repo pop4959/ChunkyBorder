@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.event.EventBus;
+import org.popcraft.chunky.event.command.ReloadCommandEvent;
 import org.popcraft.chunky.platform.Player;
 import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.platform.util.Location;
@@ -73,6 +74,7 @@ public class ChunkyBorder {
 
     private void subscribeEvents() {
         final EventBus eventBus = chunky.getEventBus();
+        eventBus.subscribe(ReloadCommandEvent.class, e -> getConfig().reload());
         eventBus.subscribe(PlayerTeleportEvent.class, e -> {
             final Optional<BorderData> borderData = getBorder(e.getLocation().getWorld().getName());
             e.redirect(borderData.map(BorderData::getBorder)

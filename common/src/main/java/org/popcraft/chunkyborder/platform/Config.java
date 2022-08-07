@@ -38,4 +38,6 @@ public interface Config {
     int weight();
 
     int priority();
+
+    void reload();
 }

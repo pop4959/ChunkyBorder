@@ -100,4 +100,9 @@ public class BukkitConfig implements Config {
     public int priority() {
         return chunkyBorderBukkit.getConfig().getInt("map-options.priority", 0);
     }
+
+    @Override
+    public void reload() {
+        chunkyBorderBukkit.reloadConfig();
+    }
 }
