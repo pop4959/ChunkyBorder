@@ -8,6 +8,7 @@ import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunkyborder.BorderData;
 import org.popcraft.chunkyborder.ChunkyBorder;
+import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
 
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ public class RemoveCommand implements ChunkyCommand {
         } else {
             sender.sendMessagePrefixed(TranslationKey.FORMAT_BORDER_NO_BORDER, world.getName());
         }
+        chunkyBorder.getChunky().getEventBus().call(new BorderChangeEvent(world, null));
     }
 
     @Override

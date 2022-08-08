@@ -1,4 +1,4 @@
-package org.popcraft.chunkyborder.event;
+package org.popcraft.chunkyborder.event.server;
 
 import org.popcraft.chunky.platform.Player;
 import org.popcraft.chunky.platform.util.Location;

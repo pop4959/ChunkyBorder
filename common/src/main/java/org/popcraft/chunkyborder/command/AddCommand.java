@@ -5,10 +5,12 @@ import org.popcraft.chunky.command.ChunkyCommand;
 import org.popcraft.chunky.command.CommandArguments;
 import org.popcraft.chunky.platform.Sender;
 import org.popcraft.chunky.platform.World;
+import org.popcraft.chunky.shape.ShapeFactory;
 import org.popcraft.chunky.util.Formatting;
 import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunkyborder.BorderData;
 import org.popcraft.chunkyborder.ChunkyBorder;
+import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
 
 import java.util.List;
 import java.util.Map;
@@ -40,6 +42,7 @@ public class AddCommand implements ChunkyCommand {
                 Formatting.radius(selection)
         );
         chunkyBorder.saveBorders();
+        chunkyBorder.getChunky().getEventBus().call(new BorderChangeEvent(world, ShapeFactory.getShape(selection, false)));
     }
 
     @Override

@@ -1,5 +1,5 @@
 plugins {
-    id("fabric-loom") version "0.11-SNAPSHOT"
+    id("fabric-loom") version "0.12-SNAPSHOT"
 }
 
 val shade: Configuration by configurations.creating
@@ -11,9 +11,9 @@ repositories {
 
 dependencies {
     minecraft(group = "com.mojang", name = "minecraft", version = "1.19")
-    mappings(group = "net.fabricmc", name = "yarn", version = "1.19+build.1", classifier = "v2")
+    mappings(group = "net.fabricmc", name = "yarn", version = "1.19+build.4", classifier = "v2")
     modImplementation(group = "net.fabricmc", name = "fabric-loader", version = "0.14.6")
-    modImplementation(group = "net.fabricmc.fabric-api", name = "fabric-api", version = "0.55.2+1.19")
+    modImplementation(group = "net.fabricmc.fabric-api", name = "fabric-api", version = "0.58.0+1.19")
     modImplementation(group = "org.popcraft", name = "chunky-fabric", version = "${project.property("target")}")
     compileOnly(group = "us.dynmap", name = "DynmapCoreAPI", version = "3.3")
     compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "v1.7.0")

@@ -17,31 +17,38 @@ import org.popcraft.chunky.platform.BukkitWorld;
 import org.popcraft.chunky.platform.Player;
 import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.platform.util.Location;
+import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunky.util.Translator;
 import org.popcraft.chunkyborder.command.BorderCommand;
-import org.popcraft.chunkyborder.event.BlockPlaceEvent;
-import org.popcraft.chunkyborder.event.CreatureSpawnEvent;
-import org.popcraft.chunkyborder.event.PlayerQuitEvent;
-import org.popcraft.chunkyborder.event.PlayerTeleportEvent;
-import org.popcraft.chunkyborder.event.WorldLoadEvent;
-import org.popcraft.chunkyborder.event.WorldUnloadEvent;
+import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
+import org.popcraft.chunkyborder.event.server.BlockPlaceEvent;
+import org.popcraft.chunkyborder.event.server.CreatureSpawnEvent;
+import org.popcraft.chunkyborder.event.server.PlayerQuitEvent;
+import org.popcraft.chunkyborder.event.server.PlayerTeleportEvent;
+import org.popcraft.chunkyborder.event.server.WorldLoadEvent;
+import org.popcraft.chunkyborder.event.server.WorldUnloadEvent;
 import org.popcraft.chunkyborder.integration.BlueMapIntegration;
 import org.popcraft.chunkyborder.integration.DynmapIntegration;
 import org.popcraft.chunkyborder.integration.SquaremapIntegration;
 import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
+import org.popcraft.chunkyborder.util.PluginMessage;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.popcraft.chunky.util.Translator.translate;
 
 public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
+    private static final String PLAY_BORDER_PACKET_ID = "chunky:border";
     private static final List<String> HEADER = Arrays.asList("ChunkyBorder Configuration", "https://github.com/pop4959/ChunkyBorder/wiki/Configuration");
     private ChunkyBorder chunkyBorder;
 
@@ -71,6 +78,8 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         final long checkInterval = chunkyBorder.getConfig().checkInterval();
         getServer().getScheduler().scheduleSyncRepeatingTask(this, new BorderCheckTask(chunkyBorder), checkInterval, checkInterval);
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
+        getServer().getMessenger().registerOutgoingPluginChannel(this, PLAY_BORDER_PACKET_ID);
+        chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(getServer().getOnlinePlayers(), e.world(), e.shape()));
         startMetrics();
     }
 
@@ -188,5 +197,33 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerQuit(final org.bukkit.event.player.PlayerQuitEvent e) {
         chunkyBorder.getChunky().getEventBus().call(new PlayerQuitEvent(new BukkitPlayer(e.getPlayer())));
+    }
+
+    @EventHandler
+    public void onPlayerJoin(final org.bukkit.event.player.PlayerJoinEvent e) {
+        final UUID uuid = e.getPlayer().getUniqueId();
+        getServer().getScheduler().scheduleSyncDelayedTask(this, () -> {
+            final org.bukkit.entity.Player player = getServer().getPlayer(uuid);
+            if (player != null) {
+                final List<org.bukkit.entity.Player> players = List.of(player);
+                for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
+                    final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
+                    sendBorderPacket(players, world, shape);
+                }
+            }
+        }, 20L);
+    }
+
+    private void sendBorderPacket(final Collection<? extends org.bukkit.entity.Player> players, final World world, final Shape shape) {
+        final byte[] data;
+        try {
+            data = PluginMessage.writeBorderData(world, shape);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+        for (final org.bukkit.entity.Player player : players) {
+            player.sendPluginMessage(this, PLAY_BORDER_PACKET_ID, data);
+        }
     }
 }

@@ -7,7 +7,7 @@ import org.popcraft.chunky.ChunkyProvider;
 import org.popcraft.chunky.platform.FabricPlayer;
 import org.popcraft.chunky.platform.FabricWorld;
 import org.popcraft.chunky.platform.util.Location;
-import org.popcraft.chunkyborder.event.PlayerTeleportEvent;
+import org.popcraft.chunkyborder.event.server.PlayerTeleportEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;

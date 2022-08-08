@@ -18,6 +18,9 @@
   "icon": "assets/chunky/icon.png",
   "environment": "*",
   "entrypoints": {
+    "client": [
+      "org.popcraft.chunkyborder.ChunkyBorderFabricClient"
+    ],
     "main": [
       "org.popcraft.chunkyborder.MainEntrypoint"
     ],
@@ -29,9 +32,9 @@
     "chunkyborder.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.12.6",
+    "fabricloader": ">=0.14.6",
     "fabric": "*",
-    "minecraft": ">=1.18",
+    "minecraft": ">=1.19",
     "java": ">=17",
     "chunky": ">=${target}"
   },
