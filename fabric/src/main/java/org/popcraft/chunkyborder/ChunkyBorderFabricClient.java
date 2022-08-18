@@ -1,5 +1,6 @@
 package org.popcraft.chunkyborder;
 
+import io.netty.buffer.ByteBufInputStream;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -10,7 +11,6 @@ import org.popcraft.chunkyborder.shape.BorderShape;
 import org.popcraft.chunkyborder.shape.EllipseBorderShape;
 import org.popcraft.chunkyborder.shape.PolygonBorderShape;
 
-import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.Map;
@@ -24,7 +24,7 @@ public class ChunkyBorderFabricClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ClientPlayConnectionEvents.INIT.register((handlerIgnored, clientIgnored) -> ClientPlayNetworking.registerReceiver(PLAY_BORDER_PACKET_ID, (client, handler, buf, responseSender) -> {
-            try (final ByteArrayInputStream in = new ByteArrayInputStream(buf.array()); final DataInputStream data = new DataInputStream(in)) {
+            try (final ByteBufInputStream in = new ByteBufInputStream(buf); final DataInputStream data = new DataInputStream(in)) {
                 final int version = data.readInt();
                 final String worldKey = data.readUTF();
                 if (version == 0) {
