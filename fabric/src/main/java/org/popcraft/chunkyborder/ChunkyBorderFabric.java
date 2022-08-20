@@ -61,15 +61,15 @@ public class ChunkyBorderFabric implements ModInitializer {
     }
 
     private void sendBorderPacket(final Collection<ServerPlayerEntity> players, final World world, final Shape shape) {
-        final PacketByteBuf packet;
+        final PacketByteBuf data;
         try {
-            packet = new PacketByteBuf(Unpooled.buffer().writeBytes(PluginMessage.writeBorderData(world, shape)));
+            data = new PacketByteBuf(Unpooled.wrappedBuffer(PluginMessage.writeBorderData(world, shape)));
         } catch (IOException e) {
             e.printStackTrace();
             return;
         }
         for (final ServerPlayerEntity player : players) {
-            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(PLAY_BORDER_PACKET_ID, packet));
+            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(PLAY_BORDER_PACKET_ID, data));
         }
     }
 }
