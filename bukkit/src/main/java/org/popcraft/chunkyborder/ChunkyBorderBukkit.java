@@ -205,11 +205,13 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         if (!PLAY_BORDER_PACKET_ID.equals(channel)) {
             return;
         }
-        final List<org.bukkit.entity.Player> players = List.of(e.getPlayer());
+        final org.bukkit.entity.Player player = e.getPlayer();
+        final List<org.bukkit.entity.Player> players = List.of(player);
         for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
             final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
             sendBorderPacket(players, world, shape);
         }
+        chunkyBorder.getPlayerData(player.getUniqueId()).setUsingMod(true);
     }
 
     private void sendBorderPacket(final Collection<? extends org.bukkit.entity.Player> players, final World world, final Shape shape) {

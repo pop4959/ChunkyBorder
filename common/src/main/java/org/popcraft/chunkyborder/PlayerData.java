@@ -9,6 +9,7 @@ public class PlayerData {
     private final UUID playerId;
     private Location lastLocation;
     private boolean bypassing;
+    private boolean usingMod;
 
     public PlayerData(final UUID playerId) {
         this.playerId = playerId;
@@ -32,5 +33,13 @@ public class PlayerData {
 
     public void setBypassing(final boolean bypassing) {
         this.bypassing = bypassing;
+    }
+
+    public boolean isUsingMod() {
+        return usingMod;
+    }
+
+    public void setUsingMod(final boolean usingMod) {
+        this.usingMod = usingMod;
     }
 }
