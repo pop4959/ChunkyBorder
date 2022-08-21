@@ -7,6 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerChannelEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -43,7 +44,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.popcraft.chunky.util.Translator.translate;
 
@@ -200,18 +200,16 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    public void onPlayerJoin(final org.bukkit.event.player.PlayerJoinEvent e) {
-        final UUID uuid = e.getPlayer().getUniqueId();
-        getServer().getScheduler().scheduleSyncDelayedTask(this, () -> {
-            final org.bukkit.entity.Player player = getServer().getPlayer(uuid);
-            if (player != null) {
-                final List<org.bukkit.entity.Player> players = List.of(player);
-                for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
-                    final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
-                    sendBorderPacket(players, world, shape);
-                }
-            }
-        }, 20L);
+    public void onPlayerChannel(final PlayerChannelEvent e) {
+        final String channel = e.getChannel();
+        if (!PLAY_BORDER_PACKET_ID.equals(channel)) {
+            return;
+        }
+        final List<org.bukkit.entity.Player> players = List.of(e.getPlayer());
+        for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
+            final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
+            sendBorderPacket(players, world, shape);
+        }
     }
 
     private void sendBorderPacket(final Collection<? extends org.bukkit.entity.Player> players, final World world, final Shape shape) {

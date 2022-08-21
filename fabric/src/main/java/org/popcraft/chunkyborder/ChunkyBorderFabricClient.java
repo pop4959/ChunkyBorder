@@ -4,7 +4,6 @@ import io.netty.buffer.ByteBufInputStream;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.util.Identifier;
 import org.popcraft.chunkyborder.shape.BorderShape;
@@ -23,7 +22,7 @@ public class ChunkyBorderFabricClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        ClientPlayConnectionEvents.INIT.register((handlerIgnored, clientIgnored) -> ClientPlayNetworking.registerReceiver(PLAY_BORDER_PACKET_ID, (client, handler, buf, responseSender) -> {
+        ClientPlayNetworking.registerGlobalReceiver(PLAY_BORDER_PACKET_ID, (client, handler, buf, responseSender) -> {
             try (final ByteBufInputStream in = new ByteBufInputStream(buf); final DataInputStream data = new DataInputStream(in)) {
                 final int version = data.readInt();
                 final String worldKey = data.readUTF();
@@ -53,7 +52,7 @@ public class ChunkyBorderFabricClient implements ClientModInitializer {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }));
+        });
     }
 
     public static void setBorderShape(final String id, final BorderShape borderShape) {
