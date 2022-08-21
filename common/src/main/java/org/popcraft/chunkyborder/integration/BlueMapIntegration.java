@@ -3,25 +3,20 @@ package org.popcraft.chunkyborder.integration;
 import com.flowpowered.math.vector.Vector2d;
 import de.bluecolored.bluemap.api.BlueMapAPI;
 import de.bluecolored.bluemap.api.BlueMapWorld;
-import de.bluecolored.bluemap.api.marker.MarkerAPI;
-import de.bluecolored.bluemap.api.marker.MarkerSet;
-import de.bluecolored.bluemap.api.marker.ShapeMarker;
+import de.bluecolored.bluemap.api.markers.MarkerSet;
+import de.bluecolored.bluemap.api.markers.ShapeMarker;
+import de.bluecolored.bluemap.api.math.Color;
 import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.platform.util.Vector2;
 import org.popcraft.chunky.shape.AbstractEllipse;
 import org.popcraft.chunky.shape.AbstractPolygon;
 import org.popcraft.chunky.shape.Shape;
 
-import java.awt.Color;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class BlueMapIntegration extends AbstractMapIntegration {
-    private static final String MARKERSET_ID = "chunky";
+    private static final String MARKER_SET_ID = "chunky";
     private final List<Runnable> pendingMarkers = new ArrayList<>();
     private BlueMapAPI blueMapAPI;
 
@@ -40,43 +35,32 @@ public class BlueMapIntegration extends AbstractMapIntegration {
             this.pendingMarkers.add(() -> this.addShapeMarker(world, shape));
             return;
         }
-        final MarkerAPI markerAPI;
-        try {
-            markerAPI = blueMapAPI.getMarkerAPI();
-        } catch (IOException e) {
-            return;
-        }
-        final MarkerSet markerSet = markerAPI.createMarkerSet(MARKERSET_ID);
-        markerSet.setLabel(this.label);
-        final de.bluecolored.bluemap.api.marker.Shape blueShape;
+        final MarkerSet markerSet = MarkerSet.builder().label(this.label).build();
+        final de.bluecolored.bluemap.api.math.Shape blueShape;
         if (shape instanceof final AbstractPolygon polygon) {
-            final List<Vector2> polygonPoints = polygon.points();
-            final int size = polygonPoints.size();
-            final Vector2d[] points = new Vector2d[size];
-            for (int i = 0; i < size; ++i) {
-                final Vector2 p = polygonPoints.get(i);
-                points[i] = Vector2d.from(p.getX(), p.getZ());
-            }
-            blueShape = new de.bluecolored.bluemap.api.marker.Shape(points);
+            final de.bluecolored.bluemap.api.math.Shape.Builder shapeBuilder = de.bluecolored.bluemap.api.math.Shape.builder();
+            polygon.points().forEach(p -> shapeBuilder.addPoint(Vector2d.from(p.getX(), p.getZ())));
+            blueShape = shapeBuilder.build();
         } else if (shape instanceof final AbstractEllipse ellipse) {
             final Vector2 center = ellipse.center();
             final Vector2 radii = ellipse.radii();
             final Vector2d centerPos = Vector2d.from(center.getX(), center.getZ());
-            blueShape = de.bluecolored.bluemap.api.marker.Shape.createEllipse(centerPos, radii.getX(), radii.getZ(), 100);
+            blueShape = de.bluecolored.bluemap.api.math.Shape.createEllipse(centerPos, radii.getX(), radii.getZ(), 100);
         } else {
             return;
         }
-        findBlueMapWorldFromPath(blueMapAPI, world).ifPresent(blueWorld -> blueWorld.getMaps().forEach(map -> {
-            final ShapeMarker marker = markerSet.createShapeMarker(world.getName(), map, blueShape, world.getSeaLevel());
-            marker.setColors(new Color(this.color), new Color(0, true));
-            marker.setLabel(this.label);
-            marker.setLineWidth(this.weight);
-        }));
-        try {
-            markerAPI.save();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        final ShapeMarker marker = ShapeMarker.builder()
+                .label(this.label)
+                .shape(blueShape, world.getSeaLevel())
+                .lineColor(new Color(this.color, 1f))
+                .fillColor(new Color(0))
+                .lineWidth(this.weight)
+                .depthTestEnabled(false)
+                .build();
+        markerSet.getMarkers().put(MARKER_SET_ID, marker);
+        blueMapAPI.getWorld(world.getName())
+                .map(BlueMapWorld::getMaps)
+                .ifPresent(maps -> maps.forEach(map -> map.getMarkerSets().put(MARKER_SET_ID, markerSet)));
     }
 
     @Override
@@ -84,14 +68,9 @@ public class BlueMapIntegration extends AbstractMapIntegration {
         if (blueMapAPI == null) {
             return;
         }
-        try {
-            final MarkerAPI markerAPI = blueMapAPI.getMarkerAPI();
-            final MarkerSet markerSet = markerAPI.createMarkerSet(MARKERSET_ID);
-            findBlueMapWorldFromPath(blueMapAPI, world).ifPresent(blueWorld -> blueWorld.getMaps().forEach(map -> markerSet.removeMarker(world.getName())));
-            markerAPI.save();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        blueMapAPI.getWorld(world.getName())
+                .map(BlueMapWorld::getMaps)
+                .ifPresent(maps -> maps.forEach(map -> map.getMarkerSets().remove(MARKER_SET_ID)));
     }
 
     @Override
@@ -99,23 +78,6 @@ public class BlueMapIntegration extends AbstractMapIntegration {
         if (blueMapAPI == null) {
             return;
         }
-        try {
-            final MarkerAPI markerAPI = blueMapAPI.getMarkerAPI();
-            if (markerAPI.removeMarkerSet(MARKERSET_ID)) {
-                markerAPI.save();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private Optional<BlueMapWorld> findBlueMapWorldFromPath(final BlueMapAPI blueMapAPI, final World world) {
-        return blueMapAPI.getWorlds().stream().filter(blueMapWorld -> world.getRegionDirectory().map(Path::getParent).map(worldDirectory -> {
-            try {
-                return Files.isSameFile(blueMapWorld.getSaveFolder(), worldDirectory);
-            } catch (IOException e) {
-                return false;
-            }
-        }).orElse(false)).findFirst();
+        blueMapAPI.getMaps().forEach(map -> map.getMarkerSets().remove(MARKER_SET_ID));
     }
 }
