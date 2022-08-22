@@ -10,6 +10,9 @@ border-options:
   prevent-mob-spawns: false
   prevent-enderpearl: false
   prevent-chorus-fruit: false
+  visualizer-enabled: false
+  visualizer-range: 8
+  visualizer-color: 20A0FF
 map-options:
   enable:
     bluemap: true

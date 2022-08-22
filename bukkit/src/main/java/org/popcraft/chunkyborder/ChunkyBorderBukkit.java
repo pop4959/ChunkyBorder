@@ -2,6 +2,8 @@ package org.popcraft.chunkyborder;
 
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.AdvancedPie;
+import org.bukkit.Color;
+import org.bukkit.Particle;
 import org.bukkit.configuration.file.FileConfigurationOptions;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -18,6 +20,7 @@ import org.popcraft.chunky.platform.BukkitWorld;
 import org.popcraft.chunky.platform.Player;
 import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.platform.util.Location;
+import org.popcraft.chunky.platform.util.Vector3;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunky.util.Translator;
@@ -34,6 +37,7 @@ import org.popcraft.chunkyborder.integration.DynmapIntegration;
 import org.popcraft.chunkyborder.integration.SquaremapIntegration;
 import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
+import org.popcraft.chunkyborder.util.Particles;
 import org.popcraft.chunkyborder.util.PluginMessage;
 
 import java.io.IOException;
@@ -44,6 +48,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.popcraft.chunky.util.Translator.translate;
 
@@ -81,6 +86,28 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         getServer().getMessenger().registerOutgoingPluginChannel(this, PLAY_BORDER_PACKET_ID);
         chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(getServer().getOnlinePlayers(), e.world(), e.shape()));
         startMetrics();
+        final boolean visualizerEnabled = chunkyBorder.getConfig().visualizerEnabled();
+        if (!visualizerEnabled) {
+            return;
+        }
+        final int maxRange = chunkyBorder.getConfig().visualizerRange();
+        Particles.setMaxDistance(maxRange);
+        final AtomicLong tick = new AtomicLong();
+        final Color visualizerColor = Color.fromRGB(Integer.valueOf(chunkyBorder.getConfig().visualizerColor(), 16));
+        final Particle.DustOptions visualizerOptions = new Particle.DustOptions(visualizerColor, 1);
+        getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
+            tick.incrementAndGet();
+            getServer().getOnlinePlayers().forEach(bukkitPlayer -> {
+                final org.bukkit.World bukkitWorld = bukkitPlayer.getWorld();
+                final Player player = new BukkitPlayer(bukkitPlayer);
+                final Shape border = chunkyBorder.getBorder(bukkitWorld.getName()).map(BorderData::getBorder).orElse(null);
+                final boolean isUsingMod = chunkyBorder.getPlayerData(player.getUUID()).isUsingMod();
+                if (border != null && !isUsingMod) {
+                    final List<Vector3> particleLocations = Particles.at(player, border, (tick.longValue() % 20) / 20d);
+                    particleLocations.forEach(location -> bukkitWorld.spawnParticle(Particle.REDSTONE, new org.bukkit.Location(bukkitWorld, location.getX(), location.getY(), location.getZ()), 1, visualizerOptions));
+                }
+            });
+        }, 0L, 1L);
     }
 
     private void startMetrics() {

@@ -62,6 +62,21 @@ public class BukkitConfig implements Config {
     }
 
     @Override
+    public boolean visualizerEnabled() {
+        return chunkyBorderBukkit.getConfig().getBoolean("border-options.visualizer-enabled", false);
+    }
+
+    @Override
+    public int visualizerRange() {
+        return chunkyBorderBukkit.getConfig().getInt("border-options.visualizer-range", 8);
+    }
+
+    @Override
+    public String visualizerColor() {
+        return chunkyBorderBukkit.getConfig().getString("border-options.visualizer-color", "20A0FF");
+    }
+
+    @Override
     public boolean blueMapEnabled() {
         return chunkyBorderBukkit.getConfig().getBoolean("map-options.enable.bluemap", true);
     }

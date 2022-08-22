@@ -8,17 +8,26 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
+import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3f;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.ChunkyProvider;
+import org.popcraft.chunky.platform.FabricPlayer;
+import org.popcraft.chunky.platform.FabricWorld;
+import org.popcraft.chunky.platform.Player;
 import org.popcraft.chunky.platform.World;
+import org.popcraft.chunky.platform.util.Vector3;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.util.Translator;
 import org.popcraft.chunkyborder.command.BorderCommand;
 import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
 import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
+import org.popcraft.chunkyborder.util.Particles;
 import org.popcraft.chunkyborder.util.PluginMessage;
 
 import java.io.IOException;
@@ -58,6 +67,27 @@ public class ChunkyBorderFabric implements ModInitializer {
             }
         });
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
+        final boolean visualizerEnabled = chunkyBorder.getConfig().visualizerEnabled();
+        if (!visualizerEnabled) {
+            return;
+        }
+        final int maxRange = chunkyBorder.getConfig().visualizerRange();
+        Particles.setMaxDistance(maxRange);
+        final Vec3f visualizerColor = new Vec3f(Vec3d.unpackRgb(Integer.valueOf(chunkyBorder.getConfig().visualizerColor(), 16)));
+        ServerTickEvents.END_SERVER_TICK.register(server -> {
+            final long tick = server.getTicks();
+            server.getPlayerManager().getPlayerList().forEach(fabricPlayer -> {
+                final ServerWorld serverWorld = fabricPlayer.getWorld();
+                final World world = new FabricWorld(serverWorld);
+                final Player player = new FabricPlayer(fabricPlayer);
+                final Shape border = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
+                final boolean isUsingMod = chunkyBorder.getPlayerData(player.getUUID()).isUsingMod();
+                if (border != null && !isUsingMod) {
+                    final List<Vector3> particleLocations = Particles.at(player, border, (tick % 20) / 20d);
+                    particleLocations.forEach(location -> serverWorld.spawnParticles(fabricPlayer, new DustParticleEffect(visualizerColor, 1f), false, location.getX(), location.getY(), location.getZ(), 1, 0d, 0d, 0d, 0d));
+                }
+            });
+        });
     }
 
     private void sendBorderPacket(final Collection<ServerPlayerEntity> players, final World world, final Shape shape) {

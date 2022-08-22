@@ -75,6 +75,21 @@ public class FabricConfig implements Config {
     }
 
     @Override
+    public boolean visualizerEnabled() {
+        return Optional.ofNullable(configModel.borderOptions.visualizerEnabled).orElse(false);
+    }
+
+    @Override
+    public int visualizerRange() {
+        return Optional.ofNullable(configModel.borderOptions.visualizerRange).orElse(8);
+    }
+
+    @Override
+    public String visualizerColor() {
+        return Optional.ofNullable(configModel.borderOptions.visualizerColor).orElse("20A0FF");
+    }
+
+    @Override
     public boolean blueMapEnabled() {
         return configModel.mapOptions.enable.getOrDefault("bluemap", true);
     }
@@ -180,6 +195,9 @@ public class FabricConfig implements Config {
         private Boolean preventMobSpawns = false;
         private Boolean preventEnderpearl = false;
         private Boolean preventChorusFruit = false;
+        private Boolean visualizerEnabled = false;
+        private Integer visualizerRange = 8;
+        private String visualizerColor = "20A0FF";
 
         public Integer getCheckInterval() {
             return checkInterval;
@@ -243,6 +261,30 @@ public class FabricConfig implements Config {
 
         public void setPreventChorusFruit(final Boolean preventChorusFruit) {
             this.preventChorusFruit = preventChorusFruit;
+        }
+
+        public Boolean getVisualizerEnabled() {
+            return visualizerEnabled;
+        }
+
+        public void setVisualizerEnabled(final Boolean visualizerEnabled) {
+            this.visualizerEnabled = visualizerEnabled;
+        }
+
+        public Integer getVisualizerRange() {
+            return visualizerRange;
+        }
+
+        public void setVisualizerRange(final Integer visualizerRange) {
+            this.visualizerRange = visualizerRange;
+        }
+
+        public String getVisualizerColor() {
+            return visualizerColor;
+        }
+
+        public void setVisualizerColor(final String visualizerColor) {
+            this.visualizerColor = visualizerColor;
         }
     }
 

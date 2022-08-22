@@ -23,6 +23,12 @@ public interface Config {
 
     boolean preventChorusFruit();
 
+    boolean visualizerEnabled();
+
+    int visualizerRange();
+
+    String visualizerColor();
+
     boolean blueMapEnabled();
 
     boolean dynmapEnabled();

@@ -63,8 +63,8 @@ public class WorldRendererMixin {
                 final double p1z = pointsZ[i];
                 final double p2x = pointsX[i + 1 == pointsX.length ? 0 : i + 1];
                 final double p2z = pointsZ[i + 1 == pointsZ.length ? 0 : i + 1];
-                final Vector2 closestPoint = closestPointOnLine(posX, posZ, p1x, p1z, p2x, p2z);
-                final double distanceToBorder = distanceBetweenPoints(posX, posZ, closestPoint.getX(), closestPoint.getZ());
+                final Vector2 closestPoint = ShapeUtil.closestPointOnLine(posX, posZ, p1x, p1z, p2x, p2z);
+                final double distanceToBorder = ShapeUtil.distanceBetweenPoints(posX, posZ, closestPoint.getX(), closestPoint.getZ());
                 if (distanceToBorder < distanceInsideBorder) {
                     distanceInsideBorder = distanceToBorder;
                 }
@@ -76,7 +76,7 @@ public class WorldRendererMixin {
             final double radiusZ = ellipse.getRadiusZ();
             final double cameraAngle = Math.atan2((radiusX * posZ) - centerZ, (radiusZ * posX) - centerX);
             final Vector2 pointOnBorder = ShapeUtil.pointOnEllipse(centerX, centerZ, radiusX, radiusZ, cameraAngle);
-            distanceInsideBorder = distanceBetweenPoints(posX, posZ, pointOnBorder.getX(), pointOnBorder.getZ());
+            distanceInsideBorder = ShapeUtil.distanceBetweenPoints(posX, posZ, pointOnBorder.getX(), pointOnBorder.getZ());
         }
         if (distanceInsideBorder < renderDistanceBlocks) {
             double alpha = 1.0D - distanceInsideBorder / renderDistanceBlocks;
@@ -110,8 +110,8 @@ public class WorldRendererMixin {
                     final double p1z = pointsZ[i];
                     final double p2x = pointsX[i + 1 == pointsX.length ? 0 : i + 1];
                     final double p2z = pointsZ[i + 1 == pointsZ.length ? 0 : i + 1];
-                    final Vector2 closestPoint = closestPointOnLine(posX, posZ, p1x, p1z, p2x, p2z);
-                    if (distanceBetweenPoints(posX, posZ, closestPoint.getX(), closestPoint.getZ()) > renderDistanceBlocks) {
+                    final Vector2 closestPoint = ShapeUtil.closestPointOnLine(posX, posZ, p1x, p1z, p2x, p2z);
+                    if (ShapeUtil.distanceBetweenPoints(posX, posZ, closestPoint.getX(), closestPoint.getZ()) > renderDistanceBlocks) {
                         continue;
                     }
                     final double dx = p2x - p1x;
@@ -183,7 +183,7 @@ public class WorldRendererMixin {
                     final Vector2 pointA = ShapeUtil.pointOnEllipse(centerX, centerZ, radiusX, radiusZ, a);
                     if (b >= maxAngle) {
                         final Vector2 pointB = ShapeUtil.pointOnEllipse(centerX, centerZ, radiusX, radiusZ, maxAngle);
-                        final float remainingDistance = (float) distanceBetweenPoints(pointA.getX(), pointA.getZ(), pointB.getX(), pointB.getZ());
+                        final float remainingDistance = (float) ShapeUtil.distanceBetweenPoints(pointA.getX(), pointA.getZ(), pointB.getX(), pointB.getZ());
                         textureDistance = remainingDistance * textureSize;
                         addWall(bufferBuilder, posX, posY, posZ, pointA.getX(), pointA.getZ(), pointB.getX(), pointB.getZ(), offset, texturePosition, textureDistance);
                         break;
@@ -212,25 +212,6 @@ public class WorldRendererMixin {
         final double min = Math.min(p1, p2);
         final double max = Math.max(p1, p2);
         return Math.max(min, Math.min(max, value));
-    }
-
-    private Vector2 closestPointOnLine(final double posX, final double posZ, final double p1x, final double p1z, final double p2x, final double p2z) {
-        final double dx = p2x - p1x;
-        final double dz = p2z - p1z;
-        final double perpendicularSlope = -dx / dz;
-        final double p3x, p3z;
-        if (Double.isInfinite(perpendicularSlope)) {
-            p3x = posX;
-            p3z = posZ + 1;
-        } else {
-            p3x = posX + 1;
-            p3z = posZ + perpendicularSlope;
-        }
-        return ShapeUtil.intersection(p1x, p1z, p2x, p2z, posX, posZ, p3x, p3z).orElseThrow(IllegalStateException::new);
-    }
-
-    private double distanceBetweenPoints(final double p1x, final double p1z, final double p2x, final double p2z) {
-        return Math.sqrt(Math.pow(p1x - p2x, 2) + Math.pow(p1z - p2z, 2));
     }
 
     private void addWall(final BufferBuilder bufferBuilder, final double posX, final double posY, final double posZ, final double x1, final double z1, final double x2, final double z2, final float offset, final float texturePos, final float textureDist) {
