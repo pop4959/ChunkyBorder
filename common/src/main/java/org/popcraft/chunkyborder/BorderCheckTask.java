@@ -9,6 +9,7 @@ import org.popcraft.chunky.shape.AbstractPolygon;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.ShapeType;
 import org.popcraft.chunky.shape.ShapeUtil;
+import org.popcraft.chunkyborder.event.border.BorderWrapEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,7 @@ public class BorderCheckTask implements Runnable {
                         if (borderData.isWrap()) {
                             redirect = wrap(borderData, player);
                             playerData.setLastLocation(redirect);
+                            chunkyBorder.getChunky().getEventBus().call(new BorderWrapEvent(player, location, redirect));
                         } else {
                             redirect = playerData.getLastLocation().orElse(location.getWorld().getSpawn());
                             redirect.setYaw(location.getYaw());
