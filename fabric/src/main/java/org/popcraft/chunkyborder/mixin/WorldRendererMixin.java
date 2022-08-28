@@ -185,12 +185,12 @@ public class WorldRendererMixin {
                         final Vector2 pointB = ShapeUtil.pointOnEllipse(centerX, centerZ, radiusX, radiusZ, maxAngle);
                         final float remainingDistance = (float) ShapeUtil.distanceBetweenPoints(pointA.getX(), pointA.getZ(), pointB.getX(), pointB.getZ());
                         textureDistance = remainingDistance * textureSize;
-                        addWall(bufferBuilder, posX, posY, posZ, pointA.getX(), pointA.getZ(), pointB.getX(), pointB.getZ(), offset, texturePosition, textureDistance);
+                        addWall(bufferBuilder, posX, posY, posZ, pointB.getX(), pointB.getZ(), pointA.getX(), pointA.getZ(), offset, texturePosition, textureDistance);
                         break;
                     } else {
                         final Vector2 pointB = ShapeUtil.pointOnEllipse(centerX, centerZ, radiusX, radiusZ, b);
                         textureDistance = textureSize;
-                        addWall(bufferBuilder, posX, posY, posZ, pointA.getX(), pointA.getZ(), pointB.getX(), pointB.getZ(), offset, texturePosition, textureDistance);
+                        addWall(bufferBuilder, posX, posY, posZ, pointB.getX(), pointB.getZ(), pointA.getX(), pointA.getZ(), offset, texturePosition, textureDistance);
                     }
                     a += angle;
                     b += angle;
