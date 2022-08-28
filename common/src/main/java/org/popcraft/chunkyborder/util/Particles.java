@@ -41,22 +41,20 @@ public class Particles {
                     final double startY = Math.floor(pos.getY());
                     final double startZ = unitZ == 0 ? closestPoint.getZ() : Math.floor(closestPoint.getZ() / unitZ) * unitZ;
                     for (double dx = -unitX, dz = -unitZ; ; dx -= unitX, dz -= unitZ) {
-                        final Vector3 startPos = Vector3.of(startX + dx, startY, startZ + dz);
-                        if (!border.isBounding(startPos.getX(), startPos.getZ())) {
-                            break;
-                        }
-                        final List<Vector3> pointsBack = verticalPoints(pos, startPos, offsetPercent, unitX, unitZ);
+                        final double x = startX + dx;
+                        final double z = startZ + dz;
+                        final Vector3 startPos = Vector3.of(x, startY, z);
+                        final List<Vector3> pointsBack = verticalPoints(border, pos, startPos, offsetPercent, unitX, unitZ);
                         if (pointsBack.isEmpty()) {
                             break;
                         }
                         particles.addAll(pointsBack);
                     }
                     for (double dx = 0, dz = 0; ; dx += unitX, dz += unitZ) {
-                        final Vector3 startPos = Vector3.of(startX + dx, startY, startZ + dz);
-                        if (!border.isBounding(startPos.getX(), startPos.getZ())) {
-                            break;
-                        }
-                        final List<Vector3> pointsForward = verticalPoints(pos, startPos, offsetPercent, unitX, unitZ);
+                        final double x = startX + dx;
+                        final double z = startZ + dz;
+                        final Vector3 startPos = Vector3.of(x, startY, z);
+                        final List<Vector3> pointsForward = verticalPoints(border, pos, startPos, offsetPercent, unitX, unitZ);
                         if (pointsForward.isEmpty()) {
                             break;
                         }
@@ -78,7 +76,7 @@ public class Particles {
                 final Vector2 start = ShapeUtil.pointOnEllipse(center.getX(), center.getZ(), radii.getX(), radii.getZ(), da);
                 final Vector2 end = ShapeUtil.pointOnEllipse(center.getX(), center.getZ(), radii.getX(), radii.getZ(), da + angle);
                 final Vector3 startPos = Vector3.of(start.getX(), startY, start.getZ());
-                final List<Vector3> pointsBack = verticalPoints(pos, startPos, offsetPercent, end.getX() - start.getX(), end.getZ() - start.getZ());
+                final List<Vector3> pointsBack = verticalPoints(border, pos, startPos, offsetPercent, end.getX() - start.getX(), end.getZ() - start.getZ());
                 if (pointsBack.isEmpty()) {
                     break;
                 }
@@ -89,7 +87,7 @@ public class Particles {
                 final Vector2 start = ShapeUtil.pointOnEllipse(center.getX(), center.getZ(), radii.getX(), radii.getZ(), da);
                 final Vector2 end = ShapeUtil.pointOnEllipse(center.getX(), center.getZ(), radii.getX(), radii.getZ(), da + angle);
                 final Vector3 startPos = Vector3.of(start.getX(), startY, start.getZ());
-                final List<Vector3> pointsBack = verticalPoints(pos, startPos, offsetPercent, end.getX() - start.getX(), end.getZ() - start.getZ());
+                final List<Vector3> pointsBack = verticalPoints(border, pos, startPos, offsetPercent, end.getX() - start.getX(), end.getZ() - start.getZ());
                 if (pointsBack.isEmpty()) {
                     break;
                 }
@@ -99,7 +97,7 @@ public class Particles {
         return particles;
     }
 
-    private static List<Vector3> verticalPoints(final Vector3 playerPos, final Vector3 startPos, final double offsetPercent, final double unitX, final double unitZ) {
+    private static List<Vector3> verticalPoints(final Shape border, final Vector3 playerPos, final Vector3 startPos, final double offsetPercent, final double unitX, final double unitZ) {
         final List<Vector3> points = new ArrayList<>();
         final double x = startPos.getX();
         final double y = startPos.getY();
@@ -107,6 +105,9 @@ public class Particles {
         final double unitOffsetX = unitX * offsetPercent;
         final double unitOffsetZ = unitZ * offsetPercent;
         final Vector3 start = Vector3.of(x + unitOffsetX, y - offsetPercent, z + unitOffsetZ);
+        if (!border.isBounding(start.getX(), start.getZ())) {
+            return points;
+        }
         if (playerPos.distanceSquared(start) > maxDistanceSquared) {
             return points;
         }
