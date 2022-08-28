@@ -104,7 +104,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
                 final boolean isUsingMod = chunkyBorder.getPlayerData(player.getUUID()).isUsingMod();
                 if (border != null && !isUsingMod) {
                     final List<Vector3> particleLocations = Particles.at(player, border, (tick.longValue() % 20) / 20d);
-                    particleLocations.forEach(location -> bukkitWorld.spawnParticle(Particle.REDSTONE, new org.bukkit.Location(bukkitWorld, location.getX(), location.getY(), location.getZ()), 1, visualizerOptions));
+                    particleLocations.forEach(location -> bukkitPlayer.spawnParticle(Particle.REDSTONE, new org.bukkit.Location(bukkitWorld, location.getX(), location.getY(), location.getZ()), 1, visualizerOptions));
                 }
             });
         }, 0L, 1L);
