@@ -37,6 +37,7 @@ import java.util.List;
 
 public class ChunkyBorderFabric implements ModInitializer {
     private static final Identifier PLAY_BORDER_PACKET_ID = new Identifier("chunky", "border");
+    private ChunkyBorder chunkyBorder;
     private boolean registered;
 
     @Override
@@ -45,7 +46,7 @@ public class ChunkyBorderFabric implements ModInitializer {
         final Path configPath = FabricLoader.getInstance().getConfigDir().resolve("chunkyborder/config.json");
         final Config config = new FabricConfig(configPath);
         final MapIntegrationLoader mapIntegrationLoader = new FabricMapIntegrationLoader();
-        final ChunkyBorder chunkyBorder = new ChunkyBorder(chunky, config, mapIntegrationLoader);
+        this.chunkyBorder = new ChunkyBorder(chunky, config, mapIntegrationLoader);
         Translator.addCustomTranslation("custom_border_message", config.message());
         new BorderInitializationTask(chunkyBorder).run();
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
@@ -67,6 +68,10 @@ public class ChunkyBorderFabric implements ModInitializer {
             }
         });
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
+        startVisualizer();
+    }
+
+    private void startVisualizer() {
         final boolean visualizerEnabled = chunkyBorder.getConfig().visualizerEnabled();
         if (!visualizerEnabled) {
             return;

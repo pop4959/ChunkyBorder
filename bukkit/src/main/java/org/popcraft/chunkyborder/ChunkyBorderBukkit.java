@@ -86,28 +86,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         getServer().getMessenger().registerOutgoingPluginChannel(this, PLAY_BORDER_PACKET_ID);
         chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(getServer().getOnlinePlayers(), e.world(), e.shape()));
         startMetrics();
-        final boolean visualizerEnabled = chunkyBorder.getConfig().visualizerEnabled();
-        if (!visualizerEnabled) {
-            return;
-        }
-        final int maxRange = chunkyBorder.getConfig().visualizerRange();
-        Particles.setMaxDistance(maxRange);
-        final AtomicLong tick = new AtomicLong();
-        final Color visualizerColor = Color.fromRGB(Integer.valueOf(chunkyBorder.getConfig().visualizerColor(), 16));
-        final Particle.DustOptions visualizerOptions = new Particle.DustOptions(visualizerColor, 1);
-        getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
-            tick.incrementAndGet();
-            getServer().getOnlinePlayers().forEach(bukkitPlayer -> {
-                final org.bukkit.World bukkitWorld = bukkitPlayer.getWorld();
-                final Player player = new BukkitPlayer(bukkitPlayer);
-                final Shape border = chunkyBorder.getBorder(bukkitWorld.getName()).map(BorderData::getBorder).orElse(null);
-                final boolean isUsingMod = chunkyBorder.getPlayerData(player.getUUID()).isUsingMod();
-                if (border != null && !isUsingMod) {
-                    final List<Vector3> particleLocations = Particles.at(player, border, (tick.longValue() % 20) / 20d);
-                    particleLocations.forEach(location -> bukkitPlayer.spawnParticle(Particle.REDSTONE, new org.bukkit.Location(bukkitWorld, location.getX(), location.getY(), location.getZ()), 1, visualizerOptions));
-                }
-            });
-        }, 0L, 1L);
+        startVisualizer();
     }
 
     private void startMetrics() {
@@ -149,6 +128,31 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
             }
             return map;
         }));
+    }
+
+    private void startVisualizer() {
+        final boolean visualizerEnabled = chunkyBorder.getConfig().visualizerEnabled();
+        if (!visualizerEnabled) {
+            return;
+        }
+        final int maxRange = chunkyBorder.getConfig().visualizerRange();
+        Particles.setMaxDistance(maxRange);
+        final AtomicLong tick = new AtomicLong();
+        final Color visualizerColor = Color.fromRGB(Integer.valueOf(chunkyBorder.getConfig().visualizerColor(), 16));
+        final Particle.DustOptions visualizerOptions = new Particle.DustOptions(visualizerColor, 1);
+        getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
+            tick.incrementAndGet();
+            getServer().getOnlinePlayers().forEach(bukkitPlayer -> {
+                final org.bukkit.World bukkitWorld = bukkitPlayer.getWorld();
+                final Player player = new BukkitPlayer(bukkitPlayer);
+                final Shape border = chunkyBorder.getBorder(bukkitWorld.getName()).map(BorderData::getBorder).orElse(null);
+                final boolean isUsingMod = chunkyBorder.getPlayerData(player.getUUID()).isUsingMod();
+                if (border != null && !isUsingMod) {
+                    final List<Vector3> particleLocations = Particles.at(player, border, (tick.longValue() % 20) / 20d);
+                    particleLocations.forEach(location -> bukkitPlayer.spawnParticle(Particle.REDSTONE, new org.bukkit.Location(bukkitWorld, location.getX(), location.getY(), location.getZ()), 1, visualizerOptions));
+                }
+            });
+        }, 0L, 1L);
     }
 
     @Override
