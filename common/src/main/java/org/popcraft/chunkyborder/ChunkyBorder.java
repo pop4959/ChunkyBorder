@@ -118,7 +118,11 @@ public class ChunkyBorder {
                         final Location insideBorder = new Location(world, closest.getX(), 0, closest.getZ());
                         insideBorder.add(centerDirection);
                         insideBorder.setDirection(centerDirection);
-                        insideBorder.setY(world.getElevation((int) insideBorder.getX(), (int) insideBorder.getZ()) + 1d);
+                        final int elevation = world.getElevation((int) insideBorder.getX(), (int) insideBorder.getZ());
+                        if (elevation >= world.getMaxElevation()) {
+                            return world.getSpawn();
+                        }
+                        insideBorder.setY(elevation);
                         final Player player = e.getPlayer();
                         if (config.useActionBar()) {
                             player.sendActionBar("custom_border_message");

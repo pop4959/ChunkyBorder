@@ -110,7 +110,11 @@ public class BorderCheckTask implements Runnable {
             location.add(centerDirection);
             location.setDirection(centerDirection);
         }
-        location.setY(location.getWorld().getElevation((int) location.getX(), (int) location.getZ()) + 1d);
+        final int elevation = location.getWorld().getElevation((int) location.getX(), (int) location.getZ());
+        if (elevation >= location.getWorld().getMaxElevation()) {
+            return location.getWorld().getSpawn();
+        }
+        location.setY(elevation);
         return location;
     }
 }
