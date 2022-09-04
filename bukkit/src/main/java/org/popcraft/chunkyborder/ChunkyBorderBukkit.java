@@ -152,14 +152,15 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
                 if (border != null && !isUsingMod) {
                     final List<Vector3> particleLocations = Particles.at(player, border, (tick.longValue() % 20) / 20d);
                     for (final Vector3 location : particleLocations) {
-                        final Block block = bukkitWorld.getBlockAt(new org.bukkit.Location(bukkitWorld, location.getX(), location.getY(), location.getZ()));
+                        final org.bukkit.Location bukkitLocation = new org.bukkit.Location(bukkitWorld, location.getX(), location.getY(), location.getZ());
+                        final Block block = bukkitWorld.getBlockAt(bukkitLocation);
                         final boolean fullyOccluded = block.getType().isOccluding()
                                 && block.getRelative(BlockFace.NORTH).getType().isOccluding()
                                 && block.getRelative(BlockFace.EAST).getType().isOccluding()
                                 && block.getRelative(BlockFace.SOUTH).getType().isOccluding()
                                 && block.getRelative(BlockFace.WEST).getType().isOccluding();
                         if (!fullyOccluded) {
-                            bukkitPlayer.spawnParticle(Particle.REDSTONE, new org.bukkit.Location(bukkitWorld, location.getX(), location.getY(), location.getZ()), 1, visualizerOptions);
+                            bukkitPlayer.spawnParticle(Particle.REDSTONE, bukkitLocation, 1, visualizerOptions);
                         }
                     }
                 }
