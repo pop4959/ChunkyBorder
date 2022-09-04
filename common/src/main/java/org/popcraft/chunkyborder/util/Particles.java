@@ -50,20 +50,20 @@ public class Particles {
                     final double x = startX + dx;
                     final double z = startZ + dz;
                     final Vector3 startPos = Vector3.of(x, startY, z);
-                    final List<Vector3> pointsBack = verticalPoints(pos, startPos, offsetPercent, unitX, unitZ, minX, minZ, maxX, maxZ);
-                    if (pointsBack.isEmpty()) {
+                    if (pos.distanceSquared(startPos) > maxDistanceSquared) {
                         break;
                     }
+                    final List<Vector3> pointsBack = verticalPoints(pos, startPos, offsetPercent, unitX, unitZ, minX, minZ, maxX, maxZ);
                     particles.addAll(pointsBack);
                 }
                 for (double dx = 0, dz = 0; ; dx += unitX, dz += unitZ) {
                     final double x = startX + dx;
                     final double z = startZ + dz;
                     final Vector3 startPos = Vector3.of(x, startY, z);
-                    final List<Vector3> pointsForward = verticalPoints(pos, startPos, offsetPercent, unitX, unitZ, minX, minZ, maxX, maxZ);
-                    if (pointsForward.isEmpty()) {
+                    if (pos.distanceSquared(startPos) > maxDistanceSquared) {
                         break;
                     }
+                    final List<Vector3> pointsForward = verticalPoints(pos, startPos, offsetPercent, unitX, unitZ, minX, minZ, maxX, maxZ);
                     particles.addAll(pointsForward);
                 }
             }
