@@ -15,6 +15,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
+import net.minecraft.util.math.MathHelper;
 import org.popcraft.chunky.platform.util.Vector2;
 import org.popcraft.chunky.shape.ShapeUtil;
 import org.popcraft.chunkyborder.ChunkyBorderFabricClient;
@@ -52,8 +53,8 @@ public class WorldRendererMixin {
         final BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
         final double renderDistanceBlocks = this.client.options.getClampedViewDistance() * 16D;
         final double posX = camera.getPos().x;
-        final double posY = camera.getPos().y;
         final double posZ = camera.getPos().z;
+        final double height = this.client.gameRenderer.method_32796();
         double distanceInsideBorder = Double.MAX_VALUE;
         if (borderShape instanceof final PolygonBorderShape polygon) {
             final double[] pointsX = polygon.getPointsX();
@@ -100,6 +101,7 @@ public class WorldRendererMixin {
             RenderSystem.enablePolygonOffset();
             RenderSystem.disableCull();
             final float offset = (Util.getMeasuringTimeMs() % 3000L) / 3000.0F;
+            float textureVertical = (float) (height - MathHelper.fractionalPart(camera.getPos().y));
             bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
             final float textureSize = 0.5F;
             if (borderShape instanceof final PolygonBorderShape polygon) {
@@ -143,13 +145,13 @@ public class WorldRendererMixin {
                             textureDistance = remainingDistance * textureSize;
                             x2 = x + remainingX;
                             z2 = z + remainingZ;
-                            addWall(bufferBuilder, posX, posY, posZ, x, z, x2, z2, offset, texturePosition, textureDistance);
+                            addWall(bufferBuilder, height, posX, posZ, x, z, x2, z2, offset, texturePosition, textureDistance, textureVertical);
                             break;
                         } else {
                             textureDistance = textureSize;
                             x2 = x + unitX;
                             z2 = z + unitZ;
-                            addWall(bufferBuilder, posX, posY, posZ, x, z, x2, z2, offset, texturePosition, textureDistance);
+                            addWall(bufferBuilder, height, posX, posZ, x, z, x2, z2, offset, texturePosition, textureDistance, textureVertical);
                         }
                         x += unitX;
                         z += unitZ;
@@ -176,7 +178,7 @@ public class WorldRendererMixin {
                     maxAngle = 2 * Math.PI;
                 }
                 final float texturePosition = 0.0F;
-                float textureDistance;
+                float textureHorizontal;
                 double a = minAngle;
                 double b = minAngle + angle;
                 while (a < maxAngle) {
@@ -184,13 +186,13 @@ public class WorldRendererMixin {
                     if (b >= maxAngle) {
                         final Vector2 pointB = ShapeUtil.pointOnEllipse(centerX, centerZ, radiusX, radiusZ, maxAngle);
                         final float remainingDistance = (float) ShapeUtil.distanceBetweenPoints(pointA.getX(), pointA.getZ(), pointB.getX(), pointB.getZ());
-                        textureDistance = remainingDistance * textureSize;
-                        addWall(bufferBuilder, posX, posY, posZ, pointB.getX(), pointB.getZ(), pointA.getX(), pointA.getZ(), offset, texturePosition, textureDistance);
+                        textureHorizontal = remainingDistance * textureSize;
+                        addWall(bufferBuilder, height, posX, posZ, pointB.getX(), pointB.getZ(), pointA.getX(), pointA.getZ(), offset, texturePosition, textureHorizontal, textureVertical);
                         break;
                     } else {
                         final Vector2 pointB = ShapeUtil.pointOnEllipse(centerX, centerZ, radiusX, radiusZ, b);
-                        textureDistance = textureSize;
-                        addWall(bufferBuilder, posX, posY, posZ, pointB.getX(), pointB.getZ(), pointA.getX(), pointA.getZ(), offset, texturePosition, textureDistance);
+                        textureHorizontal = textureSize;
+                        addWall(bufferBuilder, height, posX, posZ, pointB.getX(), pointB.getZ(), pointA.getX(), pointA.getZ(), offset, texturePosition, textureHorizontal, textureVertical);
                     }
                     a += angle;
                     b += angle;
@@ -214,15 +216,15 @@ public class WorldRendererMixin {
         return Math.max(min, Math.min(max, value));
     }
 
-    private void addWall(final BufferBuilder bufferBuilder, final double posX, final double posY, final double posZ, final double x1, final double z1, final double x2, final double z2, final float offset, final float texturePos, final float textureDist) {
-        addVertex(bufferBuilder, posX, posY, posZ, x1, 256, z1, offset + texturePos, offset + 0.0F);
-        addVertex(bufferBuilder, posX, posY, posZ, x2, 256, z2, offset + texturePos + textureDist, offset + 0.0F);
-        addVertex(bufferBuilder, posX, posY, posZ, x2, 0, z2, offset + texturePos + textureDist, offset + 128.0F);
-        addVertex(bufferBuilder, posX, posY, posZ, x1, 0, z1, offset + texturePos, offset + 128.0F);
+    private void addWall(final BufferBuilder bufferBuilder, final double height, final double posX, final double posZ, final double x1, final double z1, final double x2, final double z2, final float offset, final float texturePosition, final float textureHorizontal, final float textureVertical) {
+        addVertex(bufferBuilder, -height, posX, posZ, x1, z1, offset + texturePosition, offset + textureVertical);
+        addVertex(bufferBuilder, -height, posX, posZ, x2, z2, offset + texturePosition + textureHorizontal, offset + textureVertical);
+        addVertex(bufferBuilder, height, posX, posZ, x2, z2, offset + texturePosition + textureHorizontal, offset);
+        addVertex(bufferBuilder, height, posX, posZ, x1, z1, offset + texturePosition, offset);
     }
 
-    private void addVertex(final BufferBuilder bufferBuilder, final double x1, final double y1, final double z1, final double x2, final double y2, final double z2, final float u, final float v) {
-        bufferBuilder.vertex(x2 - x1, y2 - y1, z2 - z1).texture(u, v).next();
+    private void addVertex(final BufferBuilder bufferBuilder, final double height, final double x1, final double z1, final double x2, final double z2, final float u, final float v) {
+        bufferBuilder.vertex(x2 - x1, height, z2 - z1).texture(u, v).next();
     }
 
     @SuppressWarnings("unused")
