@@ -4,6 +4,7 @@ import io.netty.buffer.Unpooled;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.networking.v1.S2CPlayChannelEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.PacketByteBuf;
@@ -50,13 +51,18 @@ public class ChunkyBorderFabric implements ModInitializer {
         Translator.addCustomTranslation("custom_border_message", config.message());
         new BorderInitializationTask(chunkyBorder).run();
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
+                final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
+                sendBorderPacket(List.of(handler.player), world, shape);
+            }
+        });
+        S2CPlayChannelEvents.REGISTER.register((handler, sender, server, channels) -> {
             if (!registered) {
                 chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(server.getPlayerManager().getPlayerList(), e.world(), e.shape()));
                 registered = true;
             }
-            for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
-                final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
-                sendBorderPacket(List.of(handler.player), world, shape);
+            if (channels.contains(PLAY_BORDER_PACKET_ID)) {
+                chunkyBorder.getPlayerData(handler.player.getUuid()).setUsingMod(true);
             }
         });
         ServerLifecycleEvents.SERVER_STOPPING.register(minecraftServer -> chunkyBorder.disable());
