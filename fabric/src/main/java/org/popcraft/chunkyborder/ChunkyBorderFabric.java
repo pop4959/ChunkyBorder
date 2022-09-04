@@ -13,6 +13,7 @@ import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3f;
 import org.popcraft.chunky.Chunky;
@@ -95,7 +96,17 @@ public class ChunkyBorderFabric implements ModInitializer {
                 final boolean isUsingMod = chunkyBorder.getPlayerData(player.getUUID()).isUsingMod();
                 if (border != null && !isUsingMod) {
                     final List<Vector3> particleLocations = Particles.at(player, border, (tick % 20) / 20d);
-                    particleLocations.forEach(location -> serverWorld.spawnParticles(fabricPlayer, new DustParticleEffect(visualizerColor, 1f), false, location.getX(), location.getY(), location.getZ(), 1, 0d, 0d, 0d, 0d));
+                    for (final Vector3 location : particleLocations) {
+                        final BlockPos pos = new BlockPos(location.getX(), location.getY(), location.getZ());
+                        final boolean fullyOccluded = serverWorld.getBlockState(pos).isOpaqueFullCube(serverWorld, pos)
+                                && serverWorld.getBlockState(pos.north()).isOpaqueFullCube(serverWorld, pos.north())
+                                && serverWorld.getBlockState(pos.east()).isOpaqueFullCube(serverWorld, pos.east())
+                                && serverWorld.getBlockState(pos.south()).isOpaqueFullCube(serverWorld, pos.south())
+                                && serverWorld.getBlockState(pos.west()).isOpaqueFullCube(serverWorld, pos.west());
+                        if (!fullyOccluded) {
+                            serverWorld.spawnParticles(fabricPlayer, new DustParticleEffect(visualizerColor, 1f), false, location.getX(), location.getY(), location.getZ(), 1, 0d, 0d, 0d, 0d);
+                        }
+                    }
                 }
             });
         });
