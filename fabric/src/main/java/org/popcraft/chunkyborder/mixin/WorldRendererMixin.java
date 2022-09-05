@@ -91,7 +91,7 @@ public class WorldRendererMixin {
             MatrixStack matrixStack = RenderSystem.getModelViewStack();
             matrixStack.push();
             RenderSystem.applyModelViewMatrix();
-            final int color = 2138367;
+            final int color = Integer.parseInt(ChunkyBorderFabricClient.getConfig().visualizerColor(), 16);
             final float red = (color >> 16 & 255) / 255.0F;
             final float green = (color >> 8 & 255) / 255.0F;
             final float blue = (color & 255) / 255.0F;
