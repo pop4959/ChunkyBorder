@@ -22,6 +22,7 @@ import org.popcraft.chunkyborder.ChunkyBorderFabricClient;
 import org.popcraft.chunkyborder.shape.BorderShape;
 import org.popcraft.chunkyborder.shape.EllipseBorderShape;
 import org.popcraft.chunkyborder.shape.PolygonBorderShape;
+import org.popcraft.chunkyborder.util.BorderColor;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -91,7 +92,7 @@ public class WorldRendererMixin {
             MatrixStack matrixStack = RenderSystem.getModelViewStack();
             matrixStack.push();
             RenderSystem.applyModelViewMatrix();
-            final int color = Integer.parseInt(ChunkyBorderFabricClient.getConfig().visualizerColor(), 16);
+            final int color = BorderColor.getColor();
             final float red = (color >> 16 & 255) / 255.0F;
             final float green = (color >> 8 & 255) / 255.0F;
             final float blue = (color & 255) / 255.0F;
@@ -225,11 +226,5 @@ public class WorldRendererMixin {
 
     private void addVertex(final BufferBuilder bufferBuilder, final double height, final double x1, final double z1, final double x2, final double z2, final float u, final float v) {
         bufferBuilder.vertex(x2 - x1, height, z2 - z1).texture(u, v).next();
-    }
-
-    @SuppressWarnings("unused")
-    private int rainbow() {
-        final float hue = ((System.currentTimeMillis() % 10000000L) / 10000000F) * 360F;
-        return Color.HSBtoRGB(hue, 1F, 1F);
     }
 }

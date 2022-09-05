@@ -39,6 +39,7 @@ import org.popcraft.chunkyborder.integration.DynmapIntegration;
 import org.popcraft.chunkyborder.integration.SquaremapIntegration;
 import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
+import org.popcraft.chunkyborder.util.BorderColor;
 import org.popcraft.chunkyborder.util.Particles;
 import org.popcraft.chunkyborder.util.PluginMessage;
 
@@ -80,6 +81,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
             return;
         }
         Translator.addCustomTranslation("custom_border_message", config.message());
+        BorderColor.parseColor(config.visualizerColor());
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getScheduler().scheduleSyncDelayedTask(this, new BorderInitializationTask(chunkyBorder));
         final long checkInterval = chunkyBorder.getConfig().checkInterval();
@@ -140,8 +142,6 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         final int maxRange = chunkyBorder.getConfig().visualizerRange();
         Particles.setMaxDistance(maxRange);
         final AtomicLong tick = new AtomicLong();
-        final Color visualizerColor = Color.fromRGB(Integer.valueOf(chunkyBorder.getConfig().visualizerColor(), 16));
-        final Particle.DustOptions visualizerOptions = new Particle.DustOptions(visualizerColor, 1);
         getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
             tick.incrementAndGet();
             getServer().getOnlinePlayers().forEach(bukkitPlayer -> {
@@ -151,6 +151,8 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
                 final boolean isUsingMod = chunkyBorder.getPlayerData(player.getUUID()).isUsingMod();
                 if (border != null && !isUsingMod) {
                     final List<Vector3> particleLocations = Particles.at(player, border, (tick.longValue() % 20) / 20d);
+                    final Color visualizerColor = Color.fromRGB(BorderColor.getColor());
+                    final Particle.DustOptions visualizerOptions = new Particle.DustOptions(visualizerColor, 1);
                     for (final Vector3 location : particleLocations) {
                         final org.bukkit.Location bukkitLocation = new org.bukkit.Location(bukkitWorld, location.getX(), location.getY(), location.getZ());
                         final Block block = bukkitWorld.getBlockAt(bukkitLocation);

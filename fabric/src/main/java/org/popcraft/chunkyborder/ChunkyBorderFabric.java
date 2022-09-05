@@ -29,6 +29,7 @@ import org.popcraft.chunkyborder.command.BorderCommand;
 import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
 import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
+import org.popcraft.chunkyborder.util.BorderColor;
 import org.popcraft.chunkyborder.util.Particles;
 import org.popcraft.chunkyborder.util.PluginMessage;
 
@@ -50,6 +51,7 @@ public class ChunkyBorderFabric implements ModInitializer {
         final MapIntegrationLoader mapIntegrationLoader = new FabricMapIntegrationLoader();
         this.chunkyBorder = new ChunkyBorder(chunky, config, mapIntegrationLoader);
         Translator.addCustomTranslation("custom_border_message", config.message());
+        BorderColor.parseColor(config.visualizerColor());
         new BorderInitializationTask(chunkyBorder).run();
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
@@ -85,7 +87,6 @@ public class ChunkyBorderFabric implements ModInitializer {
         }
         final int maxRange = chunkyBorder.getConfig().visualizerRange();
         Particles.setMaxDistance(maxRange);
-        final Vec3f visualizerColor = new Vec3f(Vec3d.unpackRgb(Integer.valueOf(chunkyBorder.getConfig().visualizerColor(), 16)));
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             final long tick = server.getTicks();
             server.getPlayerManager().getPlayerList().forEach(fabricPlayer -> {
@@ -96,6 +97,7 @@ public class ChunkyBorderFabric implements ModInitializer {
                 final boolean isUsingMod = chunkyBorder.getPlayerData(player.getUUID()).isUsingMod();
                 if (border != null && !isUsingMod) {
                     final List<Vector3> particleLocations = Particles.at(player, border, (tick % 20) / 20d);
+                    final Vec3f visualizerColor = new Vec3f(Vec3d.unpackRgb(BorderColor.getColor()));
                     for (final Vector3 location : particleLocations) {
                         final BlockPos pos = new BlockPos(location.getX(), location.getY(), location.getZ());
                         final boolean fullyOccluded = serverWorld.getBlockState(pos).isOpaqueFullCube(serverWorld, pos)

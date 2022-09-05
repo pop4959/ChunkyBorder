@@ -11,6 +11,7 @@ import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.shape.BorderShape;
 import org.popcraft.chunkyborder.shape.EllipseBorderShape;
 import org.popcraft.chunkyborder.shape.PolygonBorderShape;
+import org.popcraft.chunkyborder.util.BorderColor;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -28,6 +29,7 @@ public class ChunkyBorderFabricClient implements ClientModInitializer {
     public void onInitializeClient() {
         final Path configPath = FabricLoader.getInstance().getConfigDir().resolve("chunkyborder/config.json");
         ChunkyBorderFabricClient.setConfig(new FabricConfig(configPath));
+        BorderColor.parseColor(config.visualizerColor());
         ClientPlayNetworking.registerGlobalReceiver(PLAY_BORDER_PACKET_ID, (client, handler, buf, responseSender) -> {
             try (final ByteBufInputStream in = new ByteBufInputStream(buf); final DataInputStream data = new DataInputStream(in)) {
                 final int version = data.readInt();
