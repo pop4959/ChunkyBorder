@@ -7,8 +7,10 @@ import org.popcraft.chunky.platform.Sender;
 import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunkyborder.BorderData;
+import org.popcraft.chunkyborder.BorderWrapType;
 import org.popcraft.chunkyborder.ChunkyBorder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -28,9 +30,10 @@ public class WrapCommand implements ChunkyCommand {
         final World world = selection.world();
         final BorderData currentBorder = borders.get(world.getName());
         if (currentBorder != null) {
-            currentBorder.setWrap(!currentBorder.isWrap());
+            final BorderWrapType wrap = arguments.next().map(BorderWrapType::fromString).orElse(BorderWrapType.NONE);
+            currentBorder.setWrap(wrap.toString());
             sender.sendMessagePrefixed(TranslationKey.FORMAT_BORDER_WRAP,
-                    translate(currentBorder.isWrap() ? TranslationKey.ENABLED : TranslationKey.DISABLED),
+                    translate("wrap_%s".formatted(wrap.toString().toLowerCase())),
                     world.getName()
             );
             chunkyBorder.saveBorders();
@@ -41,6 +44,13 @@ public class WrapCommand implements ChunkyCommand {
 
     @Override
     public List<String> suggestions(final CommandArguments commandArguments) {
+        if (commandArguments.size() == 2) {
+            final List<String> suggestions = new ArrayList<>();
+            for (final BorderWrapType wrapType : BorderWrapType.values()) {
+                suggestions.add(wrapType.name().toLowerCase());
+            }
+            return suggestions;
+        }
         return List.of();
     }
 }

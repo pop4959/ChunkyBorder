@@ -44,7 +44,7 @@ public class AddCommand implements ChunkyCommand {
         final Map<String, BorderData> borders = chunkyBorder.getBorders();
         final BorderData currentBorder = borders.get(world.getName());
         if (currentBorder != null) {
-            borderData.setWrap(currentBorder.isWrap());
+            borderData.setWrap(currentBorder.getWrap());
         }
         borders.put(world.getName(), borderData);
         chunkyBorder.getMapIntegrations().forEach(mapIntegration -> mapIntegration.addShapeMarker(world, borderData.getBorder()));

@@ -132,6 +132,16 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
             }
             return map;
         }));
+        metrics.addCustomChart(new AdvancedPie("borderWrap", () -> {
+            final Map<String, Integer> map = new HashMap<>();
+            if (borders != null) {
+                borders.values().forEach(border -> {
+                    final String wrap = border.getWrap().toLowerCase();
+                    map.put(wrap, map.getOrDefault(wrap, 0) + 1);
+                });
+            }
+            return map;
+        }));
     }
 
     private void startVisualizer() {

@@ -11,7 +11,7 @@ public class BorderData implements Serializable {
     private double centerX, centerZ;
     private double radiusX, radiusZ;
     private String shape;
-    private boolean wrap;
+    private String wrap;
     private transient Shape border;
 
     public BorderData() {
@@ -74,18 +74,23 @@ public class BorderData implements Serializable {
         this.shape = shape;
     }
 
-    public boolean isWrap() {
-        return wrap;
+    public String getWrap() {
+        return BorderWrapType.fromString(wrap).name().toLowerCase();
     }
 
-    public void setWrap(final boolean wrap) {
-        this.wrap = wrap;
+    public void setWrap(final String wrap) {
+        this.wrap = BorderWrapType.fromString(wrap).name().toLowerCase();
+    }
+
+    public BorderWrapType getWrapType() {
+        return BorderWrapType.fromString(getWrap());
     }
 
     public Shape getBorder() {
         if (border == null) {
             this.border = ShapeFactory.getShape(asSelection().build(), false);
             this.shape = border.name();
+            this.wrap = BorderWrapType.fromString(wrap).name().toLowerCase();
         }
         return border;
     }
