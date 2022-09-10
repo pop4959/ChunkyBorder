@@ -100,6 +100,11 @@ public class FabricConfig implements Config {
     }
 
     @Override
+    public boolean pl3xMapEnabled() {
+        return configModel.mapOptions.enable.getOrDefault("pl3xmap", true);
+    }
+
+    @Override
     public boolean squaremapEnabled() {
         return configModel.mapOptions.enable.getOrDefault("squaremap", true);
     }

@@ -87,6 +87,11 @@ public class BukkitConfig implements Config {
     }
 
     @Override
+    public boolean pl3xMapEnabled() {
+        return chunkyBorderBukkit.getConfig().getBoolean("map-options.enable.pl3xmap", true);
+    }
+
+    @Override
     public boolean squaremapEnabled() {
         return chunkyBorderBukkit.getConfig().getBoolean("map-options.enable.squaremap", true);
     }

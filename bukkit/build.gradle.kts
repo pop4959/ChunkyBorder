@@ -1,8 +1,16 @@
+val pl3xmap: String by project
+
 repositories {
     mavenCentral()
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
     maven("https://repo.mikeprimm.com")
     maven("https://jitpack.io")
+    maven {
+        url = uri("https://api.modrinth.com/maven")
+        content {
+            includeGroup("maven.modrinth")
+        }
+    }
 }
 
 dependencies {
@@ -11,6 +19,7 @@ dependencies {
     compileOnly(group = "us.dynmap", name = "DynmapCoreAPI", version = "3.3")
     compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "v2.1.0")
     compileOnly(group = "xyz.jpenilla", name = "squaremap-api", version = "1.1.2")
+    compileOnly(group = "maven.modrinth", name = "pl3xmap", version = pl3xmap)
     implementation(group = "org.bstats", name = "bstats-bukkit", version = "3.0.0")
     implementation(project(":chunkyborder-common"))
 }

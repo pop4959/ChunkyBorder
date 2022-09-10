@@ -29,6 +29,9 @@ public class BorderInitializationTask implements Runnable {
         if (chunkyBorder.getConfig().dynmapEnabled()) {
             mapIntegrationLoader.loadDynmap().ifPresent(mapIntegrations::add);
         }
+        if (chunkyBorder.getConfig().pl3xMapEnabled()) {
+            mapIntegrationLoader.loadPl3xMap().ifPresent(mapIntegrations::add);
+        }
         if (chunkyBorder.getConfig().squaremapEnabled()) {
             mapIntegrationLoader.loadSquaremap().ifPresent(mapIntegrations::add);
         }
