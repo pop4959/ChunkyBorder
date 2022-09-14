@@ -22,10 +22,10 @@ import org.popcraft.chunky.shape.AbstractPolygon;
 import org.popcraft.chunky.shape.Circle;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunkyborder.BorderData;
+import org.popcraft.chunkyborder.ChunkyBorder;
 import org.popcraft.chunkyborder.ChunkyBorderProvider;
 
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class Pl3xMapIntegration extends AbstractMapIntegration {
     private static final Key CHUNKY_KEY = Key.of("chunky");
@@ -36,13 +36,14 @@ public class Pl3xMapIntegration extends AbstractMapIntegration {
 
     public Pl3xMapIntegration(final Pl3xMap pl3xMap) {
         this.pl3xMap = pl3xMap;
-
         pl3xMap.getEventRegistry().register(new EventListener() {
             @EventHandler
+            @SuppressWarnings("unused")
             public void onWorldLoaded(WorldLoadedEvent event) {
-                // re-add markers on world load (happens on pl3xmap reload, etc)
-                ChunkyBorderProvider.get().getChunky().getServer().getWorld(event.getWorld().getName())
-                        .ifPresent(world -> ChunkyBorderProvider.get().getBorder(world.getName()).map(BorderData::getBorder)
+                final ChunkyBorder chunkyBorder = ChunkyBorderProvider.get();
+                chunkyBorder.getChunky().getServer().getWorld(event.getWorld().getName())
+                        .ifPresent(world -> chunkyBorder.getBorder(world.getName())
+                                .map(BorderData::getBorder)
                                 .ifPresent(shape -> addShapeMarker(world, shape)));
             }
         });
@@ -55,7 +56,7 @@ public class Pl3xMapIntegration extends AbstractMapIntegration {
             if (shape instanceof final AbstractPolygon polygon) {
                 marker = Marker.polyline(polygon.points().stream()
                         .map(point -> Point.of(point.getX(), point.getZ()))
-                        .collect(Collectors.toList())).loop();
+                        .toList()).loop();
             } else if (shape instanceof final AbstractEllipse ellipse) {
                 final Vector2 center = ellipse.center();
                 final Vector2 radii = ellipse.radii();
@@ -67,7 +68,6 @@ public class Pl3xMapIntegration extends AbstractMapIntegration {
             } else {
                 return;
             }
-
             getLayer(pl3xmapWorld).clearMarkers().addMarker(CHUNKY_KEY, marker.setOptions(this.markerOptions));
         });
     }
@@ -82,10 +82,19 @@ public class Pl3xMapIntegration extends AbstractMapIntegration {
         pl3xMap.getWorldRegistry().entries().values().forEach(this::resetLayer);
     }
 
+    @Override
+    public void setOptions(final String label, final String color, final boolean hideByDefault, final int priority, final int weight) {
+        super.setOptions(label, color, hideByDefault, priority, weight);
+        this.markerOptions = new Options(new Stroke(this.weight, Colors.setAlpha(0xFF, this.color)), new Fill(false), new Tooltip(this.label), null);
+        this.chunkyLayer = new SimpleLayer(CHUNKY_KEY, () -> this.label)
+                .setDefaultHidden(hideByDefault)
+                .setPriority(1).setZIndex(priority);
+    }
+
     private SimpleLayer getLayer(final World world) {
-        final Layer defaultLayer = world.getLayerRegistry().get(WorldBorderLayer.KEY);
+        final Layer worldBorderLayer = world.getLayerRegistry().get(WorldBorderLayer.KEY);
         if (defaultLayer != null) {
-            this.defaultLayer = defaultLayer;
+            this.defaultLayer = worldBorderLayer;
             world.getLayerRegistry().unregister(WorldBorderLayer.KEY);
         }
         return (SimpleLayer) world.getLayerRegistry().getOrRegister(CHUNKY_KEY, this.chunkyLayer);
@@ -94,15 +103,6 @@ public class Pl3xMapIntegration extends AbstractMapIntegration {
     private void resetLayer(final World world) {
         world.getLayerRegistry().unregister(CHUNKY_KEY);
         world.getLayerRegistry().register(defaultLayer);
-    }
-
-    @Override
-    public void setOptions(final String label, final String color, final boolean hideByDefault, final int priority, final int weight) {
-        super.setOptions(label, color, hideByDefault, priority, weight);
-        this.markerOptions = new Options(new Stroke(this.weight, Colors.setAlpha(0xFF, this.color)), new Fill(false), new Tooltip(this.label), null);
-        this.chunkyLayer = new SimpleLayer(CHUNKY_KEY, () -> this.label)
-                .setDefaultHidden(hideByDefault)
-                .setPriority(1).setZIndex(priority);
     }
 
     private Optional<World> getWorld(org.popcraft.chunky.platform.World world) {
