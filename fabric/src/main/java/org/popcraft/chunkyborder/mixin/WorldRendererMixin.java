@@ -124,8 +124,12 @@ public class WorldRendererMixin {
                     final double unitZ = distance == 0 ? 0 : dz / distance;
                     final double absUnitX = Math.abs(unitX);
                     final double absUnitZ = Math.abs(unitZ);
-                    final double closestPointAdjustedX = unitX == 0 ? closestPoint.getX() : Math.floor(closestPoint.getX() / unitX) * unitX;
-                    final double closestPointAdjustedZ = unitZ == 0 ? closestPoint.getZ() : Math.floor(closestPoint.getZ() / unitZ) * unitZ;
+                    final double distanceFromStartX = Math.abs(closestPoint.getX() - p1x);
+                    final double distanceFromStartZ = Math.abs(closestPoint.getZ() - p1z);
+                    final long unitsFromStartX = absUnitX == 0 ? 0 : (long) (distanceFromStartX / absUnitX);
+                    final long unitsFromStartZ = absUnitZ == 0 ? 0 : (long) (distanceFromStartZ / absUnitZ);
+                    final double closestPointAdjustedX = p1x + unitsFromStartX * unitX;
+                    final double closestPointAdjustedZ = p1z + unitsFromStartZ * unitZ;
                     final double startX = clamp(closestPointAdjustedX - renderDistanceBlocks * unitX, p1x, p2x);
                     final double startZ = clamp(closestPointAdjustedZ - renderDistanceBlocks * unitZ, p1z, p2z);
                     final double stopX = clamp(closestPointAdjustedX + renderDistanceBlocks * unitX, p1x, p2x);

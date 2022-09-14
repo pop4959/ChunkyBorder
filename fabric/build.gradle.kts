@@ -3,7 +3,6 @@ plugins {
 }
 
 val shade: Configuration by configurations.creating
-val pl3xmap: String by project
 
 repositories {
     maven("https://repo.mikeprimm.com")
@@ -22,10 +21,10 @@ dependencies {
     modImplementation(group = "net.fabricmc", name = "fabric-loader", version = "0.14.6")
     modImplementation(group = "net.fabricmc.fabric-api", name = "fabric-api", version = "0.58.0+1.19")
     modImplementation(group = "org.popcraft", name = "chunky-fabric", version = "${project.property("target")}")
-    compileOnly(group = "us.dynmap", name = "DynmapCoreAPI", version = "3.3")
-    compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "v2.1.0")
-    compileOnly(group = "xyz.jpenilla", name = "squaremap-api", version = "1.1.2")
-    compileOnly(group = "maven.modrinth", name = "pl3xmap", version = pl3xmap)
+    compileOnly(group = "us.dynmap", name = "DynmapCoreAPI", version = "${project.property("target_dynmap")}")
+    compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "${project.property("target_bluemap")}")
+    compileOnly(group = "xyz.jpenilla", name = "squaremap-api", version = "${project.property("target_squaremap")}")
+    compileOnly(group = "maven.modrinth", name = "pl3xmap", version = "${project.property("target_pl3xmap")}")
     implementation(project(":chunkyborder-common"))
     shade(project(":chunkyborder-common"))
 }
