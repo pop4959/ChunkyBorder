@@ -1,5 +1,6 @@
 package org.popcraft.chunkyborder;
 
+import net.pl3x.map.Pl3xMap;
 import org.bukkit.plugin.PluginManager;
 import org.dynmap.DynmapCommonAPI;
 import org.popcraft.chunkyborder.integration.BlueMapIntegration;
@@ -56,7 +57,7 @@ public class BukkitMapIntegrationLoader implements MapIntegrationLoader {
         return Optional.ofNullable(pluginManager.getPlugin(PL3XMAP))
                 .map(pl3xmap -> {
                     try {
-                        return new Pl3xMapIntegration(net.pl3x.map.Pl3xMap.api());
+                        return new Pl3xMapIntegration(Pl3xMap.api());
                     } catch (IllegalStateException ignored) {
                         return null;
                     }

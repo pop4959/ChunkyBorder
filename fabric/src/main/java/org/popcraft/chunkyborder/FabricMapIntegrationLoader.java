@@ -1,5 +1,6 @@
 package org.popcraft.chunkyborder;
 
+import net.pl3x.map.Pl3xMap;
 import org.popcraft.chunkyborder.integration.BlueMapIntegration;
 import org.popcraft.chunkyborder.integration.DynmapCommonAPIProvider;
 import org.popcraft.chunkyborder.integration.DynmapIntegration;
@@ -36,7 +37,7 @@ public class FabricMapIntegrationLoader implements MapIntegrationLoader {
     public Optional<MapIntegration> loadPl3xMap() {
         try {
             Class.forName("net.pl3x.map.Pl3xMap");
-            return Optional.of(new Pl3xMapIntegration(net.pl3x.map.Pl3xMap.api()));
+            return Optional.of(new Pl3xMapIntegration(Pl3xMap.api()));
         } catch (ClassNotFoundException | IllegalStateException e) {
             return Optional.empty();
         }
