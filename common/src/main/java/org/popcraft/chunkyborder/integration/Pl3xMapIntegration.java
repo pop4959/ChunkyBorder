@@ -54,16 +54,16 @@ public class Pl3xMapIntegration extends AbstractMapIntegration {
         getWorld(world).ifPresent(pl3xmapWorld -> {
             final Marker<?> marker;
             if (shape instanceof final AbstractPolygon polygon) {
-                marker = Marker.polyline(polygon.points().stream()
+                marker = Marker.polyline(CHUNKY_KEY, polygon.points().stream()
                         .map(point -> Point.of(point.getX(), point.getZ()))
                         .toList()).loop();
             } else if (shape instanceof final AbstractEllipse ellipse) {
                 final Vector2 center = ellipse.center();
                 final Vector2 radii = ellipse.radii();
                 if (ellipse instanceof Circle) {
-                    marker = Marker.circle(center.getX(), center.getZ(), radii.getX());
+                    marker = Marker.circle(CHUNKY_KEY, center.getX(), center.getZ(), radii.getX());
                 } else {
-                    marker = Marker.ellipse(center.getX(), center.getZ(), radii.getX(), radii.getZ());
+                    marker = Marker.ellipse(CHUNKY_KEY, center.getX(), center.getZ(), radii.getX(), radii.getZ());
                 }
             } else {
                 return;
