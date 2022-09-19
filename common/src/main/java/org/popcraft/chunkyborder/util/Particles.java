@@ -36,7 +36,7 @@ public class Particles {
                 if (ShapeUtil.distanceBetweenPoints(pos.getX(), pos.getZ(), closestPoint.getX(), closestPoint.getZ()) > maxDistance) {
                     continue;
                 }
-                final Vector2 unit = Vector2.of(p1.getX() - p2.getX(), p1.getZ() - p2.getZ()).normalize();
+                final Vector2 unit = Vector2.of(p2.getX() - p1.getX(), p2.getZ() - p1.getZ()).normalize();
                 final double unitX = unit.getX();
                 final double unitZ = unit.getZ();
                 final double startX = unitX == 0 ? closestPoint.getX() : Math.floor(closestPoint.getX() / unitX) * unitX;
