@@ -39,9 +39,15 @@ public class Particles {
                 final Vector2 unit = Vector2.of(p2.getX() - p1.getX(), p2.getZ() - p1.getZ()).normalize();
                 final double unitX = unit.getX();
                 final double unitZ = unit.getZ();
-                final double startX = unitX == 0 ? closestPoint.getX() : Math.floor(closestPoint.getX() / unitX) * unitX;
+                final double absUnitX = Math.abs(unitX);
+                final double absUnitZ = Math.abs(unitZ);
+                final double distanceFromStartX = Math.abs(closestPoint.getX() - p1.getX());
+                final double distanceFromStartZ = Math.abs(closestPoint.getZ() - p1.getZ());
+                final long unitsFromStartX = absUnitX == 0 ? 0 : (long) (distanceFromStartX / absUnitX);
+                final long unitsFromStartZ = absUnitZ == 0 ? 0 : (long) (distanceFromStartZ / absUnitZ);
+                final double startX = p1.getX() + unitsFromStartX * unitX;
                 final double startY = Math.floor(pos.getY());
-                final double startZ = unitZ == 0 ? closestPoint.getZ() : Math.floor(closestPoint.getZ() / unitZ) * unitZ;
+                final double startZ = p1.getZ() + unitsFromStartZ * unitZ;
                 final double minX = Math.min(p1.getX(), p2.getX());
                 final double minZ = Math.min(p1.getZ(), p2.getZ());
                 final double maxX = Math.max(p1.getX(), p2.getX());
