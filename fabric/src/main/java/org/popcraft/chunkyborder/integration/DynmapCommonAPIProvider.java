@@ -12,6 +12,10 @@ public class DynmapCommonAPIProvider extends DynmapCommonAPIListener {
         DynmapCommonAPIListener.register(new DynmapCommonAPIProvider());
     }
 
+    public static Optional<DynmapCommonAPI> get() {
+        return Optional.ofNullable(instance);
+    }
+
     @Override
     public synchronized void apiEnabled(final DynmapCommonAPI dynmapCommonAPI) {
         instance = dynmapCommonAPI;
@@ -20,9 +24,5 @@ public class DynmapCommonAPIProvider extends DynmapCommonAPIListener {
     @Override
     public synchronized void apiDisabled(final DynmapCommonAPI api) {
         instance = null;
-    }
-
-    public static Optional<DynmapCommonAPI> get() {
-        return Optional.ofNullable(instance);
     }
 }

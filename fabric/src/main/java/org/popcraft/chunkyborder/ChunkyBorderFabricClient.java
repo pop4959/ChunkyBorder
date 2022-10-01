@@ -25,6 +25,29 @@ public class ChunkyBorderFabricClient implements ClientModInitializer {
     private static final Map<Identifier, BorderShape> borderShapes = new ConcurrentHashMap<>();
     private static Config config;
 
+    public static void setBorderShape(final String id, final BorderShape borderShape) {
+        final Identifier identifier = Identifier.tryParse(id);
+        if (identifier != null) {
+            if (borderShape == null) {
+                ChunkyBorderFabricClient.borderShapes.remove(identifier);
+            } else {
+                ChunkyBorderFabricClient.borderShapes.put(identifier, borderShape);
+            }
+        }
+    }
+
+    public static BorderShape getBorderShape(final Identifier identifier) {
+        return ChunkyBorderFabricClient.borderShapes.get(identifier);
+    }
+
+    public static Config getConfig() {
+        return ChunkyBorderFabricClient.config;
+    }
+
+    public static void setConfig(final Config config) {
+        ChunkyBorderFabricClient.config = config;
+    }
+
     @Override
     public void onInitializeClient() {
         final Path configPath = FabricLoader.getInstance().getConfigDir().resolve("chunkyborder/config.json");
@@ -61,28 +84,5 @@ public class ChunkyBorderFabricClient implements ClientModInitializer {
                 e.printStackTrace();
             }
         });
-    }
-
-    public static void setBorderShape(final String id, final BorderShape borderShape) {
-        final Identifier identifier = Identifier.tryParse(id);
-        if (identifier != null) {
-            if (borderShape == null) {
-                ChunkyBorderFabricClient.borderShapes.remove(identifier);
-            } else {
-                ChunkyBorderFabricClient.borderShapes.put(identifier, borderShape);
-            }
-        }
-    }
-
-    public static BorderShape getBorderShape(final Identifier identifier) {
-        return ChunkyBorderFabricClient.borderShapes.get(identifier);
-    }
-
-    public static void setConfig(final Config config) {
-        ChunkyBorderFabricClient.config = config;
-    }
-
-    public static Config getConfig() {
-        return ChunkyBorderFabricClient.config;
     }
 }
