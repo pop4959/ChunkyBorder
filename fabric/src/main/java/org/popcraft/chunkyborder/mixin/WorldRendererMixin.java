@@ -74,7 +74,7 @@ public class WorldRendererMixin {
             final double centerZ = ellipse.getCenterZ();
             final double radiusX = ellipse.getRadiusX();
             final double radiusZ = ellipse.getRadiusZ();
-            final double cameraAngle = Math.atan2((radiusX * posZ) - centerZ, (radiusZ * posX) - centerX);
+            final double cameraAngle = Math.atan2(radiusX * (posZ - centerZ), radiusZ * (posX - centerX));
             final Vector2 pointOnBorder = ShapeUtil.pointOnEllipse(centerX, centerZ, radiusX, radiusZ, cameraAngle);
             distanceInsideBorder = ShapeUtil.distanceBetweenPoints(posX, posZ, pointOnBorder.getX(), pointOnBorder.getZ());
         }
@@ -171,7 +171,7 @@ public class WorldRendererMixin {
                 final double minAngle;
                 final double maxAngle;
                 if (radius > renderDistanceBlocks) {
-                    final double cameraAngle = Math.atan2((radiusX * posZ) - centerZ, (radiusZ * posX) - centerX);
+                    final double cameraAngle = Math.atan2(radiusX * (posZ - centerZ), radiusZ * (posX - centerX));
                     final double cameraAngleAdjusted = Math.floor(cameraAngle / angle) * angle;
                     final double arcAngle = renderDistanceBlocks / radius;
                     minAngle = cameraAngleAdjusted - arcAngle;

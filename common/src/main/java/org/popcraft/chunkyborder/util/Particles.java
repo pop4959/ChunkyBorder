@@ -78,7 +78,7 @@ public class Particles {
             final Vector2 radii = ellipse.radii();
             final double radius = Math.min(radii.getX(), radii.getZ());
             final double angle = Math.acos((2 * radius * radius - 1) / (2 * radius * radius));
-            final double cameraAngle = Math.atan2((radii.getX() * pos.getZ()) - center.getZ(), (radii.getZ() * pos.getX()) - center.getX());
+            final double cameraAngle = Math.atan2(radii.getX() * (pos.getZ() - center.getZ()), radii.getZ() * (pos.getX() - center.getX()));
             final double startY = Math.floor(pos.getY());
             final double forwardStartAngle = Math.floor(cameraAngle / angle) * angle;
             final double backwardStartAngle = forwardStartAngle - angle;
