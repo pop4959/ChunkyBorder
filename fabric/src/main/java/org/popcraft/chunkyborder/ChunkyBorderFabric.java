@@ -14,8 +14,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3f;
+import org.joml.Vector3f;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.ChunkyProvider;
 import org.popcraft.chunky.platform.FabricPlayer;
@@ -97,7 +96,7 @@ public class ChunkyBorderFabric implements ModInitializer {
                 final boolean isUsingMod = chunkyBorder.getPlayerData(player.getUUID()).isUsingMod();
                 if (border != null && !isUsingMod) {
                     final List<Vector3> particleLocations = Particles.at(player, border, (tick % 20) / 20d);
-                    final Vec3f visualizerColor = new Vec3f(Vec3d.unpackRgb(BorderColor.getColor()));
+                    final Vector3f visualizerColor = new Vector3f(BorderColor.getRGB());
                     for (final Vector3 location : particleLocations) {
                         final BlockPos pos = new BlockPos(location.getX(), location.getY(), location.getZ());
                         final boolean fullyOccluded = serverWorld.getBlockState(pos).isOpaqueFullCube(serverWorld, pos)

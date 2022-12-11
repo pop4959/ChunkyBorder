@@ -95,7 +95,7 @@ public class WorldRendererMixin {
             final float green = (color >> 8 & 255) / 255.0F;
             final float blue = (color & 255) / 255.0F;
             RenderSystem.setShaderColor(red, green, blue, (float) alpha);
-            RenderSystem.setShader(GameRenderer::getPositionTexShader);
+            RenderSystem.setShader(GameRenderer::getPositionTexProgram);
             RenderSystem.polygonOffset(-3.0F, -3.0F);
             RenderSystem.enablePolygonOffset();
             RenderSystem.disableCull();
@@ -201,7 +201,7 @@ public class WorldRendererMixin {
                     b += angle;
                 }
             }
-            BufferRenderer.drawWithShader(bufferBuilder.end());
+            BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
             RenderSystem.enableCull();
             RenderSystem.polygonOffset(0.0F, 0.0F);
             RenderSystem.disablePolygonOffset();

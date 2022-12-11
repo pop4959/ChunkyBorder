@@ -23,4 +23,12 @@ public final class BorderColor {
         final float hue = ((System.currentTimeMillis() % 10000000L) / 10000000F) * 360F;
         return 0xFFFFFF & Color.HSBtoRGB(hue, 1F, 1F);
     }
+
+    public static float[] getRGB() {
+        final int color = getColor();
+        float r = (color >> 16 & 255) / 255F;
+        float g = (color >> 8 & 255) / 255F;
+        float b = (color & 255) / 255F;
+        return new float[]{r, g, b};
+    }
 }
