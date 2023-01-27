@@ -11,6 +11,7 @@ import org.popcraft.chunky.platform.util.Vector2;
 import org.popcraft.chunky.shape.AbstractEllipse;
 import org.popcraft.chunky.shape.AbstractPolygon;
 import org.popcraft.chunky.shape.Shape;
+import org.popcraft.chunkyborder.ChunkyBorderProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,14 +20,21 @@ public class BlueMapIntegration extends AbstractMapIntegration {
     private static final String MARKER_SET_ID = "chunky";
     private final List<Runnable> pendingMarkers = new ArrayList<>();
     private BlueMapAPI blueMapAPI;
+    private boolean reloading;
 
     public BlueMapIntegration() {
         BlueMapAPI.onEnable(blueMap -> {
             this.blueMapAPI = blueMap;
             pendingMarkers.forEach(Runnable::run);
             pendingMarkers.clear();
+            if (reloading) {
+                ChunkyBorderProvider.get().addBorders();
+            }
         });
-        BlueMapAPI.onDisable(blueMap -> this.blueMapAPI = null);
+        BlueMapAPI.onDisable(blueMap -> {
+            this.blueMapAPI = null;
+            this.reloading = true;
+        });
     }
 
     @Override

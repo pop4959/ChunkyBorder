@@ -248,4 +248,17 @@ public class ChunkyBorder {
             LOGGER.warn(() -> translate(TranslationKey.BORDER_SAVE_FAILED));
         }
     }
+
+    public void addBorders() {
+        for (BorderData border : borders.values()) {
+            if (border.getWorld() == null) {
+                continue;
+            }
+            final Optional<World> world = chunky.getServer().getWorld(border.getWorld());
+            if (world.isEmpty()) {
+                continue;
+            }
+            mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(world.get(), border.getBorder()));
+        }
+    }
 }
