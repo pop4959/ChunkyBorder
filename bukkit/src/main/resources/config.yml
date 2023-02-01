@@ -17,6 +17,7 @@ map-options:
   enable:
     bluemap: true
     dynmap: true
+    pl3xmap: true
     squaremap: true
   label: "World Border"
   hide-by-default: false

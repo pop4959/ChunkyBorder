@@ -3,7 +3,7 @@ version: ${version}
 main: ${group}.chunkyborder.ChunkyBorderBukkit
 api-version: "1.13"
 depend: [Chunky]
-softdepend: [dynmap, BlueMap, squaremap]
+softdepend: [dynmap, BlueMap, Pl3xMap, squaremap]
 load: POSTWORLD
 authors: [${author}]
 description: ${description}
