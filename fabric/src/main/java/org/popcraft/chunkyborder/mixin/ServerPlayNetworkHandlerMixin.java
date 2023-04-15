@@ -1,6 +1,6 @@
 package org.popcraft.chunkyborder.mixin;
 
-import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
+import net.minecraft.network.packet.s2c.play.PositionFlag;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.popcraft.chunky.ChunkyProvider;
@@ -28,10 +28,10 @@ public class ServerPlayNetworkHandlerMixin {
     private Location redirect;
 
     @Inject(
-            method = "requestTeleport(DDDFFLjava/util/Set;Z)V",
+            method = "requestTeleport(DDDFFLjava/util/Set;)V",
             at = @At("HEAD")
     )
-    private void requestTeleport(final double x, final double y, final double z, final float yaw, final float pitch, final Set<PlayerPositionLookS2CPacket.Flag> flags, final boolean shouldDismount, final CallbackInfo ci) {
+    private void requestTeleport(final double x, final double y, final double z, final float yaw, final float pitch, final Set<PositionFlag> flags, final CallbackInfo ci) {
         final FabricPlayer fabricPlayer = new FabricPlayer(this.player);
         final FabricWorld world = new FabricWorld(this.player.getWorld());
         final Location location = new Location(world, x, y, z, yaw, pitch);
@@ -42,7 +42,7 @@ public class ServerPlayNetworkHandlerMixin {
     }
 
     @ModifyVariable(
-            method = "requestTeleport(DDDFFLjava/util/Set;Z)V",
+            method = "requestTeleport(DDDFFLjava/util/Set;)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 1
@@ -52,7 +52,7 @@ public class ServerPlayNetworkHandlerMixin {
     }
 
     @ModifyVariable(
-            method = "requestTeleport(DDDFFLjava/util/Set;Z)V",
+            method = "requestTeleport(DDDFFLjava/util/Set;)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 3
@@ -62,7 +62,7 @@ public class ServerPlayNetworkHandlerMixin {
     }
 
     @ModifyVariable(
-            method = "requestTeleport(DDDFFLjava/util/Set;Z)V",
+            method = "requestTeleport(DDDFFLjava/util/Set;)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 5
@@ -72,7 +72,7 @@ public class ServerPlayNetworkHandlerMixin {
     }
 
     @ModifyVariable(
-            method = "requestTeleport(DDDFFLjava/util/Set;Z)V",
+            method = "requestTeleport(DDDFFLjava/util/Set;)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 7
@@ -82,7 +82,7 @@ public class ServerPlayNetworkHandlerMixin {
     }
 
     @ModifyVariable(
-            method = "requestTeleport(DDDFFLjava/util/Set;Z)V",
+            method = "requestTeleport(DDDFFLjava/util/Set;)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 8

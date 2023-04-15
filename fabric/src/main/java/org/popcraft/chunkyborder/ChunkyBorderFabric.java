@@ -98,7 +98,7 @@ public class ChunkyBorderFabric implements ModInitializer {
                     final List<Vector3> particleLocations = Particles.at(player, border, (tick % 20) / 20d);
                     final Vector3f visualizerColor = new Vector3f(BorderColor.getRGB());
                     for (final Vector3 location : particleLocations) {
-                        final BlockPos pos = new BlockPos(location.getX(), location.getY(), location.getZ());
+                        final BlockPos pos = BlockPos.ofFloored(location.getX(), location.getY(), location.getZ());
                         final boolean fullyOccluded = serverWorld.getBlockState(pos).isOpaqueFullCube(serverWorld, pos)
                                 && serverWorld.getBlockState(pos.north()).isOpaqueFullCube(serverWorld, pos.north())
                                 && serverWorld.getBlockState(pos.east()).isOpaqueFullCube(serverWorld, pos.east())
