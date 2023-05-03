@@ -9,5 +9,7 @@ public interface MapIntegrationLoader {
 
     Optional<MapIntegration> loadDynmap();
 
+    Optional<MapIntegration> loadPl3xMap();
+
     Optional<MapIntegration> loadSquaremap();
 }
