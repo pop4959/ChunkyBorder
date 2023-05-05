@@ -36,6 +36,7 @@ import org.popcraft.chunkyborder.event.server.WorldLoadEvent;
 import org.popcraft.chunkyborder.event.server.WorldUnloadEvent;
 import org.popcraft.chunkyborder.integration.BlueMapIntegration;
 import org.popcraft.chunkyborder.integration.DynmapIntegration;
+import org.popcraft.chunkyborder.integration.Pl3xMapIntegration;
 import org.popcraft.chunkyborder.integration.SquaremapIntegration;
 import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
@@ -102,6 +103,8 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
                     map.put("BlueMap", 1);
                 } else if (mapIntegration instanceof DynmapIntegration) {
                     map.put("Dynmap", 1);
+                } else if (mapIntegration instanceof Pl3xMapIntegration) {
+                    map.put("Pl3xMap", 1);
                 } else if (mapIntegration instanceof SquaremapIntegration) {
                     map.put("squaremap", 1);
                 }

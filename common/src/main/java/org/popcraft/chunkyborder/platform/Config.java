@@ -33,6 +33,8 @@ public interface Config {
 
     boolean dynmapEnabled();
 
+    boolean pl3xmapEnabled();
+
     boolean squaremapEnabled();
 
     String label();
