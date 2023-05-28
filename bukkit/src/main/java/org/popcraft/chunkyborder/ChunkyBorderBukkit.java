@@ -19,6 +19,7 @@ import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.ChunkyProvider;
 import org.popcraft.chunky.platform.BukkitPlayer;
 import org.popcraft.chunky.platform.BukkitWorld;
+import org.popcraft.chunky.platform.Folia;
 import org.popcraft.chunky.platform.Player;
 import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.platform.util.Location;
@@ -84,9 +85,19 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         Translator.addCustomTranslation("custom_border_message", config.message());
         BorderColor.parseColor(config.visualizerColor());
         getServer().getPluginManager().registerEvents(this, this);
-        getServer().getScheduler().scheduleSyncDelayedTask(this, new BorderInitializationTask(chunkyBorder));
+        final Runnable borderInitTask = new BorderInitializationTask(chunkyBorder);
+        if (Folia.isFolia()) {
+            Folia.onServerInit(this, borderInitTask);
+        } else {
+            getServer().getScheduler().scheduleSyncDelayedTask(this, borderInitTask);
+        }
         final long checkInterval = chunkyBorder.getConfig().checkInterval();
-        getServer().getScheduler().scheduleSyncRepeatingTask(this, new BorderCheckTask(chunkyBorder), checkInterval, checkInterval);
+        final Runnable borderCheckTask = new BorderCheckTask(chunkyBorder);
+        if (Folia.isFolia()) {
+            Folia.scheduleFixedGlobal(this, borderCheckTask, checkInterval, checkInterval);
+        } else {
+            getServer().getScheduler().scheduleSyncRepeatingTask(this, borderCheckTask, checkInterval, checkInterval);
+        }
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
         getServer().getMessenger().registerOutgoingPluginChannel(this, PLAY_BORDER_PACKET_ID);
         chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(getServer().getOnlinePlayers(), e.world(), e.shape()));
@@ -155,7 +166,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         final int maxRange = chunkyBorder.getConfig().visualizerRange();
         Particles.setMaxDistance(maxRange);
         final AtomicLong tick = new AtomicLong();
-        getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
+        final Runnable borderVisualizerTask = () -> {
             tick.incrementAndGet();
             getServer().getOnlinePlayers().forEach(bukkitPlayer -> {
                 final org.bukkit.World bukkitWorld = bukkitPlayer.getWorld();
@@ -168,25 +179,38 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
                     final Particle.DustOptions visualizerOptions = new Particle.DustOptions(visualizerColor, 1);
                     for (final Vector3 location : particleLocations) {
                         final org.bukkit.Location bukkitLocation = new org.bukkit.Location(bukkitWorld, location.getX(), location.getY(), location.getZ());
-                        final Block block = bukkitWorld.getBlockAt(bukkitLocation);
-                        final boolean fullyOccluded = block.getType().isOccluding()
-                                && block.getRelative(BlockFace.NORTH).getType().isOccluding()
-                                && block.getRelative(BlockFace.EAST).getType().isOccluding()
-                                && block.getRelative(BlockFace.SOUTH).getType().isOccluding()
-                                && block.getRelative(BlockFace.WEST).getType().isOccluding();
-                        if (!fullyOccluded) {
+                        if (Folia.isFolia()) {
                             bukkitPlayer.spawnParticle(Particle.REDSTONE, bukkitLocation, 1, visualizerOptions);
+                        } else {
+                            final Block block = bukkitWorld.getBlockAt(bukkitLocation);
+                            final boolean fullyOccluded = block.getType().isOccluding()
+                                    && block.getRelative(BlockFace.NORTH).getType().isOccluding()
+                                    && block.getRelative(BlockFace.EAST).getType().isOccluding()
+                                    && block.getRelative(BlockFace.SOUTH).getType().isOccluding()
+                                    && block.getRelative(BlockFace.WEST).getType().isOccluding();
+                            if (!fullyOccluded) {
+                                bukkitPlayer.spawnParticle(Particle.REDSTONE, bukkitLocation, 1, visualizerOptions);
+                            }
                         }
                     }
                 }
             });
-        }, 0L, 1L);
+        };
+        if (Folia.isFolia()) {
+            Folia.scheduleFixedGlobal(this, borderVisualizerTask, 1L, 1L);
+        } else {
+            getServer().getScheduler().scheduleSyncRepeatingTask(this, borderVisualizerTask, 1L, 1L);
+        }
     }
 
     @Override
     public void onDisable() {
         HandlerList.unregisterAll((Plugin) this);
-        getServer().getScheduler().cancelTasks(this);
+        if (Folia.isFolia()) {
+            Folia.cancelTasks(this);
+        } else {
+            getServer().getScheduler().cancelTasks(this);
+        }
         getServer().getServicesManager().unregisterAll(this);
         chunkyBorder.disable();
     }
