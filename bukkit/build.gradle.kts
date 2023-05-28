@@ -3,6 +3,7 @@ repositories {
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
     maven("https://repo.mikeprimm.com")
     maven("https://jitpack.io")
+    maven("https://repo.papermc.io/repository/maven-public/")
     exclusiveContent {
         forRepository { maven("https://api.modrinth.com/maven") }
         filter { includeGroup("maven.modrinth") }
@@ -11,6 +12,7 @@ repositories {
 
 dependencies {
     compileOnly(group = "org.spigotmc", name = "spigot-api", version = "1.18.2-R0.1-SNAPSHOT")
+    compileOnly(group = "dev.folia", name = "folia-api", version = "1.19.4-R0.1-SNAPSHOT")
     compileOnly(group = "org.popcraft", name = "chunky-bukkit", version = "${project.property("target")}")
     compileOnly(group = "us.dynmap", name = "DynmapCoreAPI", version = "${project.property("target_dynmap")}")
     compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "${project.property("target_bluemap")}")

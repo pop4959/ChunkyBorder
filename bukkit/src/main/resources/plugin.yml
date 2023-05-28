@@ -7,6 +7,7 @@ softdepend: [dynmap, BlueMap, Pl3xMap, squaremap]
 load: POSTWORLD
 authors: [${author}]
 description: ${description}
+folia-supported: true
 website: https://www.spigotmc.org/resources/chunkyborder.84278/
 permissions:
   chunkyborder.bypass.move:

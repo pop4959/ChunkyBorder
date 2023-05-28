@@ -2,6 +2,7 @@ package org.popcraft.chunkyborder;
 
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.AdvancedPie;
+import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
@@ -13,6 +14,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerRegisterChannelEvent;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.popcraft.chunky.Chunky;
@@ -46,6 +48,7 @@ import org.popcraft.chunkyborder.util.PluginMessage;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -84,9 +87,16 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         Translator.addCustomTranslation("custom_border_message", config.message());
         BorderColor.parseColor(config.visualizerColor());
         getServer().getPluginManager().registerEvents(this, this);
-        getServer().getScheduler().scheduleSyncDelayedTask(this, new BorderInitializationTask(chunkyBorder));
-        final long checkInterval = chunkyBorder.getConfig().checkInterval();
-        getServer().getScheduler().scheduleSyncRepeatingTask(this, new BorderCheckTask(chunkyBorder), checkInterval, checkInterval);
+        try {
+            PluginDescriptionFile.class.getMethod("isFoliaSupported");
+            Bukkit.getGlobalRegionScheduler().execute(this, new BorderInitializationTask(chunkyBorder));
+            final long checkInterval = chunkyBorder.getConfig().checkInterval();
+            Bukkit.getGlobalRegionScheduler().runAtFixedRate(this, t -> new BorderCheckTask(chunkyBorder).run(), checkInterval, checkInterval);
+        } catch (NoSuchMethodException e) {
+            getServer().getScheduler().scheduleSyncDelayedTask(this, new BorderInitializationTask(chunkyBorder));
+            final long checkInterval = chunkyBorder.getConfig().checkInterval();
+            getServer().getScheduler().scheduleSyncRepeatingTask(this, new BorderCheckTask(chunkyBorder), checkInterval, checkInterval);
+        }
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
         getServer().getMessenger().registerOutgoingPluginChannel(this, PLAY_BORDER_PACKET_ID);
         chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(getServer().getOnlinePlayers(), e.world(), e.shape()));
@@ -155,7 +165,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         final int maxRange = chunkyBorder.getConfig().visualizerRange();
         Particles.setMaxDistance(maxRange);
         final AtomicLong tick = new AtomicLong();
-        getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
+        Runnable runnable = () -> {
             tick.incrementAndGet();
             getServer().getOnlinePlayers().forEach(bukkitPlayer -> {
                 final org.bukkit.World bukkitWorld = bukkitPlayer.getWorld();
@@ -180,13 +190,24 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
                     }
                 }
             });
-        }, 0L, 1L);
+        };
+        try {
+            PluginDescriptionFile.class.getMethod("isFoliaSupported");
+            Bukkit.getGlobalRegionScheduler().runAtFixedRate(this, t -> runnable.run(), 0L, 1L);
+        } catch (NoSuchMethodException e) {
+            getServer().getScheduler().scheduleSyncRepeatingTask(this, runnable, 0L, 1L);
+        }
     }
 
     @Override
     public void onDisable() {
         HandlerList.unregisterAll((Plugin) this);
-        getServer().getScheduler().cancelTasks(this);
+        try {
+            PluginDescriptionFile.class.getMethod("isFoliaSupported");
+            Bukkit.getGlobalRegionScheduler().cancelTasks(this);
+        } catch (NoSuchMethodException e) {
+            getServer().getScheduler().cancelTasks(this);
+        }
         getServer().getServicesManager().unregisterAll(this);
         chunkyBorder.disable();
     }
