@@ -1,5 +1,5 @@
 plugins {
-    id("fabric-loom") version "0.12-SNAPSHOT"
+    id("fabric-loom") version "1.2-SNAPSHOT"
 }
 
 val shade: Configuration by configurations.creating
@@ -33,7 +33,7 @@ tasks {
             expand(
                 "id" to rootProject.name,
                 "version" to project.version,
-                "name" to rootProject.name.capitalize(),
+                "name" to project.property("artifactName"),
                 "description" to project.property("description"),
                 "author" to project.property("author"),
                 "github" to project.property("github"),
@@ -48,6 +48,6 @@ tasks {
     }
     remapJar {
         inputFile.set(shadowJar.get().archiveFile)
-        archiveFileName.set("ChunkyBorder-${project.version}.jar")
+        archiveFileName.set("${project.property("artifactName")}-${project.version}.jar")
     }
 }
