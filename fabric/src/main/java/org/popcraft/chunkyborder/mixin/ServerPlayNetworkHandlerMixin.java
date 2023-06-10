@@ -33,7 +33,7 @@ public class ServerPlayNetworkHandlerMixin {
     )
     private void requestTeleport(final double x, final double y, final double z, final float yaw, final float pitch, final Set<PositionFlag> flags, final CallbackInfo ci) {
         final FabricPlayer fabricPlayer = new FabricPlayer(this.player);
-        final FabricWorld world = new FabricWorld(this.player.getWorld());
+        final FabricWorld world = new FabricWorld(this.player.getServerWorld());
         final Location location = new Location(world, x, y, z, yaw, pitch);
         final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(fabricPlayer, location);
         ChunkyProvider.get().getEventBus().call(playerTeleportEvent);

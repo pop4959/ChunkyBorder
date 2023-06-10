@@ -89,7 +89,7 @@ public class ChunkyBorderFabric implements ModInitializer {
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             final long tick = server.getTicks();
             server.getPlayerManager().getPlayerList().forEach(fabricPlayer -> {
-                final ServerWorld serverWorld = fabricPlayer.getWorld();
+                final ServerWorld serverWorld = fabricPlayer.getServerWorld();
                 final World world = new FabricWorld(serverWorld);
                 final Player player = new FabricPlayer(fabricPlayer);
                 final Shape border = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
