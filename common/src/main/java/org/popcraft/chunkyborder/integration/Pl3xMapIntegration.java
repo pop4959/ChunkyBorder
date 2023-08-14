@@ -93,8 +93,11 @@ public class Pl3xMapIntegration extends AbstractMapIntegration {
 
     private void resetLayer(final World world) {
         world.getLayerRegistry().unregister(CHUNKY_KEY);
-        world.getLayerRegistry().register(this.defaultLayers.get(world));
-        this.defaultLayers.remove(world);
+        final Layer defaultLayer = this.defaultLayers.get(world);
+        if (defaultLayer != null) {
+            world.getLayerRegistry().register(defaultLayer);
+            this.defaultLayers.remove(world);
+        }
     }
 
     private Optional<World> getWorld(final org.popcraft.chunky.platform.World world) {
