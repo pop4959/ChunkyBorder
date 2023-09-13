@@ -206,8 +206,10 @@ public class WorldRendererMixin {
             RenderSystem.polygonOffset(0.0F, 0.0F);
             RenderSystem.disablePolygonOffset();
             RenderSystem.disableBlend();
+            RenderSystem.defaultBlendFunc();
             matrixStack.pop();
             RenderSystem.applyModelViewMatrix();
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
             RenderSystem.depthMask(true);
         }
         ci.cancel();
