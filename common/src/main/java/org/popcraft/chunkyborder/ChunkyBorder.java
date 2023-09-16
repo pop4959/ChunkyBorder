@@ -80,6 +80,7 @@ public class ChunkyBorder {
             e.redirect(borderData.map(BorderData::getBorder)
                     .filter(border -> !border.isBounding(e.getLocation().getX(), e.getLocation().getZ()))
                     .filter(border -> !e.getPlayer().hasPermission("chunkyborder.bypass.move"))
+                    .filter(border -> !this.getPlayerData(e.getPlayer().getUUID()).isBypassing())
                     .map(border -> {
                         final Vector2 center = Vector2.of(borderData.get().getCenterX(), borderData.get().getCenterZ());
                         final World world = e.getLocation().getWorld();
@@ -213,8 +214,7 @@ public class ChunkyBorder {
     }
 
     public PlayerData getPlayerData(final UUID uuid) {
-        this.players.computeIfAbsent(uuid, x -> new PlayerData(uuid));
-        return players.get(uuid);
+        return this.players.computeIfAbsent(uuid, x -> new PlayerData(uuid));
     }
 
     public Version getVersion() {
