@@ -53,7 +53,7 @@ public class WorldRendererMixin {
         final double renderDistanceBlocks = this.client.options.getClampedViewDistance() * 16D;
         final double posX = camera.getPos().x;
         final double posZ = camera.getPos().z;
-        final double height = this.client.gameRenderer.method_32796();
+        final double height = this.client.gameRenderer.getFarPlaneDistance();
         double distanceInsideBorder = Double.MAX_VALUE;
         if (borderShape instanceof final PolygonBorderShape polygon) {
             final double[] pointsX = polygon.getPointsX();

@@ -8,7 +8,7 @@ import net.fabricmc.fabric.api.networking.v1.S2CPlayChannelEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
+import net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket;
 import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -116,13 +116,15 @@ public class ChunkyBorderFabric implements ModInitializer {
     private void sendBorderPacket(final Collection<ServerPlayerEntity> players, final World world, final Shape shape) {
         final PacketByteBuf data;
         try {
-            data = new PacketByteBuf(Unpooled.wrappedBuffer(PluginMessage.writeBorderData(world, shape)));
+            data = new PacketByteBuf(Unpooled.buffer())
+                    .writeIdentifier(PLAY_BORDER_PACKET_ID)
+                    .writeBytes(PluginMessage.writeBorderData(world, shape));
         } catch (IOException e) {
             e.printStackTrace();
             return;
         }
         for (final ServerPlayerEntity player : players) {
-            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(PLAY_BORDER_PACKET_ID, data));
+            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(data));
         }
     }
 }
