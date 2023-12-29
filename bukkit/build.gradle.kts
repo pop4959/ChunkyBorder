@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly(group = "org.spigotmc", name = "spigot-api", version = "1.19.4-R0.1-SNAPSHOT")
+    compileOnly(group = "org.spigotmc", name = "spigot-api", version = "1.20.4-R0.1-SNAPSHOT")
     compileOnly(group = "org.popcraft", name = "chunky-bukkit", version = "${project.property("target")}")
     compileOnly(group = "org.popcraft", name = "chunky-folia", version = "${project.property("target")}")
     compileOnly(group = "us.dynmap", name = "DynmapCoreAPI", version = "${project.property("target_dynmap")}")
