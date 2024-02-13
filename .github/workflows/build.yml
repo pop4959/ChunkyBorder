@@ -30,3 +30,8 @@ jobs:
         with:
           name: Fabric
           path: "fabric/build/libs/ChunkyBorder-*.jar"
+      - name: Upload Forge
+        uses: actions/upload-artifact@v4
+        with:
+          name: Forge
+          path: "forge/build/libs/ChunkyBorder-*.jar"
