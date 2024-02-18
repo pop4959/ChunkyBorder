@@ -163,7 +163,7 @@ public class FabricConfig implements Config {
     private static class ConfigModel {
         private Integer version = 1;
         private BorderOptions borderOptions = new BorderOptions();
-        private MapOptions mapOptions = new MapOptions(List.of("bluemap", "dynmap", "squaremap"));
+        private MapOptions mapOptions = new MapOptions(List.of("bluemap", "dynmap", "pl3xmap", "squaremap"));
 
         public Integer getVersion() {
             return version;
