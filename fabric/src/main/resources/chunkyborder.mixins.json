@@ -4,6 +4,7 @@
   "package": "org.popcraft.chunkyborder.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "PlayerManagerMixin",
     "ServerPlayNetworkHandlerMixin"
   ],
   "client": [
