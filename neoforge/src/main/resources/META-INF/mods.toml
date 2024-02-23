@@ -1,0 +1,32 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="GNU GPLv3"
+issueTrackerURL="${github}/issues"
+[[mods]]
+modId="${id}"
+version="${version}"
+displayName="${name}"
+displayURL="${github}"
+logoFile="icon.png"
+authors="${author}"
+description="${description}"
+[[dependencies.chunkyborder]]
+   modId="neoforge"
+   mandatory=true
+   versionRange="[20.2,)"
+   ordering="NONE"
+   side="BOTH"
+[[dependencies.chunkyborder]]
+   modId="minecraft"
+   mandatory=true
+   versionRange="[1.20.2,1.21)"
+   ordering="NONE"
+   side="BOTH"
+[[dependencies.chunkyborder]]
+  modId="chunky"
+  mandatory=true
+  versionRange="[${target},)"
+  ordering="BEFORE"
+  side="BOTH"
+[[mixins]]
+config="chunkyborder.mixins.json"
