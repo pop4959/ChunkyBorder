@@ -8,7 +8,7 @@ import net.fabricmc.fabric.api.networking.v1.S2CPlayChannelEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket;
+import net.minecraft.network.packet.Packet;
 import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -33,6 +33,9 @@ import org.popcraft.chunkyborder.util.Particles;
 import org.popcraft.chunkyborder.util.PluginMessage;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -114,17 +117,33 @@ public class ChunkyBorderFabric implements ModInitializer {
     }
 
     private void sendBorderPacket(final Collection<ServerPlayerEntity> players, final World world, final Shape shape) {
-        final PacketByteBuf data;
         try {
-            data = new PacketByteBuf(Unpooled.buffer())
-                    .writeIdentifier(PLAY_BORDER_PACKET_ID)
-                    .writeBytes(PluginMessage.writeBorderData(world, shape));
+            Packet<?> packet;
+            try {
+                // Backwards compatibility for 1.20.0 - 1.20.1
+                final Class<?> oldCustomPayloadClass = Class.forName("net.minecraft.class_2658"); // net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket
+                final MethodType oldMethodType = MethodType.methodType(void.class, Identifier.class, PacketByteBuf.class);
+                final MethodHandle oldConstructor = MethodHandles.publicLookup().findConstructor(oldCustomPayloadClass, oldMethodType);
+                // Using the old constructor
+                final PacketByteBuf data = new PacketByteBuf(Unpooled.wrappedBuffer(PluginMessage.writeBorderData(world, shape)));
+                try {
+                    packet = (Packet<?>) oldConstructor.invoke(PLAY_BORDER_PACKET_ID, data);
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                    return;
+                }
+            } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException e) {
+                // Using the new constructor
+                final PacketByteBuf data = new PacketByteBuf(Unpooled.buffer())
+                        .writeIdentifier(PLAY_BORDER_PACKET_ID)
+                        .writeBytes(PluginMessage.writeBorderData(world, shape));
+                packet = new net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket(data);
+            }
+            for (final ServerPlayerEntity player : players) {
+                player.networkHandler.sendPacket(packet);
+            }
         } catch (IOException e) {
             e.printStackTrace();
-            return;
-        }
-        for (final ServerPlayerEntity player : players) {
-            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(data));
         }
     }
 }
