@@ -180,7 +180,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
                     for (final Vector3 location : particleLocations) {
                         final org.bukkit.Location bukkitLocation = new org.bukkit.Location(bukkitWorld, location.getX(), location.getY(), location.getZ());
                         if (Folia.isFolia()) {
-                            bukkitPlayer.spawnParticle(Particle.REDSTONE, bukkitLocation, 1, visualizerOptions);
+                            bukkitPlayer.spawnParticle(Particle.DUST, bukkitLocation, 1, visualizerOptions);
                         } else {
                             final Block block = bukkitWorld.getBlockAt(bukkitLocation);
                             final boolean fullyOccluded = block.getType().isOccluding()
@@ -189,7 +189,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
                                     && block.getRelative(BlockFace.SOUTH).getType().isOccluding()
                                     && block.getRelative(BlockFace.WEST).getType().isOccluding();
                             if (!fullyOccluded) {
-                                bukkitPlayer.spawnParticle(Particle.REDSTONE, bukkitLocation, 1, visualizerOptions);
+                                bukkitPlayer.spawnParticle(Particle.DUST, bukkitLocation, 1, visualizerOptions);
                             }
                         }
                     }
