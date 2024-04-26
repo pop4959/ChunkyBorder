@@ -11,7 +11,6 @@ import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
@@ -45,7 +44,7 @@ public class WorldRendererMixin {
     @Inject(method = "renderWorldBorder", at = @At("HEAD"), cancellable = true)
     @SuppressWarnings("java:S3776")
     private void renderWorldBorder(final Camera camera, final CallbackInfo ci) {
-        final BorderShape borderShape = ChunkyBorderFabricClient.getBorderShape(this.world.getDimensionKey().getValue());
+        final BorderShape borderShape = ChunkyBorderFabricClient.getBorderShape(this.world.getRegistryKey().getValue());
         if (borderShape == null) {
             return;
         }
@@ -87,9 +86,6 @@ public class WorldRendererMixin {
             RenderSystem.blendFuncSeparate(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE, GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ZERO);
             RenderSystem.setShaderTexture(0, FORCEFIELD);
             RenderSystem.depthMask(MinecraftClient.isFabulousGraphicsOrBetter());
-            MatrixStack matrixStack = RenderSystem.getModelViewStack();
-            matrixStack.push();
-            RenderSystem.applyModelViewMatrix();
             final int color = BorderColor.getColor();
             final float red = (color >> 16 & 255) / 255.0F;
             final float green = (color >> 8 & 255) / 255.0F;
@@ -207,8 +203,6 @@ public class WorldRendererMixin {
             RenderSystem.disablePolygonOffset();
             RenderSystem.disableBlend();
             RenderSystem.defaultBlendFunc();
-            matrixStack.pop();
-            RenderSystem.applyModelViewMatrix();
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
             RenderSystem.depthMask(true);
         }

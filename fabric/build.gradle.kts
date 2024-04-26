@@ -14,10 +14,10 @@ repositories {
 }
 
 dependencies {
-    minecraft(group = "com.mojang", name = "minecraft", version = "1.20.2")
-    mappings(group = "net.fabricmc", name = "yarn", version = "1.20.2+build.4", classifier = "v2")
-    modImplementation(group = "net.fabricmc", name = "fabric-loader", version = "0.14.22")
-    modImplementation(group = "net.fabricmc.fabric-api", name = "fabric-api", version = "0.89.3+1.20.2")
+    minecraft(group = "com.mojang", name = "minecraft", version = "1.20.5")
+    mappings(group = "net.fabricmc", name = "yarn", version = "1.20.5+build.1", classifier = "v2")
+    modImplementation(group = "net.fabricmc", name = "fabric-loader", version = "0.15.10")
+    modImplementation(group = "net.fabricmc.fabric-api", name = "fabric-api", version = "0.97.6+1.20.5")
     modImplementation(group = "org.popcraft", name = "chunky-fabric", version = "${project.property("target")}")
     compileOnly(group = "us.dynmap", name = "DynmapCoreAPI", version = "${project.property("target_dynmap")}")
     compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "${project.property("target_bluemap")}")

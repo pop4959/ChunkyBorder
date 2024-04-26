@@ -1,18 +1,17 @@
 package org.popcraft.chunkyborder;
 
-import io.netty.buffer.Unpooled;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.S2CPlayChannelEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket;
 import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import org.joml.Vector3f;
 import org.popcraft.chunky.Chunky;
@@ -26,19 +25,17 @@ import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.util.Translator;
 import org.popcraft.chunkyborder.command.BorderCommand;
 import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
+import org.popcraft.chunkyborder.packet.BorderPayload;
 import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
 import org.popcraft.chunkyborder.util.BorderColor;
 import org.popcraft.chunkyborder.util.Particles;
-import org.popcraft.chunkyborder.util.PluginMessage;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 
 public class ChunkyBorderFabric implements ModInitializer {
-    private static final Identifier PLAY_BORDER_PACKET_ID = new Identifier("chunky", "border");
     private ChunkyBorder chunkyBorder;
     private boolean registered;
 
@@ -52,6 +49,7 @@ public class ChunkyBorderFabric implements ModInitializer {
         Translator.addCustomTranslation("custom_border_message", config.message());
         BorderColor.parseColor(config.visualizerColor());
         new BorderInitializationTask(chunkyBorder).run();
+        PayloadTypeRegistry.playS2C().register(BorderPayload.ID, CustomPayload.codecOf(BorderPayload::write, BorderPayload::new));
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
                 final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
@@ -63,7 +61,7 @@ public class ChunkyBorderFabric implements ModInitializer {
                 chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(server.getPlayerManager().getPlayerList(), e.world(), e.shape()));
                 registered = true;
             }
-            if (channels.contains(PLAY_BORDER_PACKET_ID)) {
+            if (channels.contains(BorderPayload.ID.id())) {
                 chunkyBorder.getPlayerData(handler.player.getUuid()).setUsingMod(true);
             }
         });
@@ -114,17 +112,8 @@ public class ChunkyBorderFabric implements ModInitializer {
     }
 
     private void sendBorderPacket(final Collection<ServerPlayerEntity> players, final World world, final Shape shape) {
-        final PacketByteBuf data;
-        try {
-            data = new PacketByteBuf(Unpooled.buffer())
-                    .writeIdentifier(PLAY_BORDER_PACKET_ID)
-                    .writeBytes(PluginMessage.writeBorderData(world, shape));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
         for (final ServerPlayerEntity player : players) {
-            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(data));
+            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(new BorderPayload(world, shape)));
         }
     }
 }

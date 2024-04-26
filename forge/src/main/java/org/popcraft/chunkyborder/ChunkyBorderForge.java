@@ -166,15 +166,9 @@ public class ChunkyBorderForge {
     }
 
     private void sendBorderPacket(final Collection<ServerPlayer> players, final World world, final Shape shape) {
-        final FriendlyByteBuf data;
-        try {
-            data = new FriendlyByteBuf(Unpooled.buffer())
-                    .writeResourceLocation(PLAY_BORDER_PACKET_ID)
-                    .writeBytes(PluginMessage.writeBorderData(world, shape));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
+        final FriendlyByteBuf data = new FriendlyByteBuf(Unpooled.buffer())
+                .writeResourceLocation(PLAY_BORDER_PACKET_ID)
+                .writeBytes(PluginMessage.writeBorder(world, shape));
         for (final ServerPlayer player : players) {
             player.connection.send(new ClientboundCustomPayloadPacket(data));
         }

@@ -45,7 +45,6 @@ import org.popcraft.chunkyborder.util.BorderColor;
 import org.popcraft.chunkyborder.util.Particles;
 import org.popcraft.chunkyborder.util.PluginMessage;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -298,13 +297,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
     }
 
     private void sendBorderPacket(final Collection<? extends org.bukkit.entity.Player> players, final World world, final Shape shape) {
-        final byte[] data;
-        try {
-            data = PluginMessage.writeBorderData(world, shape);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
+        final byte[] data = PluginMessage.writeBorder(world, shape);
         for (final org.bukkit.entity.Player player : players) {
             player.sendPluginMessage(this, PLAY_BORDER_PACKET_ID, data);
         }
