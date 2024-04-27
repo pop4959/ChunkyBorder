@@ -15,9 +15,11 @@ import org.popcraft.chunky.platform.util.Vector2;
 import org.popcraft.chunky.platform.util.Vector3;
 import org.popcraft.chunky.shape.AbstractEllipse;
 import org.popcraft.chunky.shape.AbstractPolygon;
+import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.ShapeUtil;
 import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunky.util.Version;
+import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
 import org.popcraft.chunkyborder.event.server.BlockPlaceEvent;
 import org.popcraft.chunkyborder.event.server.CreatureSpawnEvent;
 import org.popcraft.chunkyborder.event.server.PlayerQuitEvent;
@@ -74,7 +76,10 @@ public class ChunkyBorder {
 
     private void subscribeEvents() {
         final EventBus eventBus = chunky.getEventBus();
-        eventBus.subscribe(ReloadCommandEvent.class, e -> getConfig().reload());
+        eventBus.subscribe(ReloadCommandEvent.class, e -> {
+            getConfig().reload();
+            reloadBorders();
+        });
         eventBus.subscribe(PlayerTeleportEvent.class, e -> {
             final Optional<BorderData> borderData = getBorder(e.getLocation().getWorld().getName());
             e.redirect(borderData.map(BorderData::getBorder)
@@ -226,7 +231,7 @@ public class ChunkyBorder {
     }
 
     public Map<String, BorderData> loadBorders() {
-        try (FileReader fileReader = new FileReader(new File(config.getDirectory().toFile(), "borders.json"))) {
+        try (final FileReader fileReader = new FileReader(new File(config.getDirectory().toFile(), "borders.json"))) {
             final Map<String, BorderData> loadedBorders = new Gson().fromJson(fileReader, new TypeToken<Map<String, BorderData>>() {
             }.getType());
             if (loadedBorders != null) {
@@ -250,15 +255,24 @@ public class ChunkyBorder {
     }
 
     public void addBorders() {
-        for (BorderData border : borders.values()) {
-            if (border.getWorld() == null) {
+        for (final BorderData borderData : borders.values()) {
+            final String worldName = borderData.getWorld();
+            if (worldName == null) {
                 continue;
             }
-            final Optional<World> world = chunky.getServer().getWorld(border.getWorld());
-            if (world.isEmpty()) {
+            final World world = chunky.getServer().getWorld(worldName).orElse(null);
+            if (world == null) {
                 continue;
             }
-            mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(world.get(), border.getBorder()));
+            final Shape border = borderData.getBorder();
+            mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(world, border));
+            chunky.getEventBus().call(new BorderChangeEvent(world, border));
         }
+    }
+
+    public void reloadBorders() {
+        borders.clear();
+        borders.putAll(loadBorders());
+        addBorders();
     }
 }
