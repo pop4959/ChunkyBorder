@@ -5,7 +5,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.Util;
@@ -45,7 +44,7 @@ public class LevelRendererMixin {
     @Inject(method = "renderWorldBorder", at = @At("HEAD"), cancellable = true)
     @SuppressWarnings("java:S3776")
     private void renderWorldBorder(final Camera camera, final CallbackInfo ci) {
-        final BorderShape borderShape = ChunkyBorderNeoForge.getBorderShape(this.level.dimensionTypeId().location());
+        final BorderShape borderShape = ChunkyBorderNeoForge.getBorderShape(this.level.dimension().location());
         if (borderShape == null) {
             return;
         }
@@ -87,9 +86,6 @@ public class LevelRendererMixin {
             RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
             RenderSystem.setShaderTexture(0, FORCEFIELD_LOCATION);
             RenderSystem.depthMask(Minecraft.useShaderTransparency());
-            PoseStack poseStack = RenderSystem.getModelViewStack();
-            poseStack.pushPose();
-            RenderSystem.applyModelViewMatrix();
             final int color = BorderColor.getColor();
             final float red = (color >> 16 & 255) / 255.0F;
             final float green = (color >> 8 & 255) / 255.0F;
@@ -207,8 +203,6 @@ public class LevelRendererMixin {
             RenderSystem.disablePolygonOffset();
             RenderSystem.disableBlend();
             RenderSystem.defaultBlendFunc();
-            poseStack.popPose();
-            RenderSystem.applyModelViewMatrix();
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
             RenderSystem.depthMask(true);
         }

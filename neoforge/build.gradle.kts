@@ -15,9 +15,9 @@ repositories {
 }
 
 dependencies {
-    minecraft(group = "com.mojang", name = "minecraft", version = "1.20.2")
+    minecraft(group = "com.mojang", name = "minecraft", version = "1.20.5")
     mappings(loom.officialMojangMappings())
-    neoForge(group = "net.neoforged", name = "neoforge", version = "20.2.88")
+    neoForge(group = "net.neoforged", name = "neoforge", version = "20.5.5-beta")
     modImplementation(group = "org.popcraft", name = "chunky-neoforge", version = "${project.property("target")}")
     compileOnly(group = "us.dynmap", name = "DynmapCoreAPI", version = "${project.property("target_dynmap")}")
     compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "${project.property("target_bluemap")}")
@@ -29,7 +29,7 @@ dependencies {
 
 tasks {
     processResources {
-        filesMatching("META-INF/mods.toml") {
+        filesMatching("META-INF/neoforge.mods.toml") {
             expand(
                 "id" to rootProject.name,
                 "version" to project.version,

@@ -1,14 +1,14 @@
 package org.popcraft.chunkyborder;
 
-import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLPaths;
@@ -17,6 +17,7 @@ import net.neoforged.neoforge.event.TickEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import org.joml.Vector3f;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.ChunkyProvider;
@@ -29,10 +30,12 @@ import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.util.Translator;
 import org.popcraft.chunkyborder.command.BorderCommand;
 import org.popcraft.chunkyborder.integration.DynmapCommonAPIProvider;
+import org.popcraft.chunkyborder.packet.BorderPayload;
 import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
 import org.popcraft.chunkyborder.shape.BorderShape;
 import org.popcraft.chunkyborder.util.BorderColor;
+import org.popcraft.chunkyborder.util.ClientBorder;
 import org.popcraft.chunkyborder.util.Particles;
 import org.popcraft.chunkyborder.util.PluginMessage;
 
@@ -41,18 +44,18 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 @Mod(ChunkyBorderNeoForge.MOD_ID)
 public class ChunkyBorderNeoForge {
     public static final String MOD_ID = "chunkyborder";
-    private static final ResourceLocation PLAY_BORDER_PACKET_ID = new ResourceLocation("chunky", "border");
     private static final Map<ResourceLocation, BorderShape> borderShapes = new ConcurrentHashMap<>();
     private static Config config;
     private ChunkyBorder chunkyBorder;
     private BorderCheckTask borderCheckTask;
     private boolean initialized;
 
-    public ChunkyBorderNeoForge() {
+    public ChunkyBorderNeoForge(final IEventBus modBus) {
         try {
             Class.forName("org.dynmap.DynmapCommonAPI");
             new DynmapCommonAPIProvider();
@@ -60,6 +63,24 @@ public class ChunkyBorderNeoForge {
             // Dynmap is not installed
         }
         NeoForge.EVENT_BUS.register(this);
+        modBus.addListener((Consumer<RegisterPayloadHandlersEvent>) event -> event.registrar(String.valueOf(PluginMessage.VERSION))
+                .optional()
+                .playToClient(BorderPayload.ID, CustomPacketPayload.codec(BorderPayload::write, BorderPayload::new), (borderPayload, context) -> {
+                    final ClientBorder clientBorder = borderPayload.getBorder();
+                    if (clientBorder.worldKey() == null) {
+                        return;
+                    }
+                    final ResourceLocation identifier = ResourceLocation.tryParse(clientBorder.worldKey());
+                    if (identifier == null) {
+                        return;
+                    }
+                    final BorderShape borderShape = clientBorder.borderShape();
+                    if (borderShape == null) {
+                        ChunkyBorderNeoForge.borderShapes.remove(identifier);
+                    } else {
+                        ChunkyBorderNeoForge.borderShapes.put(identifier, borderShape);
+                    }
+                }));
     }
 
     @SubscribeEvent
@@ -135,22 +156,11 @@ public class ChunkyBorderNeoForge {
     }
 
     private void sendBorderPacket(final Collection<ServerPlayer> players, final World world, final Shape shape) {
-        final FriendlyByteBuf data = new FriendlyByteBuf(Unpooled.buffer())
-                .writeResourceLocation(PLAY_BORDER_PACKET_ID)
-                .writeBytes(PluginMessage.writeBorder(world, shape));
         for (final ServerPlayer player : players) {
-            player.connection.send(new ClientboundCustomPayloadPacket(data));
-        }
-    }
-
-    public static void setBorderShape(final String id, final BorderShape borderShape) {
-        final ResourceLocation identifier = ResourceLocation.tryParse(id);
-        if (identifier != null) {
-            if (borderShape == null) {
-                ChunkyBorderNeoForge.borderShapes.remove(identifier);
-            } else {
-                ChunkyBorderNeoForge.borderShapes.put(identifier, borderShape);
+            if (!player.connection.hasChannel(BorderPayload.ID)) {
+                continue;
             }
+            player.connection.send(new ClientboundCustomPayloadPacket(new BorderPayload(world, shape)));
         }
     }
 
