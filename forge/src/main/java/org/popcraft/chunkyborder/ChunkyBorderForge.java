@@ -1,10 +1,8 @@
 package org.popcraft.chunkyborder;
 
 import io.netty.buffer.ByteBufInputStream;
-import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -34,6 +32,7 @@ import org.popcraft.chunky.util.Translator;
 import org.popcraft.chunkyborder.command.BorderCommand;
 import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
 import org.popcraft.chunkyborder.integration.DynmapCommonAPIProvider;
+import org.popcraft.chunkyborder.packet.BorderPayload;
 import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
 import org.popcraft.chunkyborder.shape.BorderShape;
@@ -41,7 +40,6 @@ import org.popcraft.chunkyborder.shape.EllipseBorderShape;
 import org.popcraft.chunkyborder.shape.PolygonBorderShape;
 import org.popcraft.chunkyborder.util.BorderColor;
 import org.popcraft.chunkyborder.util.Particles;
-import org.popcraft.chunkyborder.util.PluginMessage;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -166,11 +164,8 @@ public class ChunkyBorderForge {
     }
 
     private void sendBorderPacket(final Collection<ServerPlayer> players, final World world, final Shape shape) {
-        final FriendlyByteBuf data = new FriendlyByteBuf(Unpooled.buffer())
-                .writeResourceLocation(PLAY_BORDER_PACKET_ID)
-                .writeBytes(PluginMessage.writeBorder(world, shape));
         for (final ServerPlayer player : players) {
-            player.connection.send(new ClientboundCustomPayloadPacket(data));
+            player.connection.send(new ClientboundCustomPayloadPacket(new BorderPayload(world, shape)));
         }
     }
 
