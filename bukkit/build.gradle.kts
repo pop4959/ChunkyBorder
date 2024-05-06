@@ -35,5 +35,8 @@ tasks {
     shadowJar {
         minimize()
         relocate("org.bstats", "${project.group}.${rootProject.name}.lib.bstats")
+        manifest {
+            attributes("paperweight-mappings-namespace" to "mojang")
+        }
     }
 }
