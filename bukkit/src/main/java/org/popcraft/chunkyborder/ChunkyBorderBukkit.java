@@ -44,7 +44,7 @@ import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
 import org.popcraft.chunkyborder.util.BorderColor;
 import org.popcraft.chunkyborder.util.Particles;
 import org.popcraft.chunkyborder.util.PluginMessage;
-import util.EnumUtil;
+import org.popcraft.chunkyborder.util.EnumUtil;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;

@@ -1,4 +1,4 @@
-package util;
+package org.popcraft.chunkyborder.util;
 
 import java.util.Optional;
 
