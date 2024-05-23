@@ -6,7 +6,9 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.S2CPlayChannelEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.impl.networking.PayloadTypeRegistryImpl;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket;
 import net.minecraft.particle.DustParticleEffect;
@@ -39,6 +41,7 @@ public class ChunkyBorderFabric implements ModInitializer {
     private ChunkyBorder chunkyBorder;
     private boolean registered;
 
+    @SuppressWarnings("UnstableApiUsage")
     @Override
     public void onInitialize() {
         final Chunky chunky = ChunkyProvider.get();
@@ -49,7 +52,12 @@ public class ChunkyBorderFabric implements ModInitializer {
         Translator.addCustomTranslation("custom_border_message", config.message());
         BorderColor.parseColor(config.visualizerColor());
         new BorderInitializationTask(chunkyBorder).run();
-        PayloadTypeRegistry.playS2C().register(BorderPayload.ID, CustomPayload.codecOf(BorderPayload::write, BorderPayload::new));
+        final PayloadTypeRegistry<RegistryByteBuf> payloadTypeRegistry = PayloadTypeRegistry.playS2C();
+        if (payloadTypeRegistry instanceof final PayloadTypeRegistryImpl<RegistryByteBuf> payloadTypeRegistryImpl) {
+            if (payloadTypeRegistryImpl.get(BorderPayload.ID) == null) {
+                PayloadTypeRegistry.playS2C().register(BorderPayload.ID, CustomPayload.codecOf(BorderPayload::write, BorderPayload::new));
+            }
+        }
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
                 final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
