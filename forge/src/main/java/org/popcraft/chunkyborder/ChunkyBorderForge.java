@@ -1,9 +1,9 @@
 package org.popcraft.chunkyborder;
 
-import io.netty.buffer.ByteBufInputStream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -12,13 +12,14 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.network.Channel;
+import net.minecraftforge.network.ChannelBuilder;
 import org.joml.Vector3f;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.ChunkyProvider;
@@ -36,13 +37,10 @@ import org.popcraft.chunkyborder.packet.BorderPayload;
 import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
 import org.popcraft.chunkyborder.shape.BorderShape;
-import org.popcraft.chunkyborder.shape.EllipseBorderShape;
-import org.popcraft.chunkyborder.shape.PolygonBorderShape;
 import org.popcraft.chunkyborder.util.BorderColor;
+import org.popcraft.chunkyborder.util.ClientBorder;
 import org.popcraft.chunkyborder.util.Particles;
 
-import java.io.DataInputStream;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -53,10 +51,32 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ChunkyBorderForge {
     public static final String MOD_ID = "chunkyborder";
     private static final ResourceLocation PLAY_BORDER_PACKET_ID = new ResourceLocation("chunky", "border");
+    public static final Channel<CustomPacketPayload> PLAY_BORDER_CHANNEL = ChannelBuilder.named(PLAY_BORDER_PACKET_ID)
+            .optional()
+            .payloadChannel()
+            .play()
+            .clientbound()
+            .add(BorderPayload.ID, StreamCodec.ofMember(BorderPayload::write, BorderPayload::new), (borderPayload, context) -> {
+                context.setPacketHandled(true);
+                final ClientBorder clientBorder = borderPayload.getBorder();
+                if (clientBorder.worldKey() == null) {
+                    return;
+                }
+                final ResourceLocation identifier = ResourceLocation.tryParse(clientBorder.worldKey());
+                if (identifier == null) {
+                    return;
+                }
+                final BorderShape borderShape = clientBorder.borderShape();
+                if (borderShape == null) {
+                    ChunkyBorderForge.borderShapes.remove(identifier);
+                } else {
+                    ChunkyBorderForge.borderShapes.put(identifier, borderShape);
+                }
+            })
+            .build();
     private static final Map<ResourceLocation, BorderShape> borderShapes = new ConcurrentHashMap<>();
     private static Config config;
     private ChunkyBorder chunkyBorder;
-    private boolean registered;
     private BorderCheckTask borderCheckTask;
     private boolean initialized;
 
@@ -83,6 +103,7 @@ public class ChunkyBorderForge {
         new BorderInitializationTask(chunkyBorder).run();
         this.borderCheckTask = new BorderCheckTask(chunkyBorder);
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
+        chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(event.getServer().getPlayerList().getPlayers(), e.world(), e.shape()));
         this.initialized = true;
     }
 
@@ -94,26 +115,6 @@ public class ChunkyBorderForge {
         for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
             final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
             sendBorderPacket(List.of(player), world, shape);
-        }
-    }
-
-    @SubscribeEvent
-    public void onCustomPayload(final CustomPayloadEvent event) {
-        final ResourceLocation channel = event.getChannel();
-        final ServerPlayer player = event.getSource().getSender();
-        if (player == null) {
-            return;
-        }
-        final MinecraftServer server = player.getServer();
-        if (server == null) {
-            return;
-        }
-        if (!registered) {
-            chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(server.getPlayerList().getPlayers(), e.world(), e.shape()));
-            registered = true;
-        }
-        if (PLAY_BORDER_PACKET_ID.equals(channel)) {
-            chunkyBorder.getPlayerData(player.getUUID()).setUsingMod(true);
         }
     }
 
@@ -165,7 +166,7 @@ public class ChunkyBorderForge {
 
     private void sendBorderPacket(final Collection<ServerPlayer> players, final World world, final Shape shape) {
         for (final ServerPlayer player : players) {
-            player.connection.send(new ClientboundCustomPayloadPacket(new BorderPayload(world, shape)));
+            PLAY_BORDER_CHANNEL.send(new BorderPayload(world, shape), player.connection.getConnection());
         }
     }
 
@@ -176,54 +177,6 @@ public class ChunkyBorderForge {
             final Path configPath = FMLPaths.CONFIGDIR.get().resolve("chunkyborder/config.json");
             ChunkyBorderForge.setConfig(new ForgeConfig(configPath));
             BorderColor.parseColor(config.visualizerColor());
-        }
-
-        @SubscribeEvent
-        public void onCustomPayload(final CustomPayloadEvent event) {
-            final ResourceLocation channel = event.getChannel();
-            if (!PLAY_BORDER_PACKET_ID.equals(channel)) {
-                return;
-            }
-            try (final ByteBufInputStream in = new ByteBufInputStream(event.getPayload()); final DataInputStream data = new DataInputStream(in)) {
-                final int version = data.readInt();
-                final String worldKey = data.readUTF();
-                if (version == 0) {
-                    final byte type = data.readByte();
-                    switch (type) {
-                        case 1 -> {
-                            final int numPoints = data.readInt();
-                            final double[] pointsX = new double[numPoints];
-                            final double[] pointsZ = new double[numPoints];
-                            for (int i = 0; i < numPoints; ++i) {
-                                pointsX[i] = data.readDouble();
-                                pointsZ[i] = data.readDouble();
-                            }
-                            ChunkyBorderForge.setBorderShape(worldKey, new PolygonBorderShape(pointsX, pointsZ));
-                        }
-                        case 2 -> {
-                            final double centerX = data.readDouble();
-                            final double centerZ = data.readDouble();
-                            final double radiusX = data.readDouble();
-                            final double radiusZ = data.readDouble();
-                            ChunkyBorderForge.setBorderShape(worldKey, new EllipseBorderShape(centerX, centerZ, radiusX, radiusZ));
-                        }
-                        default -> ChunkyBorderForge.setBorderShape(worldKey, null);
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public static void setBorderShape(final String id, final BorderShape borderShape) {
-        final ResourceLocation identifier = ResourceLocation.tryParse(id);
-        if (identifier != null) {
-            if (borderShape == null) {
-                ChunkyBorderForge.borderShapes.remove(identifier);
-            } else {
-                ChunkyBorderForge.borderShapes.put(identifier, borderShape);
-            }
         }
     }
 
