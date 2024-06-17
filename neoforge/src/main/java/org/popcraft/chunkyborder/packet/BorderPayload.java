@@ -3,6 +3,7 @@ package org.popcraft.chunkyborder.packet;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.shape.Shape;
@@ -10,7 +11,7 @@ import org.popcraft.chunkyborder.util.ClientBorder;
 import org.popcraft.chunkyborder.util.PluginMessage;
 
 public class BorderPayload implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<BorderPayload> ID = CustomPacketPayload.createType("chunky:border");
+    public static final CustomPacketPayload.Type<BorderPayload> ID = new CustomPacketPayload.Type<>(ResourceLocation.parse("chunky:border"));
     private World world;
     private Shape shape;
     private ClientBorder border;

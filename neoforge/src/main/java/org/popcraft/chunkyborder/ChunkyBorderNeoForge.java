@@ -13,10 +13,10 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.TickEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import org.joml.Vector3f;
 import org.popcraft.chunky.Chunky;
@@ -115,7 +115,7 @@ public class ChunkyBorderNeoForge {
     }
 
     @SubscribeEvent
-    public void onServerTick(final TickEvent.ServerTickEvent event) {
+    public void onServerTick(final ServerTickEvent.Post event) {
         if (!initialized) {
             return;
         }

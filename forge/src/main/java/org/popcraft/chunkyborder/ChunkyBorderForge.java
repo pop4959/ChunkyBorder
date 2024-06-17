@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Mod(ChunkyBorderForge.MOD_ID)
 public class ChunkyBorderForge {
     public static final String MOD_ID = "chunkyborder";
-    private static final ResourceLocation PLAY_BORDER_PACKET_ID = new ResourceLocation("chunky", "border");
+    private static final ResourceLocation PLAY_BORDER_PACKET_ID = ResourceLocation.fromNamespaceAndPath("chunky", "border");
     public static final Channel<CustomPacketPayload> PLAY_BORDER_CHANNEL = ChannelBuilder.named(PLAY_BORDER_PACKET_ID)
             .optional()
             .payloadChannel()

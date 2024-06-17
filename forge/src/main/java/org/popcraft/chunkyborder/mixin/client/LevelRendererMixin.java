@@ -5,6 +5,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.Util;
@@ -48,7 +49,6 @@ public class LevelRendererMixin {
         if (borderShape == null) {
             return;
         }
-        final BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
         final double renderDistanceBlocks = this.minecraft.options.getEffectiveRenderDistance() * 16D;
         final double posX = camera.getPosition().x;
         final double posZ = camera.getPosition().z;
@@ -97,7 +97,7 @@ public class LevelRendererMixin {
             RenderSystem.disableCull();
             final float offset = (Util.getMillis() % 3000L) / 3000.0F;
             float textureVertical = (float) (height - Mth.frac(camera.getPosition().y));
-            bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+            final BufferBuilder bufferBuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
             final float textureSize = 0.5F;
             if (borderShape instanceof final PolygonBorderShape polygon) {
                 final double[] pointsX = polygon.getPointsX();
@@ -197,7 +197,10 @@ public class LevelRendererMixin {
                     b += angle;
                 }
             }
-            BufferUploader.drawWithShader(bufferBuilder.end());
+            final MeshData meshdata = bufferBuilder.build();
+            if (meshdata != null) {
+                BufferUploader.drawWithShader(meshdata);
+            }
             RenderSystem.enableCull();
             RenderSystem.polygonOffset(0.0F, 0.0F);
             RenderSystem.disablePolygonOffset();
@@ -223,6 +226,6 @@ public class LevelRendererMixin {
     }
 
     private void addVertex(final BufferBuilder bufferBuilder, final double height, final double x1, final double z1, final double x2, final double z2, final float u, final float v) {
-        bufferBuilder.vertex(x2 - x1, height, z2 - z1).uv(u, v).endVertex();
+        bufferBuilder.addVertex((float) (x2 - x1), (float) height, (float) (z2 - z1)).setUv(u, v);
     }
 }
