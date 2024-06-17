@@ -5,6 +5,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
+import net.minecraft.client.render.BuiltBuffer;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.Tessellator;
@@ -196,7 +197,10 @@ public class WorldRendererMixin {
                     b += angle;
                 }
             }
-            BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
+            final BuiltBuffer builtBuffer = bufferBuilder.endNullable();
+            if (builtBuffer != null) {
+                BufferRenderer.drawWithGlobalProgram(builtBuffer);
+            }
             RenderSystem.enableCull();
             RenderSystem.polygonOffset(0.0F, 0.0F);
             RenderSystem.disablePolygonOffset();
