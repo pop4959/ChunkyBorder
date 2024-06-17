@@ -48,7 +48,6 @@ public class WorldRendererMixin {
         if (borderShape == null) {
             return;
         }
-        final BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
         final double renderDistanceBlocks = this.client.options.getClampedViewDistance() * 16D;
         final double posX = camera.getPos().x;
         final double posZ = camera.getPos().z;
@@ -97,7 +96,7 @@ public class WorldRendererMixin {
             RenderSystem.disableCull();
             final float offset = (Util.getMeasuringTimeMs() % 3000L) / 3000.0F;
             float textureVertical = (float) (height - MathHelper.fractionalPart(camera.getPos().y));
-            bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+            final BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
             final float textureSize = 0.5F;
             if (borderShape instanceof final PolygonBorderShape polygon) {
                 final double[] pointsX = polygon.getPointsX();
@@ -223,6 +222,6 @@ public class WorldRendererMixin {
     }
 
     private void addVertex(final BufferBuilder bufferBuilder, final double height, final double x1, final double z1, final double x2, final double z2, final float u, final float v) {
-        bufferBuilder.vertex(x2 - x1, height, z2 - z1).texture(u, v).next();
+        bufferBuilder.vertex((float) (x2 - x1), (float) height, (float) (z2 - z1)).texture(u, v);
     }
 }

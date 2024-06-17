@@ -3,13 +3,14 @@ package org.popcraft.chunkyborder.packet;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.util.Identifier;
 import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunkyborder.util.ClientBorder;
 import org.popcraft.chunkyborder.util.PluginMessage;
 
 public class BorderPayload implements CustomPayload {
-    public static final CustomPayload.Id<BorderPayload> ID = CustomPayload.id("chunky:border");
+    public static final CustomPayload.Id<BorderPayload> ID = new CustomPayload.Id<>(Identifier.of("chunky:border"));
     private World world;
     private Shape shape;
     private ClientBorder border;
