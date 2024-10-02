@@ -18,6 +18,7 @@ import org.popcraft.chunky.shape.AbstractPolygon;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.ShapeUtil;
 import org.popcraft.chunky.util.TranslationKey;
+import org.popcraft.chunky.util.Translator;
 import org.popcraft.chunky.util.Version;
 import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
 import org.popcraft.chunkyborder.event.server.BlockPlaceEvent;
@@ -79,6 +80,7 @@ public class ChunkyBorder {
         eventBus.subscribe(ReloadCommandEvent.class, e -> {
             getConfig().reload();
             reloadBorders();
+            Translator.addCustomTranslation("custom_border_message", config.message());
         });
         eventBus.subscribe(PlayerTeleportEvent.class, e -> {
             final Optional<BorderData> borderData = getBorder(e.getLocation().getWorld().getName());
@@ -130,10 +132,12 @@ public class ChunkyBorder {
                         }
                         insideBorder.setY(elevation);
                         final Player player = e.getPlayer();
-                        if (config.useActionBar()) {
-                            player.sendActionBar("custom_border_message");
-                        } else {
-                            player.sendMessage("custom_border_message");
+                        if (config.hasMessage()) {
+                            if (config.useActionBar()) {
+                                player.sendActionBar("custom_border_message");
+                            } else {
+                                player.sendMessage("custom_border_message");
+                            }
                         }
                         getPlayerData(player.getUUID()).setLastLocation(insideBorder);
                         return insideBorder;

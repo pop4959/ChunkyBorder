@@ -45,10 +45,12 @@ public class BorderCheckTask implements Runnable {
                         location.getWorld().playEffect(player, chunkyBorder.getConfig().effect());
                         location.getWorld().playSound(player, chunkyBorder.getConfig().sound());
                         player.teleport(redirect);
-                        if (chunkyBorder.getConfig().useActionBar()) {
-                            player.sendActionBar("custom_border_message");
-                        } else {
-                            player.sendMessage("custom_border_message");
+                        if (chunkyBorder.getConfig().hasMessage()) {
+                            if (chunkyBorder.getConfig().useActionBar()) {
+                                player.sendActionBar("custom_border_message");
+                            } else {
+                                player.sendMessage("custom_border_message");
+                            }
                         }
                     }
                 });

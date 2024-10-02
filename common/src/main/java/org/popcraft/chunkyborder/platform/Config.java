@@ -11,6 +11,11 @@ public interface Config {
 
     String message();
 
+    default boolean hasMessage() {
+        final String message = message();
+        return message != null && !message.isBlank();
+    }
+
     boolean useActionBar();
 
     String effect();
