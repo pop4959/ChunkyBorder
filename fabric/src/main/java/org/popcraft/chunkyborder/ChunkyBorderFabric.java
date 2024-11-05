@@ -15,7 +15,6 @@ import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
-import org.joml.Vector3f;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.ChunkyProvider;
 import org.popcraft.chunky.platform.FabricPlayer;
@@ -102,16 +101,15 @@ public class ChunkyBorderFabric implements ModInitializer {
                 final boolean isUsingMod = chunkyBorder.getPlayerData(player.getUUID()).isUsingMod();
                 if (border != null && !isUsingMod) {
                     final List<Vector3> particleLocations = Particles.at(player, border, (tick % 20) / 20d);
-                    final Vector3f visualizerColor = new Vector3f(BorderColor.getRGB());
                     for (final Vector3 location : particleLocations) {
                         final BlockPos pos = BlockPos.ofFloored(location.getX(), location.getY(), location.getZ());
-                        final boolean fullyOccluded = serverWorld.getBlockState(pos).isOpaqueFullCube(serverWorld, pos)
-                                && serverWorld.getBlockState(pos.north()).isOpaqueFullCube(serverWorld, pos.north())
-                                && serverWorld.getBlockState(pos.east()).isOpaqueFullCube(serverWorld, pos.east())
-                                && serverWorld.getBlockState(pos.south()).isOpaqueFullCube(serverWorld, pos.south())
-                                && serverWorld.getBlockState(pos.west()).isOpaqueFullCube(serverWorld, pos.west());
+                        final boolean fullyOccluded = serverWorld.getBlockState(pos).isOpaqueFullCube()
+                                && serverWorld.getBlockState(pos.north()).isOpaqueFullCube()
+                                && serverWorld.getBlockState(pos.east()).isOpaqueFullCube()
+                                && serverWorld.getBlockState(pos.south()).isOpaqueFullCube()
+                                && serverWorld.getBlockState(pos.west()).isOpaqueFullCube();
                         if (!fullyOccluded) {
-                            serverWorld.spawnParticles(fabricPlayer, new DustParticleEffect(visualizerColor, 1f), false, location.getX(), location.getY(), location.getZ(), 1, 0d, 0d, 0d, 0d);
+                            serverWorld.spawnParticles(fabricPlayer, new DustParticleEffect(BorderColor.getColor(), 1f), false, location.getX(), location.getY(), location.getZ(), 1, 0d, 0d, 0d, 0d);
                         }
                     }
                 }

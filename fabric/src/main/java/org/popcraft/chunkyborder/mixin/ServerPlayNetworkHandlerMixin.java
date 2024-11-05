@@ -1,6 +1,5 @@
 package org.popcraft.chunkyborder.mixin;
 
-import net.minecraft.network.packet.s2c.play.PositionFlag;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.popcraft.chunky.ChunkyProvider;
@@ -19,7 +18,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 @Mixin(ServerPlayNetworkHandler.class)
 public class ServerPlayNetworkHandlerMixin implements RespawningPlayerBridge {
@@ -33,10 +31,10 @@ public class ServerPlayNetworkHandlerMixin implements RespawningPlayerBridge {
     private ServerPlayerEntity respawningPlayer;
 
     @Inject(
-            method = "requestTeleport(DDDFFLjava/util/Set;)V",
+            method = "requestTeleport(DDDFF)V",
             at = @At("HEAD")
     )
-    private void requestTeleport(final double x, final double y, final double z, final float yaw, final float pitch, final Set<PositionFlag> flags, final CallbackInfo ci) {
+    private void requestTeleport(final double x, final double y, final double z, final float yaw, final float pitch, final CallbackInfo ci) {
         ServerPlayerEntity player = Objects.requireNonNullElse(this.respawningPlayer, this.player);
         this.respawningPlayer = null; // Reset respawning player, that way it keeps using 'this.player' until it's respawning again
         final FabricPlayer fabricPlayer = new FabricPlayer(player);
@@ -49,7 +47,7 @@ public class ServerPlayNetworkHandlerMixin implements RespawningPlayerBridge {
     }
 
     @ModifyVariable(
-            method = "requestTeleport(DDDFFLjava/util/Set;)V",
+            method = "requestTeleport(DDDFF)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 1
@@ -59,7 +57,7 @@ public class ServerPlayNetworkHandlerMixin implements RespawningPlayerBridge {
     }
 
     @ModifyVariable(
-            method = "requestTeleport(DDDFFLjava/util/Set;)V",
+            method = "requestTeleport(DDDFF)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 3
@@ -69,7 +67,7 @@ public class ServerPlayNetworkHandlerMixin implements RespawningPlayerBridge {
     }
 
     @ModifyVariable(
-            method = "requestTeleport(DDDFFLjava/util/Set;)V",
+            method = "requestTeleport(DDDFF)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 5
@@ -79,7 +77,7 @@ public class ServerPlayNetworkHandlerMixin implements RespawningPlayerBridge {
     }
 
     @ModifyVariable(
-            method = "requestTeleport(DDDFFLjava/util/Set;)V",
+            method = "requestTeleport(DDDFF)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 7
@@ -89,7 +87,7 @@ public class ServerPlayNetworkHandlerMixin implements RespawningPlayerBridge {
     }
 
     @ModifyVariable(
-            method = "requestTeleport(DDDFFLjava/util/Set;)V",
+            method = "requestTeleport(DDDFF)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 8
