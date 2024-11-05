@@ -12,19 +12,19 @@ authors="${author}"
 description="${description}"
 [[dependencies.chunkyborder]]
    modId="neoforge"
-   mandatory=true
+   type="required"
    versionRange="[21.0-beta,)"
    ordering="NONE"
    side="BOTH"
 [[dependencies.chunkyborder]]
    modId="minecraft"
-   mandatory=true
+   type="required"
    versionRange="[1.21,1.22)"
    ordering="NONE"
    side="BOTH"
 [[dependencies.chunkyborder]]
   modId="chunky"
-  mandatory=true
+  type="required"
   versionRange="[${target},)"
   ordering="BEFORE"
   side="BOTH"
