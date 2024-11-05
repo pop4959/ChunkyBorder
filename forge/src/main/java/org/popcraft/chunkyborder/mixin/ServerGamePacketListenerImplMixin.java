@@ -2,7 +2,6 @@ package org.popcraft.chunkyborder.mixin;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
-import net.minecraft.world.entity.RelativeMovement;
 import org.popcraft.chunky.ChunkyProvider;
 import org.popcraft.chunky.platform.ForgePlayer;
 import org.popcraft.chunky.platform.ForgeWorld;
@@ -17,7 +16,6 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Optional;
-import java.util.Set;
 
 @Mixin(ServerGamePacketListenerImpl.class)
 public class ServerGamePacketListenerImplMixin {
@@ -28,10 +26,10 @@ public class ServerGamePacketListenerImplMixin {
     private Location redirect;
 
     @Inject(
-            method = "teleport(DDDFFLjava/util/Set;)V",
+            method = "teleport(DDDFF)V",
             at = @At("HEAD")
     )
-    private void requestTeleport(final double x, final double y, final double z, final float yaw, final float pitch, final Set<RelativeMovement> flags, final CallbackInfo ci) {
+    private void requestTeleport(final double x, final double y, final double z, final float yaw, final float pitch, final CallbackInfo ci) {
         final ForgePlayer forgePlayer = new ForgePlayer(this.player);
         final ForgeWorld world = new ForgeWorld(this.player.serverLevel());
         final Location location = new Location(world, x, y, z, yaw, pitch);
@@ -42,7 +40,7 @@ public class ServerGamePacketListenerImplMixin {
     }
 
     @ModifyVariable(
-            method = "teleport(DDDFFLjava/util/Set;)V",
+            method = "teleport(DDDFF)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 1
@@ -52,7 +50,7 @@ public class ServerGamePacketListenerImplMixin {
     }
 
     @ModifyVariable(
-            method = "teleport(DDDFFLjava/util/Set;)V",
+            method = "teleport(DDDFF)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 3
@@ -62,7 +60,7 @@ public class ServerGamePacketListenerImplMixin {
     }
 
     @ModifyVariable(
-            method = "teleport(DDDFFLjava/util/Set;)V",
+            method = "teleport(DDDFF)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 5
@@ -72,7 +70,7 @@ public class ServerGamePacketListenerImplMixin {
     }
 
     @ModifyVariable(
-            method = "teleport(DDDFFLjava/util/Set;)V",
+            method = "teleport(DDDFF)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 7
@@ -82,7 +80,7 @@ public class ServerGamePacketListenerImplMixin {
     }
 
     @ModifyVariable(
-            method = "teleport(DDDFFLjava/util/Set;)V",
+            method = "teleport(DDDFF)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 8

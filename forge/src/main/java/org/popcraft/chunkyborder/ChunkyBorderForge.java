@@ -20,7 +20,6 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.network.Channel;
 import net.minecraftforge.network.ChannelBuilder;
-import org.joml.Vector3f;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.ChunkyProvider;
 import org.popcraft.chunky.platform.ForgePlayer;
@@ -148,16 +147,15 @@ public class ChunkyBorderForge {
             final boolean isUsingMod = chunkyBorder.getPlayerData(player.getUUID()).isUsingMod();
             if (border != null && !isUsingMod) {
                 final List<Vector3> particleLocations = Particles.at(player, border, (tick % 20) / 20d);
-                final Vector3f visualizerColor = new Vector3f(BorderColor.getRGB());
                 for (final Vector3 location : particleLocations) {
                     final BlockPos pos = BlockPos.containing(location.getX(), location.getY(), location.getZ());
-                    final boolean fullyOccluded = serverLevel.getBlockState(pos).isSolidRender(serverLevel, pos)
-                            && serverLevel.getBlockState(pos.north()).isSolidRender(serverLevel, pos.north())
-                            && serverLevel.getBlockState(pos.east()).isSolidRender(serverLevel, pos.east())
-                            && serverLevel.getBlockState(pos.south()).isSolidRender(serverLevel, pos.south())
-                            && serverLevel.getBlockState(pos.west()).isSolidRender(serverLevel, pos.west());
+                    final boolean fullyOccluded = serverLevel.getBlockState(pos).isSolidRender()
+                            && serverLevel.getBlockState(pos.north()).isSolidRender()
+                            && serverLevel.getBlockState(pos.east()).isSolidRender()
+                            && serverLevel.getBlockState(pos.south()).isSolidRender()
+                            && serverLevel.getBlockState(pos.west()).isSolidRender();
                     if (!fullyOccluded) {
-                        serverLevel.sendParticles(forgePlayer, new DustParticleOptions(visualizerColor, 1f), false, location.getX(), location.getY(), location.getZ(), 1, 0d, 0d, 0d, 0d);
+                        serverLevel.sendParticles(forgePlayer, new DustParticleOptions(BorderColor.getColor(), 1f), false, location.getX(), location.getY(), location.getZ(), 1, 0d, 0d, 0d, 0d);
                     }
                 }
             }

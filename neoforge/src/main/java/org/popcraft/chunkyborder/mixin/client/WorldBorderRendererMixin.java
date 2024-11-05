@@ -9,13 +9,14 @@ import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.Util;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.CoreShaders;
+import net.minecraft.client.renderer.WorldBorderRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.border.WorldBorder;
+import net.minecraft.world.phys.Vec3;
 import org.popcraft.chunky.platform.util.Vector2;
 import org.popcraft.chunky.shape.ShapeUtil;
 import org.popcraft.chunkyborder.ChunkyBorderNeoForge;
@@ -30,29 +31,25 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(LevelRenderer.class)
-public class LevelRendererMixin {
+@Mixin(WorldBorderRenderer.class)
+public class WorldBorderRendererMixin {
     @Shadow
     @Final
-    @SuppressWarnings("java:S3008")
     private static ResourceLocation FORCEFIELD_LOCATION;
-    @Shadow
-    @Final
-    private Minecraft minecraft;
-    @Shadow
-    private ClientLevel level;
 
-    @Inject(method = "renderWorldBorder", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     @SuppressWarnings("java:S3776")
-    private void renderWorldBorder(final Camera camera, final CallbackInfo ci) {
-        final BorderShape borderShape = ChunkyBorderNeoForge.getBorderShape(this.level.dimension().location());
+    private void renderWorldBorder(WorldBorder border, Vec3 pos, double renderDistanceBlocks, double height, CallbackInfo ci) {
+        final ClientLevel clientLevel = Minecraft.getInstance().level;
+        if (clientLevel == null) {
+            return;
+        }
+        final BorderShape borderShape = ChunkyBorderNeoForge.getBorderShape(clientLevel.dimension().location());
         if (borderShape == null) {
             return;
         }
-        final double renderDistanceBlocks = this.minecraft.options.getEffectiveRenderDistance() * 16D;
-        final double posX = camera.getPosition().x;
-        final double posZ = camera.getPosition().z;
-        final double height = this.minecraft.gameRenderer.getDepthFar();
+        final double posX = pos.x();
+        final double posZ = pos.z();
         double distanceInsideBorder = Double.MAX_VALUE;
         if (borderShape instanceof final PolygonBorderShape polygon) {
             final double[] pointsX = polygon.getPointsX();
@@ -91,12 +88,12 @@ public class LevelRendererMixin {
             final float green = (color >> 8 & 255) / 255.0F;
             final float blue = (color & 255) / 255.0F;
             RenderSystem.setShaderColor(red, green, blue, (float) alpha);
-            RenderSystem.setShader(GameRenderer::getPositionTexShader);
+            RenderSystem.setShader(CoreShaders.POSITION_TEX);
             RenderSystem.polygonOffset(-3.0F, -3.0F);
             RenderSystem.enablePolygonOffset();
             RenderSystem.disableCull();
             final float offset = (Util.getMillis() % 3000L) / 3000.0F;
-            float textureVertical = (float) (height - Mth.frac(camera.getPosition().y));
+            float textureVertical = (float) (height - Mth.frac(pos.y()));
             final BufferBuilder bufferBuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
             final float textureSize = 0.5F;
             if (borderShape instanceof final PolygonBorderShape polygon) {

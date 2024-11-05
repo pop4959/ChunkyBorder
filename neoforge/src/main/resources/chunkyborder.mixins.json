@@ -7,7 +7,7 @@
     "ServerGamePacketListenerImplMixin"
   ],
   "client": [
-    "client.LevelRendererMixin"
+    "client.WorldBorderRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -18,7 +18,6 @@ import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import org.joml.Vector3f;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.ChunkyProvider;
 import org.popcraft.chunky.platform.NeoForgePlayer;
@@ -139,16 +138,15 @@ public class ChunkyBorderNeoForge {
             final boolean isUsingMod = chunkyBorder.getPlayerData(player.getUUID()).isUsingMod();
             if (border != null && !isUsingMod) {
                 final List<Vector3> particleLocations = Particles.at(player, border, (tick % 20) / 20d);
-                final Vector3f visualizerColor = new Vector3f(BorderColor.getRGB());
                 for (final Vector3 location : particleLocations) {
                     final BlockPos pos = BlockPos.containing(location.getX(), location.getY(), location.getZ());
-                    final boolean fullyOccluded = serverLevel.getBlockState(pos).isSolidRender(serverLevel, pos)
-                            && serverLevel.getBlockState(pos.north()).isSolidRender(serverLevel, pos.north())
-                            && serverLevel.getBlockState(pos.east()).isSolidRender(serverLevel, pos.east())
-                            && serverLevel.getBlockState(pos.south()).isSolidRender(serverLevel, pos.south())
-                            && serverLevel.getBlockState(pos.west()).isSolidRender(serverLevel, pos.west());
+                    final boolean fullyOccluded = serverLevel.getBlockState(pos).isSolidRender()
+                            && serverLevel.getBlockState(pos.north()).isSolidRender()
+                            && serverLevel.getBlockState(pos.east()).isSolidRender()
+                            && serverLevel.getBlockState(pos.south()).isSolidRender()
+                            && serverLevel.getBlockState(pos.west()).isSolidRender();
                     if (!fullyOccluded) {
-                        serverLevel.sendParticles(neoForgePlayer, new DustParticleOptions(visualizerColor, 1f), false, location.getX(), location.getY(), location.getZ(), 1, 0d, 0d, 0d, 0d);
+                        serverLevel.sendParticles(neoForgePlayer, new DustParticleOptions(BorderColor.getColor(), 1f), false, location.getX(), location.getY(), location.getZ(), 1, 0d, 0d, 0d, 0d);
                     }
                 }
             }

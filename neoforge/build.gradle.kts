@@ -15,9 +15,9 @@ repositories {
 }
 
 dependencies {
-    minecraft(group = "com.mojang", name = "minecraft", version = "1.21")
+    minecraft(group = "com.mojang", name = "minecraft", version = "1.21.2")
     mappings(loom.officialMojangMappings())
-    neoForge(group = "net.neoforged", name = "neoforge", version = "21.0.14-beta")
+    neoForge(group = "net.neoforged", name = "neoforge", version = "21.2.1-beta")
     modImplementation(group = "org.popcraft", name = "chunky-neoforge", version = "${project.property("target")}")
     compileOnly(group = "us.dynmap", name = "DynmapCoreAPI", version = "${project.property("target_dynmap")}")
     compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "${project.property("target_bluemap")}")
