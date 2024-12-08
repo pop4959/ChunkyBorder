@@ -146,7 +146,7 @@ public class ChunkyBorderNeoForge {
                             && serverLevel.getBlockState(pos.south()).isSolidRender()
                             && serverLevel.getBlockState(pos.west()).isSolidRender();
                     if (!fullyOccluded) {
-                        serverLevel.sendParticles(neoForgePlayer, new DustParticleOptions(BorderColor.getColor(), 1f), false, location.getX(), location.getY(), location.getZ(), 1, 0d, 0d, 0d, 0d);
+                        serverLevel.sendParticles(neoForgePlayer, new DustParticleOptions(BorderColor.getColor(), 1f), false, false, location.getX(), location.getY(), location.getZ(), 1, 0d, 0d, 0d, 0d);
                     }
                 }
             }

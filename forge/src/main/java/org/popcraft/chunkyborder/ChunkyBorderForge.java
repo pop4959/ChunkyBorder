@@ -155,7 +155,7 @@ public class ChunkyBorderForge {
                             && serverLevel.getBlockState(pos.south()).isSolidRender()
                             && serverLevel.getBlockState(pos.west()).isSolidRender();
                     if (!fullyOccluded) {
-                        serverLevel.sendParticles(forgePlayer, new DustParticleOptions(BorderColor.getColor(), 1f), false, location.getX(), location.getY(), location.getZ(), 1, 0d, 0d, 0d, 0d);
+                        serverLevel.sendParticles(forgePlayer, new DustParticleOptions(BorderColor.getColor(), 1f), false, false, location.getX(), location.getY(), location.getZ(), 1, 0d, 0d, 0d, 0d);
                     }
                 }
             }

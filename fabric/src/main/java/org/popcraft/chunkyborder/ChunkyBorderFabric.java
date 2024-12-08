@@ -109,7 +109,7 @@ public class ChunkyBorderFabric implements ModInitializer {
                                 && serverWorld.getBlockState(pos.south()).isOpaqueFullCube()
                                 && serverWorld.getBlockState(pos.west()).isOpaqueFullCube();
                         if (!fullyOccluded) {
-                            serverWorld.spawnParticles(fabricPlayer, new DustParticleEffect(BorderColor.getColor(), 1f), false, location.getX(), location.getY(), location.getZ(), 1, 0d, 0d, 0d, 0d);
+                            serverWorld.spawnParticles(fabricPlayer, new DustParticleEffect(BorderColor.getColor(), 1f), false, false, location.getX(), location.getY(), location.getZ(), 1, 0d, 0d, 0d, 0d);
                         }
                     }
                 }
