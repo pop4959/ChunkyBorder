@@ -1,10 +1,6 @@
 package org.popcraft.chunkyborder.util;
 
-import org.popcraft.chunky.platform.World;
-import org.popcraft.chunky.platform.util.Vector2;
-import org.popcraft.chunky.shape.AbstractEllipse;
-import org.popcraft.chunky.shape.AbstractPolygon;
-import org.popcraft.chunky.shape.Shape;
+import org.popcraft.chunkyborder.shape.BorderShape;
 import org.popcraft.chunkyborder.shape.EllipseBorderShape;
 import org.popcraft.chunkyborder.shape.PolygonBorderShape;
 
@@ -14,7 +10,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.List;
 
 public class PluginMessage {
     public static final int VERSION = 0;
@@ -44,35 +39,34 @@ public class PluginMessage {
                         final double radiusZ = data.readDouble();
                         yield new ClientBorder(worldKey, new EllipseBorderShape(centerX, centerZ, radiusX, radiusZ));
                     }
-                    default -> new ClientBorder(worldKey, null);
+                    default -> new ClientBorder(worldKey, (BorderShape) null);
                 };
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return new ClientBorder(null, null);
+        return new ClientBorder(null, (BorderShape) null);
     }
 
-    public static byte[] writeBorder(final World world, final Shape shape) {
+    public static byte[] writeBorder(final ClientBorder border) {
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream(); final DataOutputStream data = new DataOutputStream(out)) {
             data.writeInt(VERSION);
-            data.writeUTF(world.getKey());
-            if (shape instanceof final AbstractPolygon polygon) {
+            data.writeUTF(border.worldKey());
+            if (border.borderShape() instanceof final PolygonBorderShape polygon) {
                 data.writeByte(1);
-                final List<Vector2> points = polygon.points();
-                data.writeInt(points.size());
-                for (final Vector2 point : points) {
-                    data.writeDouble(point.getX());
-                    data.writeDouble(point.getZ());
+                final double[] pointsX = polygon.getPointsX();
+                final double[] pointsZ = polygon.getPointsZ();
+                data.writeInt(pointsX.length);
+                for (int i = 0; i < pointsX.length; i++) {
+                    data.writeDouble(pointsX[i]);
+                    data.writeDouble(pointsZ[i]);
                 }
-            } else if (shape instanceof final AbstractEllipse ellipse) {
+            } else if (border.borderShape() instanceof final EllipseBorderShape ellipse) {
                 data.writeByte(2);
-                final Vector2 center = ellipse.center();
-                final Vector2 radii = ellipse.radii();
-                data.writeDouble(center.getX());
-                data.writeDouble(center.getZ());
-                data.writeDouble(radii.getX());
-                data.writeDouble(radii.getZ());
+                data.writeDouble(ellipse.getCenterX());
+                data.writeDouble(ellipse.getCenterZ());
+                data.writeDouble(ellipse.getRadiusX());
+                data.writeDouble(ellipse.getRadiusZ());
             } else {
                 data.writeByte(0);
             }

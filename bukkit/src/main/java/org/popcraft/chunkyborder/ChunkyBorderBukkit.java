@@ -41,10 +41,7 @@ import org.popcraft.chunkyborder.integration.Pl3xMapIntegration;
 import org.popcraft.chunkyborder.integration.SquaremapIntegration;
 import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
-import org.popcraft.chunkyborder.util.BorderColor;
-import org.popcraft.chunkyborder.util.Particles;
-import org.popcraft.chunkyborder.util.PluginMessage;
-import org.popcraft.chunkyborder.util.EnumUtil;
+import org.popcraft.chunkyborder.util.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
@@ -302,7 +299,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
     }
 
     private void sendBorderPacket(final Collection<? extends org.bukkit.entity.Player> players, final World world, final Shape shape) {
-        final byte[] data = PluginMessage.writeBorder(world, shape);
+        final byte[] data = PluginMessage.writeBorder(new ClientBorder(world.getKey(), shape));
         for (final org.bukkit.entity.Player player : players) {
             player.sendPluginMessage(this, PLAY_BORDER_PACKET_ID, data);
         }

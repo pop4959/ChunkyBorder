@@ -12,13 +12,10 @@ import org.popcraft.chunkyborder.util.PluginMessage;
 
 public class BorderPayload implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<BorderPayload> ID = new CustomPacketPayload.Type<>(ResourceLocation.parse("chunky:border"));
-    private World world;
-    private Shape shape;
-    private ClientBorder border;
+    private final ClientBorder border;
 
     public BorderPayload(final World world, final Shape shape) {
-        this.world = world;
-        this.shape = shape;
+        this.border = new ClientBorder(world.getKey(), shape);
     }
 
     public BorderPayload(final FriendlyByteBuf buf) {
@@ -29,7 +26,7 @@ public class BorderPayload implements CustomPacketPayload {
     }
 
     public void write(final FriendlyByteBuf buf) {
-        buf.writeBytes(PluginMessage.writeBorder(world, shape));
+        buf.writeBytes(PluginMessage.writeBorder(this.border));
     }
 
     public ClientBorder getBorder() {
