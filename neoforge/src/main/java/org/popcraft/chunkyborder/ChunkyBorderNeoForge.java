@@ -14,6 +14,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -24,11 +25,14 @@ import org.popcraft.chunky.platform.NeoForgePlayer;
 import org.popcraft.chunky.platform.NeoForgeWorld;
 import org.popcraft.chunky.platform.Player;
 import org.popcraft.chunky.platform.World;
+import org.popcraft.chunky.platform.util.Location;
 import org.popcraft.chunky.platform.util.Vector3;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.util.Translator;
 import org.popcraft.chunkyborder.command.BorderCommand;
 import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
+import org.popcraft.chunkyborder.event.server.BlockBreakEvent;
+import org.popcraft.chunkyborder.event.server.BlockPlaceEvent;
 import org.popcraft.chunkyborder.integration.DynmapCommonAPIProvider;
 import org.popcraft.chunkyborder.packet.BorderPayload;
 import org.popcraft.chunkyborder.platform.Config;
@@ -153,6 +157,32 @@ public class ChunkyBorderNeoForge {
                 }
             }
         });
+    }
+
+    @SubscribeEvent
+    public void onBlockPlace(final BlockEvent.EntityPlaceEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+
+        final BlockPlaceEvent placeEvent = new BlockPlaceEvent(new NeoForgePlayer(player), new Location(new NeoForgeWorld((ServerLevel) event.getLevel()), event.getPos().getX(), event.getPos().getY(), event.getPos().getZ()));
+        chunkyBorder.getChunky().getEventBus().call(placeEvent);
+        if (placeEvent.isCancelled()) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public void onBlockBreak(final BlockEvent.BreakEvent event) {
+        if (!(event.getPlayer() instanceof ServerPlayer player)) {
+            return;
+        }
+
+        final BlockBreakEvent breakEvent = new BlockBreakEvent(new NeoForgePlayer(player), new Location(new NeoForgeWorld((ServerLevel) event.getLevel()), event.getPos().getX(), event.getPos().getY(), event.getPos().getZ()));
+        chunkyBorder.getChunky().getEventBus().call(breakEvent);
+        if (breakEvent.isCancelled()) {
+            event.setCanceled(true);
+        }
     }
 
     private void sendBorderPacket(final Collection<ServerPlayer> players, final World world, final Shape shape) {
