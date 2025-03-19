@@ -29,6 +29,7 @@ import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunky.util.Translator;
 import org.popcraft.chunkyborder.command.BorderCommand;
 import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
+import org.popcraft.chunkyborder.event.server.BlockBreakEvent;
 import org.popcraft.chunkyborder.event.server.BlockPlaceEvent;
 import org.popcraft.chunkyborder.event.server.CreatureSpawnEvent;
 import org.popcraft.chunkyborder.event.server.PlayerQuitEvent;
@@ -278,6 +279,17 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         final BlockPlaceEvent blockPlaceEvent = new BlockPlaceEvent(player, location);
         chunkyBorder.getChunky().getEventBus().call(blockPlaceEvent);
         if (blockPlaceEvent.isCancelled()) {
+            e.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onBlockBreak(final org.bukkit.event.block.BlockBreakEvent e) {
+        final org.bukkit.Location bukkitLocation = e.getBlock().getLocation();
+        final World world = new BukkitWorld(e.getPlayer().getWorld());
+        final BlockBreakEvent blockBreakEvent = new BlockBreakEvent(new BukkitPlayer(e.getPlayer()), new Location(world, bukkitLocation.getX(), bukkitLocation.getY(), bukkitLocation.getZ()));
+        chunkyBorder.getChunky().getEventBus().call(blockBreakEvent);
+        if (blockBreakEvent.isCancelled()) {
             e.setCancelled(true);
         }
     }

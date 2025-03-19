@@ -16,3 +16,6 @@ permissions:
   chunkyborder.bypass.place:
     description: Bypass border block placement checks
     default: false
+  chunkyborder.bypass.break:
+    description: Bypass border block breaking checks
+    default: false
