@@ -12,6 +12,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -26,11 +27,14 @@ import org.popcraft.chunky.platform.ForgePlayer;
 import org.popcraft.chunky.platform.ForgeWorld;
 import org.popcraft.chunky.platform.Player;
 import org.popcraft.chunky.platform.World;
+import org.popcraft.chunky.platform.util.Location;
 import org.popcraft.chunky.platform.util.Vector3;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.util.Translator;
 import org.popcraft.chunkyborder.command.BorderCommand;
 import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
+import org.popcraft.chunkyborder.event.server.BlockBreakEvent;
+import org.popcraft.chunkyborder.event.server.BlockPlaceEvent;
 import org.popcraft.chunkyborder.integration.DynmapCommonAPIProvider;
 import org.popcraft.chunkyborder.packet.BorderPayload;
 import org.popcraft.chunkyborder.platform.Config;
@@ -160,6 +164,32 @@ public class ChunkyBorderForge {
                 }
             }
         });
+    }
+
+    @SubscribeEvent
+    public void onBlockPlace(final BlockEvent.EntityPlaceEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+
+        final BlockPlaceEvent placeEvent = new BlockPlaceEvent(new ForgePlayer(player), new Location(new ForgeWorld((ServerLevel) event.getLevel()), event.getPos().getX(), event.getPos().getY(), event.getPos().getZ()));
+        chunkyBorder.getChunky().getEventBus().call(placeEvent);
+        if (placeEvent.isCancelled()) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public void onBlockBreak(final BlockEvent.BreakEvent event) {
+        if (!(event.getPlayer() instanceof ServerPlayer player)) {
+            return;
+        }
+
+        final BlockBreakEvent breakEvent = new BlockBreakEvent(new ForgePlayer(player), new Location(new ForgeWorld((ServerLevel) event.getLevel()), event.getPos().getX(), event.getPos().getY(), event.getPos().getZ()));
+        chunkyBorder.getChunky().getEventBus().call(breakEvent);
+        if (breakEvent.isCancelled()) {
+            event.setCanceled(true);
+        }
     }
 
     private void sendBorderPacket(final Collection<ServerPlayer> players, final World world, final Shape shape) {

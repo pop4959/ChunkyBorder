@@ -3,6 +3,7 @@ package org.popcraft.chunkyborder;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.S2CPlayChannelEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -21,11 +22,13 @@ import org.popcraft.chunky.platform.FabricPlayer;
 import org.popcraft.chunky.platform.FabricWorld;
 import org.popcraft.chunky.platform.Player;
 import org.popcraft.chunky.platform.World;
+import org.popcraft.chunky.platform.util.Location;
 import org.popcraft.chunky.platform.util.Vector3;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.util.Translator;
 import org.popcraft.chunkyborder.command.BorderCommand;
 import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
+import org.popcraft.chunkyborder.event.server.BlockBreakEvent;
 import org.popcraft.chunkyborder.packet.BorderPayload;
 import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
@@ -80,6 +83,17 @@ public class ChunkyBorderFabric implements ModInitializer {
                 borderCheckTask.run();
             }
         });
+
+        PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, blockEntity) -> {
+            if (!(player instanceof ServerPlayerEntity serverPlayer)) {
+                return true;
+            }
+
+            final BlockBreakEvent breakEvent = new BlockBreakEvent(new FabricPlayer(serverPlayer), new Location(new FabricWorld((ServerWorld) world), pos.getX(), pos.getY(), pos.getZ()));
+            chunky.getEventBus().call(breakEvent);
+            return !breakEvent.isCancelled(); // Return false when cancelled to indicate we want to cancel this block break
+        });
+
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
         startVisualizer();
     }
