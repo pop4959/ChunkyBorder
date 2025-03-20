@@ -28,6 +28,7 @@ import org.popcraft.chunky.platform.util.Vector3;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.util.Translator;
 import org.popcraft.chunkyborder.command.BorderCommand;
+import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
 import org.popcraft.chunkyborder.integration.DynmapCommonAPIProvider;
 import org.popcraft.chunkyborder.packet.BorderPayload;
 import org.popcraft.chunkyborder.platform.Config;
@@ -94,6 +95,7 @@ public class ChunkyBorderNeoForge {
         new BorderInitializationTask(chunkyBorder).run();
         this.borderCheckTask = new BorderCheckTask(chunkyBorder);
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
+        chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(event.getServer().getPlayerList().getPlayers(), e.world(), e.shape()));
         this.initialized = true;
     }
 
