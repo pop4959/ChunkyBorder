@@ -25,36 +25,34 @@ public class BorderCheckTask implements Runnable {
     public void run() {
         for (final Player player : chunkyBorder.getChunky().getServer().getPlayers()) {
             final PlayerData playerData = chunkyBorder.getPlayerData(player.getUUID());
-            if (!player.hasPermission("chunkyborder.bypass.move") && !playerData.isBypassing()) {
-                chunkyBorder.getBorder(player.getWorld().getName()).ifPresent(borderData -> {
-                    final Location location = player.getLocation();
-                    if (borderData.getBorder().isBounding(location.getX(), location.getZ())) {
-                        playerData.setLastLocation(location);
+            chunkyBorder.getBorder(player.getWorld().getName()).ifPresent(borderData -> {
+                final Location location = player.getLocation();
+                if (borderData.getBorder().isBounding(location.getX(), location.getZ())) {
+                    playerData.setLastLocation(location);
+                } else if (!player.hasPermission("chunkyborder.bypass.move") && !playerData.isBypassing()) {
+                    final Location redirect;
+                    final BorderWrapType borderWrapType = borderData.getWrapType();
+                    if (!BorderWrapType.NONE.equals(borderWrapType)) {
+                        redirect = wrap(borderData, borderWrapType, player, playerData);
+                        playerData.setLastLocation(redirect);
+                        chunkyBorder.getChunky().getEventBus().call(new BorderWrapEvent(player, location, redirect));
                     } else {
-                        final Location redirect;
-                        final BorderWrapType borderWrapType = borderData.getWrapType();
-                        if (!BorderWrapType.NONE.equals(borderWrapType)) {
-                            redirect = wrap(borderData, borderWrapType, player, playerData);
-                            playerData.setLastLocation(redirect);
-                            chunkyBorder.getChunky().getEventBus().call(new BorderWrapEvent(player, location, redirect));
+                        redirect = playerData.getLastLocation().orElse(location.getWorld().getSpawn());
+                        redirect.setYaw(location.getYaw());
+                        redirect.setPitch(location.getPitch());
+                    }
+                    location.getWorld().playEffect(player, chunkyBorder.getConfig().effect());
+                    location.getWorld().playSound(player, chunkyBorder.getConfig().sound());
+                    player.teleport(redirect);
+                    if (chunkyBorder.getConfig().hasMessage()) {
+                        if (chunkyBorder.getConfig().useActionBar()) {
+                            player.sendActionBar("custom_border_message");
                         } else {
-                            redirect = playerData.getLastLocation().orElse(location.getWorld().getSpawn());
-                            redirect.setYaw(location.getYaw());
-                            redirect.setPitch(location.getPitch());
-                        }
-                        location.getWorld().playEffect(player, chunkyBorder.getConfig().effect());
-                        location.getWorld().playSound(player, chunkyBorder.getConfig().sound());
-                        player.teleport(redirect);
-                        if (chunkyBorder.getConfig().hasMessage()) {
-                            if (chunkyBorder.getConfig().useActionBar()) {
-                                player.sendActionBar("custom_border_message");
-                            } else {
-                                player.sendMessage("custom_border_message");
-                            }
+                            player.sendMessage("custom_border_message");
                         }
                     }
-                });
-            }
+                }
+            });
         }
     }
 
