@@ -31,7 +31,7 @@ public class ServerGamePacketListenerImplMixin {
     )
     private void requestTeleport(final double x, final double y, final double z, final float yaw, final float pitch, final CallbackInfo ci) {
         final ForgePlayer forgePlayer = new ForgePlayer(this.player);
-        final ForgeWorld world = new ForgeWorld(this.player.serverLevel());
+        final ForgeWorld world = new ForgeWorld(this.player.level());
         final Location location = new Location(world, x, y, z, yaw, pitch);
         final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(forgePlayer, location);
         ChunkyProvider.get().getEventBus().call(playerTeleportEvent);

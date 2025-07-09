@@ -38,7 +38,7 @@ public class ServerPlayNetworkHandlerMixin implements RespawningPlayerBridge {
         ServerPlayerEntity player = Objects.requireNonNullElse(this.respawningPlayer, this.player);
         this.respawningPlayer = null; // Reset respawning player, that way it keeps using 'this.player' until it's respawning again
         final FabricPlayer fabricPlayer = new FabricPlayer(player);
-        final FabricWorld world = new FabricWorld(player.getServerWorld());
+        final FabricWorld world = new FabricWorld(player.getWorld());
         final Location location = new Location(world, x, y, z, yaw, pitch);
         final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(fabricPlayer, location);
         ChunkyProvider.get().getEventBus().call(playerTeleportEvent);

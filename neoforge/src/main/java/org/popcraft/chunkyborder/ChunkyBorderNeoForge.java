@@ -133,7 +133,7 @@ public class ChunkyBorderNeoForge {
         final int maxRange = chunkyBorder.getConfig().visualizerRange();
         Particles.setMaxDistance(maxRange);
         server.getPlayerList().getPlayers().forEach(neoForgePlayer -> {
-            final ServerLevel serverLevel = neoForgePlayer.serverLevel();
+            final ServerLevel serverLevel = neoForgePlayer.level();
             final World world = new NeoForgeWorld(serverLevel);
             final Player player = new NeoForgePlayer(neoForgePlayer);
             final Shape border = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
