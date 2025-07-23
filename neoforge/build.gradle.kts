@@ -1,5 +1,5 @@
 plugins {
-    id("dev.architectury.loom") version "1.7-SNAPSHOT"
+    id("dev.architectury.loom") version "1.10-SNAPSHOT"
 }
 
 val shade: Configuration by configurations.creating
@@ -15,9 +15,9 @@ repositories {
 }
 
 dependencies {
-    minecraft(group = "com.mojang", name = "minecraft", version = "1.21.4")
+    minecraft(group = "com.mojang", name = "minecraft", version = "1.21.6")
     mappings(loom.officialMojangMappings())
-    neoForge(group = "net.neoforged", name = "neoforge", version = "21.4.10-beta")
+    neoForge(group = "net.neoforged", name = "neoforge", version = "21.6.10-beta")
     modImplementation(group = "org.popcraft", name = "chunky-neoforge", version = "${project.property("target")}")
     compileOnly(group = "us.dynmap", name = "DynmapCoreAPI", version = "${project.property("target_dynmap")}")
     compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "${project.property("target_bluemap")}")
