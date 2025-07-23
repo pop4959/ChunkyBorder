@@ -40,7 +40,7 @@ public class Pl3xMapIntegration extends AbstractMapIntegration {
                 final Vector2 center = ellipse.center();
                 final Vector2 radii = ellipse.radii();
                 if (ellipse instanceof Circle) {
-                    marker = Marker.circle(CHUNKY_KEY, center.getX(), center.getZ(), radii.getX());
+                    marker = Marker.ellipse(CHUNKY_KEY, center.getX(), center.getZ(), radii.getX(), radii.getX());
                 } else {
                     marker = Marker.ellipse(CHUNKY_KEY, center.getX(), center.getZ(), radii.getX(), radii.getZ());
                 }

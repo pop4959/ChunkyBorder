@@ -64,7 +64,7 @@ public class SquaremapIntegration extends AbstractMapIntegration {
                 final Vector2 radii = ellipse.radii();
                 final Point centerPoint = Point.of(center.getX(), center.getZ());
                 if (ellipse instanceof Circle) {
-                    marker = Marker.circle(centerPoint, radii.getX());
+                    marker = ellipse(centerPoint, radii.getX(), radii.getX());
                 } else {
                     marker = ellipse(centerPoint, radii.getX(), radii.getZ());
                 }
