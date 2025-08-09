@@ -1,6 +1,7 @@
 package org.popcraft.chunkyborder;
 
 import org.popcraft.chunky.platform.Player;
+import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.platform.util.Location;
 import org.popcraft.chunky.platform.util.Vector2;
 import org.popcraft.chunky.platform.util.Vector3;
@@ -13,6 +14,7 @@ import org.popcraft.chunkyborder.event.border.BorderWrapEvent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class BorderCheckTask implements Runnable {
     private final ChunkyBorder chunkyBorder;
@@ -24,23 +26,36 @@ public class BorderCheckTask implements Runnable {
     @Override
     public void run() {
         for (final Player player : chunkyBorder.getChunky().getServer().getPlayers()) {
-            final PlayerData playerData = chunkyBorder.getPlayerData(player.getUUID());
-            chunkyBorder.getBorder(player.getWorld().getName()).ifPresent(borderData -> {
-                final Location location = player.getLocation();
-                if (borderData.getBorder().isBounding(location.getX(), location.getZ())) {
-                    playerData.setLastLocation(location);
-                } else if (!player.hasPermission("chunkyborder.bypass.move") && !playerData.isBypassing()) {
-                    final Location redirect;
-                    final BorderWrapType borderWrapType = borderData.getWrapType();
-                    if (!BorderWrapType.NONE.equals(borderWrapType)) {
-                        redirect = wrap(borderData, borderWrapType, player, playerData);
+            check(player);
+        }
+    }
+
+    public void check(Player player) {
+        final PlayerData playerData = chunkyBorder.getPlayerData(player.getUUID());
+
+        chunkyBorder.getBorder(player.getWorld().getName()).ifPresent(borderData -> {
+            final Location location = player.getLocation();
+            if (borderData.getBorder().isBounding(location.getX(), location.getZ())) {
+                playerData.setLastLocation(location);
+            } else if (!playerData.isBypassing() && !player.hasPermission("chunkyborder.bypass.move")) {
+                final CompletableFuture<Location> redirectFuture;
+                final BorderWrapType borderWrapType = borderData.getWrapType();
+                if (!BorderWrapType.NONE.equals(borderWrapType)) {
+                    redirectFuture = wrap(borderData, borderWrapType, player, playerData);
+                    redirectFuture.thenAccept(redirect -> {
                         playerData.setLastLocation(redirect);
                         chunkyBorder.getChunky().getEventBus().call(new BorderWrapEvent(player, location, redirect));
-                    } else {
-                        redirect = playerData.getLastLocation().orElse(location.getWorld().getSpawn());
-                        redirect.setYaw(location.getYaw());
-                        redirect.setPitch(location.getPitch());
-                    }
+                    });
+                } else {
+                    redirectFuture = CompletableFuture.completedFuture(playerData.getLastLocation().orElse(location.getWorld().getSpawn()))
+                        .thenApply(redirect -> {
+                            redirect.setYaw(location.getYaw());
+                            redirect.setPitch(location.getPitch());
+                            return redirect;
+                        });
+                }
+
+                redirectFuture.thenAccept(redirect -> {
                     location.getWorld().playEffect(player, chunkyBorder.getConfig().effect());
                     location.getWorld().playSound(player, chunkyBorder.getConfig().sound());
                     player.teleport(redirect);
@@ -51,12 +66,12 @@ public class BorderCheckTask implements Runnable {
                             player.sendMessage("custom_border_message");
                         }
                     }
-                }
-            });
-        }
+                });
+            }
+        });
     }
 
-    private Location wrap(final BorderData borderData, final BorderWrapType borderWrapType, final Player player, final PlayerData playerData) {
+    private CompletableFuture<Location> wrap(final BorderData borderData, final BorderWrapType borderWrapType, final Player player, final PlayerData playerData) {
         final Location location = player.getLocation();
         final boolean rectangle = ShapeType.SQUARE.equals(borderData.getShape()) || ShapeType.RECTANGLE.equals(borderData.getShape());
         final boolean wrapped = switch (borderWrapType) {
@@ -69,18 +84,22 @@ public class BorderCheckTask implements Runnable {
             case EARTH -> rectangle && wrapEarth(borderData, location);
         };
         if (wrapped) {
-            final int elevation = location.getWorld().getElevation((int) location.getX(), (int) location.getZ());
-            if (elevation >= location.getWorld().getMaxElevation()) {
-                return location.getWorld().getSpawn();
-            }
-            location.setY(elevation);
+            return this.getElevation(location.getWorld(), (int) location.getX(), (int) location.getZ()).thenApply(elevation -> {
+                if (elevation >= location.getWorld().getMaxElevation()) {
+                    return location.getWorld().getSpawn();
+                }
+
+                location.setY(elevation);
+                return location;
+            });
         } else {
             final Location lastLocation = playerData.getLastLocation().orElse(location.getWorld().getSpawn());
             location.setX(lastLocation.getX());
             location.setY(lastLocation.getY());
             location.setZ(lastLocation.getZ());
+
+            return CompletableFuture.completedFuture(location);
         }
-        return location;
     }
 
     private boolean wrapBoth(final BorderData borderData, final Location location) {
@@ -172,5 +191,9 @@ public class BorderCheckTask implements Runnable {
             location.setYaw(180);
         }
         return true;
+    }
+
+    protected CompletableFuture<Integer> getElevation(final World world, final int x, final int z) {
+        return CompletableFuture.completedFuture(world.getElevation(x, z));
     }
 }
