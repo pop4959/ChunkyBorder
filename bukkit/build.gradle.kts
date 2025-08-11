@@ -3,7 +3,6 @@ repositories {
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
     maven("https://repo.mikeprimm.com")
     maven("https://jitpack.io")
-    maven("https://repo.papermc.io/repository/maven-public/")
     exclusiveContent {
         forRepository { maven("https://api.modrinth.com/maven") }
         filter { includeGroup("maven.modrinth") }
@@ -11,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly(group = "io.papermc.paper", name = "paper-api", version = "1.21.8-R0.1-SNAPSHOT")
+    compileOnly(group = "org.spigotmc", name = "spigot-api", version = "1.20.5-R0.1-SNAPSHOT")
     compileOnly(group = "org.popcraft", name = "chunky-bukkit", version = "${project.property("target")}")
     compileOnly(group = "org.popcraft", name = "chunky-folia", version = "${project.property("target")}")
     compileOnly(group = "us.dynmap", name = "DynmapCoreAPI", version = "${project.property("target_dynmap")}")
