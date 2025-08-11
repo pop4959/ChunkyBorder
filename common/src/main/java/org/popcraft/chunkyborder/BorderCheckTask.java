@@ -58,7 +58,11 @@ public class BorderCheckTask implements Runnable {
                                 player.sendMessage("custom_border_message");
                             }
                         }
-                    });
+                    }).whenComplete(((unused, throwable) -> {
+                        if (throwable != null) {
+                            chunkyBorder.getLogger().warn("An exception occurred while redirecting {}", player.getName(), throwable);
+                        }
+                    }));
                 }
             });
         }

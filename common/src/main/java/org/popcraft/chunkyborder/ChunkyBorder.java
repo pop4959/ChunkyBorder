@@ -291,4 +291,8 @@ public class ChunkyBorder {
         borders.putAll(loadBorders());
         addBorders();
     }
+
+    public Logger getLogger() {
+        return LOGGER;
+    }
 }
