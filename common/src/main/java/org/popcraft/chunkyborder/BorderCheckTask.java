@@ -1,7 +1,6 @@
 package org.popcraft.chunkyborder;
 
 import org.popcraft.chunky.platform.Player;
-import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.platform.util.Location;
 import org.popcraft.chunky.platform.util.Vector2;
 import org.popcraft.chunky.platform.util.Vector3;
