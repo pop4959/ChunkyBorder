@@ -81,7 +81,7 @@ public class BorderCheckTask implements Runnable {
             case EARTH -> rectangle && wrapEarth(borderData, location);
         };
         if (wrapped) {
-            return this.getElevation(location.getWorld(), (int) location.getX(), (int) location.getZ()).thenApply(elevation -> {
+            return location.getWorld().getElevationAtAsync((int) location.getX(), (int) location.getZ()).thenApply(elevation -> {
                 if (elevation >= location.getWorld().getMaxElevation()) {
                     return location.getWorld().getSpawn();
                 }
@@ -188,29 +188,5 @@ public class BorderCheckTask implements Runnable {
             location.setYaw(180);
         }
         return true;
-    }
-
-    // pretend this part doesn't exist, will be replaced by a proper method call once possible
-    private static final java.lang.invoke.MethodHandle GET_ELEVATION_AT_ASYNC;
-
-    static {
-        java.lang.invoke.MethodHandle temp;
-
-        try {
-            temp = java.lang.invoke.MethodHandles.publicLookup().unreflect(World.class.getMethod("getElevationAtAsync", int.class, int.class));
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-
-        GET_ELEVATION_AT_ASYNC = temp;
-    }
-
-    @SuppressWarnings("unchecked")
-    private CompletableFuture<Integer> getElevation(final World world, final int x, final int z) {
-        try {
-            return (CompletableFuture<Integer>) GET_ELEVATION_AT_ASYNC.invokeExact(world, x, z);
-        } catch (Throwable e) {
-            return CompletableFuture.failedFuture(e);
-        }
     }
 }
