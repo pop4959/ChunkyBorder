@@ -21,6 +21,7 @@ import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunky.util.Translator;
 import org.popcraft.chunky.util.Version;
 import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
+import org.popcraft.chunkyborder.event.server.BlockBreakEvent;
 import org.popcraft.chunkyborder.event.server.BlockPlaceEvent;
 import org.popcraft.chunkyborder.event.server.CreatureSpawnEvent;
 import org.popcraft.chunkyborder.event.server.PlayerQuitEvent;
@@ -162,6 +163,17 @@ public class ChunkyBorder {
                         final double x = ((int) location.getX()) + 0.5;
                         final double z = ((int) location.getZ()) + 0.5;
                         return !border.isBounding(x, z) && !e.getPlayer().hasPermission("chunkyborder.bypass.place");
+                    })
+                    .orElse(false));
+        });
+        eventBus.subscribe(BlockBreakEvent.class, e -> {
+            final Location location = e.getLocation();
+            e.setCancelled(getBorder(location.getWorld().getName())
+                    .map(BorderData::getBorder)
+                    .map(border -> {
+                        final double x = ((int) location.getX()) + 0.5;
+                        final double z = ((int) location.getZ()) + 0.5;
+                        return !border.isBounding(x, z) && !e.getPlayer().hasPermission("chunkyborder.bypass.break");
                     })
                     .orElse(false));
         });
