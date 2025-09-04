@@ -48,8 +48,12 @@ public class BorderCheckTask implements Runnable {
                     }
 
                     redirectFuture.thenAccept(redirect -> {
-                        location.getWorld().playEffect(player, chunkyBorder.getConfig().effect());
-                        location.getWorld().playSound(player, chunkyBorder.getConfig().sound());
+                        if (chunkyBorder.getConfig().hasEffect()) {
+                            location.getWorld().playEffect(player, chunkyBorder.getConfig().effect());
+                        }
+                        if (chunkyBorder.getConfig().hasSound()) {
+                            location.getWorld().playSound(player, chunkyBorder.getConfig().sound());
+                        }
                         player.teleport(redirect);
                         if (chunkyBorder.getConfig().hasMessage()) {
                             if (chunkyBorder.getConfig().useActionBar()) {

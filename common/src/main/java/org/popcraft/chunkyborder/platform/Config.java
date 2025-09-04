@@ -20,7 +20,17 @@ public interface Config {
 
     String effect();
 
+    default boolean hasEffect() {
+        final String effect = effect();
+        return effect != null && !effect.isBlank();
+    }
+
     String sound();
+
+    default boolean hasSound() {
+        final String sound = sound();
+        return sound != null && !sound.isBlank();
+    }
 
     boolean preventMobSpawns();
 
