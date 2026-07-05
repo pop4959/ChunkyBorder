@@ -20,6 +20,7 @@ public class BorderCommand implements ChunkyCommand {
         subCommands.put("help", new HelpCommand(chunkyBorder));
         subCommands.put("list", new ListCommand(chunkyBorder));
         subCommands.put("load", new LoadCommand(chunkyBorder));
+        subCommands.put("reload", new ReloadCommand(chunkyBorder));
         subCommands.put("remove", new RemoveCommand(chunkyBorder));
         subCommands.put("wrap", new WrapCommand(chunkyBorder));
     }
