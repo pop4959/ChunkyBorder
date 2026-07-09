@@ -25,10 +25,12 @@ tasks {
     processResources {
         filesMatching("plugin.yml") {
             expand(
-                "version" to project.version,
-                "group" to project.group,
-                "author" to project.property("author"),
-                "description" to project.property("description")
+                mapOf(
+                    "version" to project.version.toString(),
+                    "group" to project.group.toString(),
+                    "author" to project.property("author").toString(),
+                    "description" to project.property("description").toString()
+                )
             )
         }
     }

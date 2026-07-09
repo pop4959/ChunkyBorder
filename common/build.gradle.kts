@@ -18,8 +18,10 @@ tasks {
     processResources {
         filesMatching("version.properties") {
             expand(
-                "version" to project.version,
-                "target" to project.property("target")
+                mapOf(
+                    "version" to project.version.toString(),
+                    "target" to project.property("target").toString()
+                )
             )
         }
     }

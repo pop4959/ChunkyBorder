@@ -1,5 +1,5 @@
 plugins {
-    id("dev.architectury.loom") version "1.10-SNAPSHOT"
+    id("net.fabricmc.fabric-loom") version "1.17.13"
 }
 
 val shade: Configuration by configurations.creating
@@ -13,12 +13,21 @@ repositories {
     }
 }
 
+loom {
+    splitEnvironmentSourceSets()
+    mods {
+        create(rootProject.name) {
+            sourceSet(sourceSets["main"])
+            sourceSet(sourceSets["client"])
+        }
+    }
+}
+
 dependencies {
-    minecraft(group = "com.mojang", name = "minecraft", version = "1.21.4")
-    mappings(group = "net.fabricmc", name = "yarn", version = "1.21.4+build.1", classifier = "v2")
-    modImplementation(group = "net.fabricmc", name = "fabric-loader", version = "0.16.7")
-    modImplementation(group = "net.fabricmc.fabric-api", name = "fabric-api", version = "0.111.0+1.21.4")
-    modImplementation(group = "org.popcraft", name = "chunky-fabric", version = "${project.property("target")}")
+    minecraft("com.mojang:minecraft:26.2")
+    implementation("net.fabricmc:fabric-loader:0.19.3")
+    implementation("net.fabricmc.fabric-api:fabric-api:0.154.2+26.2")
+    implementation("org.popcraft:chunky-fabric:${project.property("target_fabric")}")
     compileOnly(group = "us.dynmap", name = "DynmapCoreAPI", version = "${project.property("target_dynmap")}")
     compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "${project.property("target_bluemap")}")
     compileOnly(group = "xyz.jpenilla", name = "squaremap-api", version = "${project.property("target_squaremap")}")
@@ -31,23 +40,23 @@ tasks {
     processResources {
         filesMatching("fabric.mod.json") {
             expand(
-                "id" to rootProject.name,
-                "version" to project.version,
-                "name" to project.property("artifactName"),
-                "description" to project.property("description"),
-                "author" to project.property("author"),
-                "github" to project.property("github"),
-                "target" to project.property("target")
+                mapOf(
+                    "id" to rootProject.name,
+                    "version" to project.version.toString(),
+                    "name" to project.property("artifactName").toString(),
+                    "description" to project.property("description").toString(),
+                    "author" to project.property("author").toString(),
+                    "github" to project.property("github").toString(),
+                    "target" to project.property("target_fabric").toString()
+                )
             )
         }
     }
     shadowJar {
+        dependsOn("clientClasses")
+        from(sourceSets["client"].output)
         configurations = listOf(shade)
         archiveClassifier.set("dev")
-        archiveFileName.set(null as String?)
-    }
-    remapJar {
-        inputFile.set(shadowJar.get().archiveFile)
         archiveFileName.set("${project.property("artifactName")}-Fabric-${project.version}.jar")
     }
 }

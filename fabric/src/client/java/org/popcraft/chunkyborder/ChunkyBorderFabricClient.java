@@ -6,8 +6,8 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 import org.popcraft.chunkyborder.packet.BorderPayload;
 import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.shape.BorderShape;
@@ -40,7 +40,7 @@ public class ChunkyBorderFabricClient implements ClientModInitializer {
         final Path configPath = FabricLoader.getInstance().getConfigDir().resolve("chunkyborder/config.json");
         ChunkyBorderFabricClient.setConfig(new FabricConfig(configPath));
         BorderColor.parseColor(config.visualizerColor());
-        PayloadTypeRegistry.playS2C().register(BorderPayload.ID, CustomPayload.codecOf(BorderPayload::write, BorderPayload::new));
+        PayloadTypeRegistry.clientboundPlay().register(BorderPayload.ID, CustomPacketPayload.codec(BorderPayload::write, BorderPayload::new));
         ClientPlayNetworking.registerGlobalReceiver(BorderPayload.ID, (borderPayload, context) -> {
             final ClientBorder clientBorder = borderPayload.getBorder();
             if (clientBorder.worldKey() == null) {
