@@ -23,6 +23,12 @@ loom {
     }
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(25))
+    }
+}
+
 dependencies {
     minecraft("com.mojang:minecraft:26.2")
     implementation("net.fabricmc:fabric-loader:0.19.3")
@@ -37,6 +43,9 @@ dependencies {
 }
 
 tasks {
+    withType<JavaCompile> {
+        options.release = 25
+    }
     processResources {
         filesMatching("fabric.mod.json") {
             expand(

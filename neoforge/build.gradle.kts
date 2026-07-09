@@ -1,5 +1,5 @@
 plugins {
-    id("dev.architectury.loom") version "1.10-SNAPSHOT"
+    id("dev.architectury.loom-no-remap") version "1.17.491"
 }
 
 val shade: Configuration by configurations.creating
@@ -15,10 +15,9 @@ repositories {
 }
 
 dependencies {
-    minecraft(group = "com.mojang", name = "minecraft", version = "1.21.4")
-    mappings(loom.officialMojangMappings())
-    neoForge(group = "net.neoforged", name = "neoforge", version = "21.4.10-beta")
-    modImplementation(group = "org.popcraft", name = "chunky-neoforge", version = "${project.property("target")}")
+    minecraft(group = "com.mojang", name = "minecraft", version = "26.2")
+    neoForge(group = "net.neoforged", name = "neoforge", version = "26.2.0.9-beta")
+    implementation(group = "org.popcraft", name = "chunky-neoforge", version = "${project.property("target_neoforge")}")
     compileOnly(group = "us.dynmap", name = "DynmapCoreAPI", version = "${project.property("target_dynmap")}")
     compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "${project.property("target_bluemap")}")
     compileOnly(group = "xyz.jpenilla", name = "squaremap-api", version = "${project.property("target_squaremap")}")
@@ -27,7 +26,16 @@ dependencies {
     shade(project(":chunkyborder-common"))
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(25))
+    }
+}
+
 tasks {
+    withType<JavaCompile> {
+        options.release = 25
+    }
     processResources {
         filesMatching("META-INF/neoforge.mods.toml") {
             expand(
@@ -38,7 +46,7 @@ tasks {
                     "description" to project.property("description").toString(),
                     "author" to project.property("author").toString(),
                     "github" to project.property("github").toString(),
-                    "target" to project.property("target").toString()
+                    "target" to project.property("target_neoforge").toString()
                 )
             )
         }
@@ -56,11 +64,7 @@ tasks {
     }
     shadowJar {
         configurations = listOf(shade)
-        archiveClassifier.set("dev")
-        archiveFileName.set(null as String?)
-    }
-    remapJar {
-        inputFile.set(shadowJar.get().archiveFile)
+        archiveClassifier.set("")
         archiveFileName.set("${project.property("artifactName")}-NeoForge-${project.version}.jar")
     }
 }

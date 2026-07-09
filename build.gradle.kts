@@ -35,7 +35,7 @@ subprojects {
     tasks {
         withType<JavaCompile> {
             options.encoding = "UTF-8"
-            options.release = 25
+            options.release = 21
         }
         jar {
             archiveClassifier.set("noshade")

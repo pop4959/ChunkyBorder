@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,6 +15,7 @@ import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -53,7 +54,7 @@ import java.util.function.Consumer;
 @Mod(ChunkyBorderNeoForge.MOD_ID)
 public class ChunkyBorderNeoForge {
     public static final String MOD_ID = "chunkyborder";
-    private static final Map<ResourceLocation, BorderShape> borderShapes = new ConcurrentHashMap<>();
+    private static final Map<Identifier, BorderShape> borderShapes = new ConcurrentHashMap<>();
     private static Config config;
     private ChunkyBorder chunkyBorder;
     private BorderCheckTask borderCheckTask;
@@ -74,7 +75,7 @@ public class ChunkyBorderNeoForge {
                     if (clientBorder.worldKey() == null) {
                         return;
                     }
-                    final ResourceLocation identifier = ResourceLocation.tryParse(clientBorder.worldKey());
+                    final Identifier identifier = Identifier.tryParse(clientBorder.worldKey());
                     if (identifier == null) {
                         return;
                     }
@@ -137,7 +138,7 @@ public class ChunkyBorderNeoForge {
         final int maxRange = chunkyBorder.getConfig().visualizerRange();
         Particles.setMaxDistance(maxRange);
         server.getPlayerList().getPlayers().forEach(neoForgePlayer -> {
-            final ServerLevel serverLevel = neoForgePlayer.serverLevel();
+            final ServerLevel serverLevel = neoForgePlayer.level();
             final World world = new NeoForgeWorld(serverLevel);
             final Player player = new NeoForgePlayer(neoForgePlayer);
             final Shape border = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
@@ -173,7 +174,7 @@ public class ChunkyBorderNeoForge {
     }
 
     @SubscribeEvent
-    public void onBlockBreak(final BlockEvent.BreakEvent event) {
+    public void onBlockBreak(final BreakBlockEvent event) {
         if (!(event.getPlayer() instanceof ServerPlayer player)) {
             return;
         }
@@ -194,7 +195,7 @@ public class ChunkyBorderNeoForge {
         }
     }
 
-    public static BorderShape getBorderShape(final ResourceLocation identifier) {
+    public static BorderShape getBorderShape(final Identifier identifier) {
         return ChunkyBorderNeoForge.borderShapes.get(identifier);
     }
 
