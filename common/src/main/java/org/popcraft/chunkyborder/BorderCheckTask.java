@@ -18,6 +18,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class BorderCheckTask implements Runnable {
     private final ChunkyBorder chunkyBorder;
+    public static boolean swapRotation;
 
     public BorderCheckTask(final ChunkyBorder chunkyBorder) {
         this.chunkyBorder = chunkyBorder;
@@ -28,7 +29,7 @@ public class BorderCheckTask implements Runnable {
         for (final Player player : chunkyBorder.getChunky().getServer().getPlayers()) {
             final PlayerData playerData = chunkyBorder.getPlayerData(player.getUUID());
             chunkyBorder.getBorder(player.getWorld().getName()).ifPresent(borderData -> {
-                final Location location = player.getLocation();
+                final Location location = getLocation(player);
                 if (borderData.getBorder().isBounding(location.getX(), location.getZ())) {
                     playerData.setLastLocation(location);
                 } else if (!playerData.isBypassing() && !player.hasPermission("chunkyborder.bypass.move")) {
@@ -72,8 +73,19 @@ public class BorderCheckTask implements Runnable {
         }
     }
 
-    private CompletableFuture<Location> wrap(final BorderData borderData, final BorderWrapType borderWrapType, final Player player, final PlayerData playerData) {
+    private Location getLocation(final Player player) {
         final Location location = player.getLocation();
+        if (swapRotation) {
+            final float yaw = location.getYaw();
+            final float pitch = location.getPitch();
+            location.setYaw(pitch);
+            location.setPitch(yaw);
+        }
+        return location;
+    }
+
+    private CompletableFuture<Location> wrap(final BorderData borderData, final BorderWrapType borderWrapType, final Player player, final PlayerData playerData) {
+        final Location location = getLocation(player);
         final boolean rectangle = ShapeType.SQUARE.equals(borderData.getShape()) || ShapeType.RECTANGLE.equals(borderData.getShape());
         final boolean wrapped = switch (borderWrapType) {
             case NONE -> false;
