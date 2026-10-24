@@ -12,6 +12,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerRegisterChannelEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -224,6 +225,19 @@ public final class ChunkyBorderPaper extends JavaPlugin implements Listener {
                         .ifPresent(e::setTo);
             }
         }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onPlayerRespawn(final PlayerRespawnEvent e) {
+        final org.bukkit.Location paperLocation = e.getRespawnLocation();
+        final Player player = new PaperPlayer(e.getPlayer());
+        final World world = new PaperWorld(paperLocation.getWorld());
+        final Location location = new Location(world, paperLocation.getX(), paperLocation.getY(), paperLocation.getZ(), paperLocation.getYaw(), paperLocation.getPitch());
+        final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(player, location);
+        chunkyBorder.getChunky().getEventBus().call(playerTeleportEvent);
+        playerTeleportEvent.redirect()
+                .map(r -> new org.bukkit.Location(paperLocation.getWorld(), r.getX(), r.getY(), r.getZ(), r.getYaw(), r.getPitch()))
+                .ifPresent(e::setRespawnLocation);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
