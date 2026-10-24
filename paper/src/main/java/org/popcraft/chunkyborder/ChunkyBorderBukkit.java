@@ -17,9 +17,8 @@ import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.ChunkyProvider;
-import org.popcraft.chunky.platform.BukkitPlayer;
-import org.popcraft.chunky.platform.BukkitWorld;
-import org.popcraft.chunky.platform.Folia;
+import org.popcraft.chunky.platform.PaperPlayer;
+import org.popcraft.chunky.platform.PaperWorld;
 import org.popcraft.chunky.platform.Player;
 import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.platform.util.Location;
@@ -92,18 +91,10 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         BorderColor.parseColor(config.visualizerColor());
         getServer().getPluginManager().registerEvents(this, this);
         final Runnable borderInitTask = new BorderInitializationTask(chunkyBorder);
-        if (Folia.isFolia()) {
-            Folia.onServerInit(this, borderInitTask);
-        } else {
-            getServer().getScheduler().scheduleSyncDelayedTask(this, borderInitTask);
-        }
+        getServer().getGlobalRegionScheduler().run(this, ignored -> borderInitTask.run());
         final long checkInterval = chunkyBorder.getConfig().checkInterval();
         final Runnable borderCheckTask = new BorderCheckTask(chunkyBorder);
-        if (Folia.isFolia()) {
-            Folia.scheduleFixedGlobal(this, borderCheckTask, checkInterval, checkInterval);
-        } else {
-            getServer().getScheduler().scheduleSyncRepeatingTask(this, borderCheckTask, checkInterval, checkInterval);
-        }
+        getServer().getGlobalRegionScheduler().runAtFixedRate(this, ignored -> borderCheckTask.run(), checkInterval, checkInterval);
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
         getServer().getMessenger().registerOutgoingPluginChannel(this, PLAY_BORDER_PACKET_ID);
         chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(getServer().getOnlinePlayers(), e.world(), e.shape()));
@@ -176,7 +167,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
             tick.incrementAndGet();
             getServer().getOnlinePlayers().forEach(bukkitPlayer -> {
                 final org.bukkit.World bukkitWorld = bukkitPlayer.getWorld();
-                final Player player = new BukkitPlayer(bukkitPlayer);
+                final Player player = new PaperPlayer(bukkitPlayer);
                 final Shape border = chunkyBorder.getBorder(bukkitWorld.getName()).map(BorderData::getBorder).orElse(null);
                 final boolean isUsingMod = chunkyBorder.getPlayerData(player.getUUID()).isUsingMod();
                 if (border != null && !isUsingMod) {
@@ -185,7 +176,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
                     final Particle.DustOptions visualizerOptions = new Particle.DustOptions(visualizerColor, 1);
                     for (final Vector3 location : particleLocations) {
                         final org.bukkit.Location bukkitLocation = new org.bukkit.Location(bukkitWorld, location.getX(), location.getY(), location.getZ());
-                        if (Folia.isFolia()) {
+                        if (!getServer().isOwnedByCurrentRegion(bukkitLocation)) {
                             bukkitPlayer.spawnParticle(DUST_PARTICLE, bukkitLocation, 1, visualizerOptions);
                         } else {
                             final Block block = bukkitWorld.getBlockAt(bukkitLocation);
@@ -202,33 +193,25 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
                 }
             });
         };
-        if (Folia.isFolia()) {
-            Folia.scheduleFixedGlobal(this, borderVisualizerTask, 1L, 1L);
-        } else {
-            getServer().getScheduler().scheduleSyncRepeatingTask(this, borderVisualizerTask, 1L, 1L);
-        }
+        getServer().getGlobalRegionScheduler().runAtFixedRate(this, ignored -> borderVisualizerTask.run(), 1L, 1L);
     }
 
     @Override
     public void onDisable() {
         HandlerList.unregisterAll((Plugin) this);
-        if (Folia.isFolia()) {
-            Folia.cancelTasks(this);
-        } else {
-            getServer().getScheduler().cancelTasks(this);
-        }
+        getServer().getGlobalRegionScheduler().cancelTasks(this);
         getServer().getServicesManager().unregisterAll(this);
         chunkyBorder.disable();
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldLoad(final org.bukkit.event.world.WorldLoadEvent e) {
-        chunkyBorder.getChunky().getEventBus().call(new WorldLoadEvent(new BukkitWorld(e.getWorld())));
+        chunkyBorder.getChunky().getEventBus().call(new WorldLoadEvent(new PaperWorld(e.getWorld())));
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldUnload(final org.bukkit.event.world.WorldUnloadEvent e) {
-        chunkyBorder.getChunky().getEventBus().call(new WorldUnloadEvent(new BukkitWorld(e.getWorld())));
+        chunkyBorder.getChunky().getEventBus().call(new WorldUnloadEvent(new PaperWorld(e.getWorld())));
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
@@ -236,8 +219,8 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         if (e.getTo() == null || e.getTo().getWorld() == null) {
             return;
         }
-        final Player player = new BukkitPlayer(e.getPlayer());
-        final World world = new BukkitWorld(e.getTo().getWorld());
+        final Player player = new PaperPlayer(e.getPlayer());
+        final World world = new PaperWorld(e.getTo().getWorld());
         final Location location = new Location(world, e.getTo().getX(), e.getTo().getY(), e.getTo().getZ(), e.getTo().getYaw(), e.getTo().getPitch());
         final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(player, location);
         chunkyBorder.getChunky().getEventBus().call(playerTeleportEvent);
@@ -260,7 +243,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         }
         final org.bukkit.World bukkitWorld = e.getEntity().getWorld();
         final org.bukkit.Location bukkitLocation = e.getLocation();
-        final World world = new BukkitWorld(bukkitWorld);
+        final World world = new PaperWorld(bukkitWorld);
         final Location location = new Location(world, bukkitLocation.getX(), bukkitLocation.getY(), bukkitLocation.getZ());
         final CreatureSpawnEvent creatureSpawnEvent = new CreatureSpawnEvent(location);
         chunkyBorder.getChunky().getEventBus().call(creatureSpawnEvent);
@@ -273,9 +256,9 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
     public void onBlockPlace(final org.bukkit.event.block.BlockPlaceEvent e) {
         final org.bukkit.World bukkitWorld = e.getPlayer().getWorld();
         final org.bukkit.Location bukkitLocation = e.getBlockPlaced().getLocation();
-        final World world = new BukkitWorld(bukkitWorld);
+        final World world = new PaperWorld(bukkitWorld);
         final Location location = new Location(world, bukkitLocation.getX(), bukkitLocation.getY(), bukkitLocation.getZ());
-        final Player player = new BukkitPlayer(e.getPlayer());
+        final Player player = new PaperPlayer(e.getPlayer());
         final BlockPlaceEvent blockPlaceEvent = new BlockPlaceEvent(player, location);
         chunkyBorder.getChunky().getEventBus().call(blockPlaceEvent);
         if (blockPlaceEvent.isCancelled()) {
@@ -286,8 +269,8 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onBlockBreak(final org.bukkit.event.block.BlockBreakEvent e) {
         final org.bukkit.Location bukkitLocation = e.getBlock().getLocation();
-        final World world = new BukkitWorld(e.getPlayer().getWorld());
-        final BlockBreakEvent blockBreakEvent = new BlockBreakEvent(new BukkitPlayer(e.getPlayer()), new Location(world, bukkitLocation.getX(), bukkitLocation.getY(), bukkitLocation.getZ()));
+        final World world = new PaperWorld(e.getPlayer().getWorld());
+        final BlockBreakEvent blockBreakEvent = new BlockBreakEvent(new PaperPlayer(e.getPlayer()), new Location(world, bukkitLocation.getX(), bukkitLocation.getY(), bukkitLocation.getZ()));
         chunkyBorder.getChunky().getEventBus().call(blockBreakEvent);
         if (blockBreakEvent.isCancelled()) {
             e.setCancelled(true);
@@ -296,7 +279,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerQuit(final org.bukkit.event.player.PlayerQuitEvent e) {
-        chunkyBorder.getChunky().getEventBus().call(new PlayerQuitEvent(new BukkitPlayer(e.getPlayer())));
+        chunkyBorder.getChunky().getEventBus().call(new PlayerQuitEvent(new PaperPlayer(e.getPlayer())));
     }
 
     @EventHandler

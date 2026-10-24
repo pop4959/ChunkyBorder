@@ -1,6 +1,6 @@
 repositories {
     mavenCentral()
-    maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
+    maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://repo.mikeprimm.com")
     maven("https://jitpack.io")
     exclusiveContent {
@@ -10,9 +10,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly("org.spigotmc:spigot-api:1.21.2-R0.1-SNAPSHOT")
-    compileOnly("org.popcraft:chunky-bukkit:${project.property("target")}")
-    compileOnly("org.popcraft:chunky-folia:${project.property("target")}")
+    compileOnly("io.papermc.paper:paper-api:26.3.build.186-stable")
+    compileOnly("org.popcraft:chunky-paper:1.5.20")
     compileOnly("us.dynmap:DynmapCoreAPI:${project.property("target_dynmap")}")
     compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:${project.property("target_bluemap")}")
     compileOnly("xyz.jpenilla:squaremap-api:${project.property("target_squaremap")}")
@@ -21,7 +20,16 @@ dependencies {
     implementation(project(":chunkyborder-common"))
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(25))
+    }
+}
+
 tasks {
+    withType<JavaCompile> {
+        options.release = 25
+    }
     processResources {
         val properties = mapOf(
             "version" to project.version,
