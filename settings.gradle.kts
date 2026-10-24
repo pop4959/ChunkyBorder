@@ -12,6 +12,7 @@ rootProject.name = "chunkyborder"
 sequenceOf(
     "common",
     "bukkit",
+    "paper",
     "fabric",
     "forge",
     "neoforge"
