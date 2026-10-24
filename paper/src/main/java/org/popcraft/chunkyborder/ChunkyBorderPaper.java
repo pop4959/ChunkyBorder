@@ -2,6 +2,8 @@ package org.popcraft.chunkyborder;
 
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.AdvancedPie;
+import org.bstats.charts.DrilldownPie;
+import org.bstats.charts.SimplePie;
 import org.bukkit.Color;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
@@ -95,6 +97,7 @@ public final class ChunkyBorderPaper extends JavaPlugin implements Listener {
 
     private void startMetrics() {
         final Metrics metrics = new Metrics(this, 8953);
+        metrics.addCustomChart(new DrilldownPie("platform", () -> Map.of("Paper", Map.of(getPluginMeta().getVersion(), 1))));
         metrics.addCustomChart(new AdvancedPie("mapIntegration", () -> {
             final Map<String, Integer> map = new HashMap<>();
             chunkyBorder.getMapIntegrations().forEach(mapIntegration -> {
@@ -114,6 +117,16 @@ public final class ChunkyBorderPaper extends JavaPlugin implements Listener {
             return map;
         }));
         final Map<String, BorderData> borders = chunkyBorder.getBorders();
+        metrics.addCustomChart(new AdvancedPie("borderDimension", () -> {
+            final Map<String, Integer> map = new HashMap<>();
+            if (borders != null) {
+                borders.values().forEach(border -> chunkyBorder.getChunky().getServer().getWorld(border.getWorld()).ifPresent(world -> {
+                    final String dimension = ((PaperWorld) world).getDimension();
+                    map.put(dimension, map.getOrDefault(dimension, 0) + 1);
+                }));
+            }
+            return map;
+        }));
         metrics.addCustomChart(new AdvancedPie("borderSize", () -> {
             final Map<String, Integer> map = new HashMap<>();
             if (borders != null) {
@@ -144,6 +157,7 @@ public final class ChunkyBorderPaper extends JavaPlugin implements Listener {
             }
             return map;
         }));
+        metrics.addCustomChart(new SimplePie("visualizer", () -> chunkyBorder.getConfig().visualizerEnabled() ? "enabled" : "disabled"));
     }
 
     private void startVisualizer() {

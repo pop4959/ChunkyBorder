@@ -11,7 +11,7 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:26.3.build.186-stable")
-    compileOnly("org.popcraft:chunky-paper:1.5.20")
+    compileOnly("org.popcraft:chunky-paper:1.5.23")
     compileOnly("us.dynmap:DynmapCoreAPI:${project.property("target_dynmap")}")
     compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:${project.property("target_bluemap")}")
     compileOnly("xyz.jpenilla:squaremap-api:${project.property("target_squaremap")}")
