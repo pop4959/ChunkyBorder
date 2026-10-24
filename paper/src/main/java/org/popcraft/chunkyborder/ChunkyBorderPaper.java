@@ -56,7 +56,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.popcraft.chunky.util.Translator.translate;
 
-public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
+public final class ChunkyBorderPaper extends JavaPlugin implements Listener {
     private static final String PLAY_BORDER_PACKET_ID = "chunky:border";
     private static final List<String> HEADER = Arrays.asList("ChunkyBorder Configuration", "https://github.com/pop4959/ChunkyBorder/wiki/Configuration");
     private ChunkyBorder chunkyBorder;
@@ -68,8 +68,8 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         options.setHeader(HEADER);
         saveConfig();
         final Chunky chunky = ChunkyProvider.get();
-        final Config config = new BukkitConfig(this);
-        final MapIntegrationLoader mapIntegrationLoader = new BukkitMapIntegrationLoader(this);
+        final Config config = new PaperConfig(this);
+        final MapIntegrationLoader mapIntegrationLoader = new PaperMapIntegrationLoader(this);
         this.chunkyBorder = new ChunkyBorder(chunky, config, mapIntegrationLoader);
         getServer().getServicesManager().register(ChunkyBorder.class, chunkyBorder, this, ServicePriority.Normal);
         if (!chunkyBorder.hasCompatibleChunkyVersion()) {
@@ -155,28 +155,28 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         final AtomicLong tick = new AtomicLong();
         final Runnable borderVisualizerTask = () -> {
             tick.incrementAndGet();
-            getServer().getOnlinePlayers().forEach(bukkitPlayer -> {
-                final org.bukkit.World bukkitWorld = bukkitPlayer.getWorld();
-                final Player player = new PaperPlayer(bukkitPlayer);
-                final Shape border = chunkyBorder.getBorder(bukkitWorld.getName()).map(BorderData::getBorder).orElse(null);
+            getServer().getOnlinePlayers().forEach(paperPlayer -> {
+                final org.bukkit.World paperWorld = paperPlayer.getWorld();
+                final Player player = new PaperPlayer(paperPlayer);
+                final Shape border = chunkyBorder.getBorder(paperWorld.getName()).map(BorderData::getBorder).orElse(null);
                 final boolean isUsingMod = chunkyBorder.getPlayerData(player.getUUID()).isUsingMod();
                 if (border != null && !isUsingMod) {
                     final List<Vector3> particleLocations = Particles.at(player, border, (tick.longValue() % 20) / 20d);
                     final Color visualizerColor = Color.fromRGB(BorderColor.getColor());
                     final Particle.DustOptions visualizerOptions = new Particle.DustOptions(visualizerColor, 1);
                     for (final Vector3 location : particleLocations) {
-                        final org.bukkit.Location bukkitLocation = new org.bukkit.Location(bukkitWorld, location.getX(), location.getY(), location.getZ());
-                        if (!getServer().isOwnedByCurrentRegion(bukkitLocation)) {
-                            bukkitPlayer.spawnParticle(Particle.DUST, bukkitLocation, 1, visualizerOptions);
+                        final org.bukkit.Location paperLocation = new org.bukkit.Location(paperWorld, location.getX(), location.getY(), location.getZ());
+                        if (!getServer().isOwnedByCurrentRegion(paperLocation)) {
+                            paperPlayer.spawnParticle(Particle.DUST, paperLocation, 1, visualizerOptions);
                         } else {
-                            final Block block = bukkitWorld.getBlockAt(bukkitLocation);
+                            final Block block = paperWorld.getBlockAt(paperLocation);
                             final boolean fullyOccluded = block.getType().isOccluding()
                                     && block.getRelative(BlockFace.NORTH).getType().isOccluding()
                                     && block.getRelative(BlockFace.EAST).getType().isOccluding()
                                     && block.getRelative(BlockFace.SOUTH).getType().isOccluding()
                                     && block.getRelative(BlockFace.WEST).getType().isOccluding();
                             if (!fullyOccluded) {
-                                bukkitPlayer.spawnParticle(Particle.DUST, bukkitLocation, 1, visualizerOptions);
+                                paperPlayer.spawnParticle(Particle.DUST, paperLocation, 1, visualizerOptions);
                             }
                         }
                     }
@@ -231,10 +231,10 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         if (!chunkyBorder.getConfig().preventMobSpawns()) {
             return;
         }
-        final org.bukkit.World bukkitWorld = e.getEntity().getWorld();
-        final org.bukkit.Location bukkitLocation = e.getLocation();
-        final World world = new PaperWorld(bukkitWorld);
-        final Location location = new Location(world, bukkitLocation.getX(), bukkitLocation.getY(), bukkitLocation.getZ());
+        final org.bukkit.World paperWorld = e.getEntity().getWorld();
+        final org.bukkit.Location paperLocation = e.getLocation();
+        final World world = new PaperWorld(paperWorld);
+        final Location location = new Location(world, paperLocation.getX(), paperLocation.getY(), paperLocation.getZ());
         final CreatureSpawnEvent creatureSpawnEvent = new CreatureSpawnEvent(location);
         chunkyBorder.getChunky().getEventBus().call(creatureSpawnEvent);
         if (creatureSpawnEvent.isCancelled()) {
@@ -244,10 +244,10 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onBlockPlace(final org.bukkit.event.block.BlockPlaceEvent e) {
-        final org.bukkit.World bukkitWorld = e.getPlayer().getWorld();
-        final org.bukkit.Location bukkitLocation = e.getBlockPlaced().getLocation();
-        final World world = new PaperWorld(bukkitWorld);
-        final Location location = new Location(world, bukkitLocation.getX(), bukkitLocation.getY(), bukkitLocation.getZ());
+        final org.bukkit.World paperWorld = e.getPlayer().getWorld();
+        final org.bukkit.Location paperLocation = e.getBlockPlaced().getLocation();
+        final World world = new PaperWorld(paperWorld);
+        final Location location = new Location(world, paperLocation.getX(), paperLocation.getY(), paperLocation.getZ());
         final Player player = new PaperPlayer(e.getPlayer());
         final BlockPlaceEvent blockPlaceEvent = new BlockPlaceEvent(player, location);
         chunkyBorder.getChunky().getEventBus().call(blockPlaceEvent);
@@ -258,9 +258,9 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onBlockBreak(final org.bukkit.event.block.BlockBreakEvent e) {
-        final org.bukkit.Location bukkitLocation = e.getBlock().getLocation();
+        final org.bukkit.Location paperLocation = e.getBlock().getLocation();
         final World world = new PaperWorld(e.getPlayer().getWorld());
-        final BlockBreakEvent blockBreakEvent = new BlockBreakEvent(new PaperPlayer(e.getPlayer()), new Location(world, bukkitLocation.getX(), bukkitLocation.getY(), bukkitLocation.getZ()));
+        final BlockBreakEvent blockBreakEvent = new BlockBreakEvent(new PaperPlayer(e.getPlayer()), new Location(world, paperLocation.getX(), paperLocation.getY(), paperLocation.getZ()));
         chunkyBorder.getChunky().getEventBus().call(blockBreakEvent);
         if (blockBreakEvent.isCancelled()) {
             e.setCancelled(true);

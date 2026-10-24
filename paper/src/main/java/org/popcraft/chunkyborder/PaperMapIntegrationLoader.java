@@ -13,34 +13,34 @@ import xyz.jpenilla.squaremap.api.SquaremapProvider;
 
 import java.util.Optional;
 
-public class BukkitMapIntegrationLoader implements MapIntegrationLoader {
+public class PaperMapIntegrationLoader implements MapIntegrationLoader {
     private static final String BLUEMAP = "BlueMap";
     private static final String DYNMAP = "dynmap";
     private static final String PL3XMAP = "Pl3xMap";
     private static final String SQUAREMAP = "squaremap";
-    private final ChunkyBorderBukkit chunkyBorderBukkit;
+    private final ChunkyBorderPaper chunkyBorderPaper;
 
-    public BukkitMapIntegrationLoader(final ChunkyBorderBukkit chunkyBorderBukkit) {
-        this.chunkyBorderBukkit = chunkyBorderBukkit;
+    public PaperMapIntegrationLoader(final ChunkyBorderPaper chunkyBorderPaper) {
+        this.chunkyBorderPaper = chunkyBorderPaper;
     }
 
     @Override
     public Optional<MapIntegration> loadBlueMap() {
-        final PluginManager pluginManager = chunkyBorderBukkit.getServer().getPluginManager();
+        final PluginManager pluginManager = chunkyBorderPaper.getServer().getPluginManager();
         if (!pluginManager.isPluginEnabled(BLUEMAP)) {
             return Optional.empty();
         }
-        return Optional.ofNullable(chunkyBorderBukkit.getServer().getPluginManager().getPlugin(BLUEMAP))
+        return Optional.ofNullable(chunkyBorderPaper.getServer().getPluginManager().getPlugin(BLUEMAP))
                 .map(blueMap -> new BlueMapIntegration());
     }
 
     @Override
     public Optional<MapIntegration> loadDynmap() {
-        final PluginManager pluginManager = chunkyBorderBukkit.getServer().getPluginManager();
+        final PluginManager pluginManager = chunkyBorderPaper.getServer().getPluginManager();
         if (!pluginManager.isPluginEnabled(DYNMAP)) {
             return Optional.empty();
         }
-        return Optional.ofNullable(chunkyBorderBukkit.getServer().getPluginManager().getPlugin(DYNMAP))
+        return Optional.ofNullable(chunkyBorderPaper.getServer().getPluginManager().getPlugin(DYNMAP))
                 .map(dynmap -> {
                     final DynmapCommonAPI dynmapAPI = (DynmapCommonAPI) dynmap;
                     return dynmapAPI.markerAPIInitialized() ? new DynmapIntegration(dynmapAPI) : null;
@@ -49,7 +49,7 @@ public class BukkitMapIntegrationLoader implements MapIntegrationLoader {
 
     @Override
     public Optional<MapIntegration> loadPl3xMap() {
-        final PluginManager pluginManager = chunkyBorderBukkit.getServer().getPluginManager();
+        final PluginManager pluginManager = chunkyBorderPaper.getServer().getPluginManager();
         if (!pluginManager.isPluginEnabled(PL3XMAP)) {
             return Optional.empty();
         }
@@ -59,7 +59,7 @@ public class BukkitMapIntegrationLoader implements MapIntegrationLoader {
 
     @Override
     public Optional<MapIntegration> loadSquaremap() {
-        final PluginManager pluginManager = chunkyBorderBukkit.getServer().getPluginManager();
+        final PluginManager pluginManager = chunkyBorderPaper.getServer().getPluginManager();
         if (!pluginManager.isPluginEnabled(SQUAREMAP)) {
             return Optional.empty();
         }
