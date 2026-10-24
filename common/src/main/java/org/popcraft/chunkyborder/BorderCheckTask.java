@@ -97,14 +97,16 @@ public class BorderCheckTask implements Runnable {
             case EARTH -> rectangle && wrapEarth(borderData, location);
         };
         if (wrapped) {
-            return this.getElevationAtAsync(location.getWorld(), (int) location.getX(), (int) location.getZ()).thenApply(elevation -> {
-                if (elevation >= location.getWorld().getMaxElevation()) {
-                    return location.getWorld().getSpawn();
-                }
+            return location.getWorld().getChunkAtAsync((int) location.getX() >> 4, (int) location.getZ() >> 4)
+                    .thenCompose(ignored -> this.getElevationAtAsync(location.getWorld(), (int) location.getX(), (int) location.getZ()))
+                    .thenApply(elevation -> {
+                        if (elevation >= location.getWorld().getMaxElevation()) {
+                            return location.getWorld().getSpawn();
+                        }
 
-                location.setY(elevation);
-                return location;
-            });
+                        location.setY(elevation);
+                        return location;
+                    });
         } else {
             final Location lastLocation = playerData.getLastLocation().orElse(location.getWorld().getSpawn());
             location.setX(lastLocation.getX());
