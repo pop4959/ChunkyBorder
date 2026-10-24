@@ -203,7 +203,7 @@ public class BorderCheckTask implements Runnable {
         try {
             temp = java.lang.invoke.MethodHandles.publicLookup().unreflect(World.class.getMethod("getElevationAtAsync", int.class, int.class));
         } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
+            temp = null;
         }
 
         GET_ELEVATION_AT_ASYNC = temp;
@@ -211,6 +211,9 @@ public class BorderCheckTask implements Runnable {
 
     @SuppressWarnings("unchecked")
     private CompletableFuture<Integer> getElevationAtAsync(final World world, final int x, final int z) {
+        if (GET_ELEVATION_AT_ASYNC == null) {
+            return CompletableFuture.completedFuture(world.getElevation(x, z));
+        }
         try {
             return (CompletableFuture<Integer>) GET_ELEVATION_AT_ASYNC.invokeExact(world, x, z);
         } catch (Throwable e) {
