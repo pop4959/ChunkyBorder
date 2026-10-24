@@ -15,9 +15,9 @@ repositories {
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:1.21.4")
+    minecraft("com.mojang:minecraft:1.21.5")
     mappings(loom.officialMojangMappings())
-    neoForge("net.neoforged:neoforge:21.4.10-beta")
+    neoForge("net.neoforged:neoforge:21.5.0-beta")
     modImplementation("org.popcraft:chunky-neoforge:${project.property("target")}")
     compileOnly("us.dynmap:DynmapCoreAPI:${project.property("target_dynmap")}")
     compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:${project.property("target_bluemap")}")

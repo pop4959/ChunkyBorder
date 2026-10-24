@@ -14,9 +14,9 @@ repositories {
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:1.21.4")
+    minecraft("com.mojang:minecraft:1.21.5")
     mappings(loom.officialMojangMappings())
-    forge("net.minecraftforge:forge:1.21.4-54.0.0")
+    forge("net.minecraftforge:forge:1.21.5-55.0.0")
     modImplementation("org.popcraft:chunky-forge:${project.property("target")}")
     compileOnly("us.dynmap:DynmapCoreAPI:${project.property("target_dynmap")}")
     compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:${project.property("target_bluemap")}")
@@ -24,6 +24,18 @@ dependencies {
     compileOnly("maven.modrinth:pl3xmap:${project.property("target_pl3xmap")}")
     implementation(project(":chunkyborder-common"))
     shade(project(":chunkyborder-common"))
+    components {
+        withModule("org.popcraft:chunky-forge") {
+            listOf("apiElements", "runtimeElements").forEach { variant ->
+                withVariant(variant) {
+                    withFiles {
+                        removeAllFiles()
+                        addFile("chunky-forge-${id.version}.jar")
+                    }
+                }
+            }
+        }
+    }
 }
 
 tasks {
