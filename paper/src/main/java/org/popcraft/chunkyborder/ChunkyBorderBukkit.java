@@ -45,9 +45,7 @@ import org.popcraft.chunkyborder.util.BorderColor;
 import org.popcraft.chunkyborder.util.ClientBorder;
 import org.popcraft.chunkyborder.util.Particles;
 import org.popcraft.chunkyborder.util.PluginMessage;
-import org.popcraft.chunkyborder.util.EnumUtil;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -61,21 +59,13 @@ import static org.popcraft.chunky.util.Translator.translate;
 public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
     private static final String PLAY_BORDER_PACKET_ID = "chunky:border";
     private static final List<String> HEADER = Arrays.asList("ChunkyBorder Configuration", "https://github.com/pop4959/ChunkyBorder/wiki/Configuration");
-    @SuppressWarnings("ExcessiveLambdaUsage")
-    private static final Particle DUST_PARTICLE = EnumUtil
-            .valueOf(Particle.class, "REDSTONE") // 1.20.4 and prior
-            .orElseGet(() -> Particle.DUST); // 1.20.5 and above
     private ChunkyBorder chunkyBorder;
 
     @Override
     public void onEnable() {
         final FileConfigurationOptions options = getConfig().options();
         options.copyDefaults(true);
-        try {
-            FileConfigurationOptions.class.getMethod("header", String.class).invoke(options, String.join("\n", HEADER));
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            options.setHeader(HEADER);
-        }
+        options.setHeader(HEADER);
         saveConfig();
         final Chunky chunky = ChunkyProvider.get();
         final Config config = new BukkitConfig(this);
@@ -177,7 +167,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
                     for (final Vector3 location : particleLocations) {
                         final org.bukkit.Location bukkitLocation = new org.bukkit.Location(bukkitWorld, location.getX(), location.getY(), location.getZ());
                         if (!getServer().isOwnedByCurrentRegion(bukkitLocation)) {
-                            bukkitPlayer.spawnParticle(DUST_PARTICLE, bukkitLocation, 1, visualizerOptions);
+                            bukkitPlayer.spawnParticle(Particle.DUST, bukkitLocation, 1, visualizerOptions);
                         } else {
                             final Block block = bukkitWorld.getBlockAt(bukkitLocation);
                             final boolean fullyOccluded = block.getType().isOccluding()
@@ -186,7 +176,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
                                     && block.getRelative(BlockFace.SOUTH).getType().isOccluding()
                                     && block.getRelative(BlockFace.WEST).getType().isOccluding();
                             if (!fullyOccluded) {
-                                bukkitPlayer.spawnParticle(DUST_PARTICLE, bukkitLocation, 1, visualizerOptions);
+                                bukkitPlayer.spawnParticle(Particle.DUST, bukkitLocation, 1, visualizerOptions);
                             }
                         }
                     }
