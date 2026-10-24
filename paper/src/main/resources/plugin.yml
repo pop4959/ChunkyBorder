@@ -8,7 +8,7 @@ softdepend: [dynmap, BlueMap, Pl3xMap, squaremap]
 load: POSTWORLD
 authors: [${author}]
 description: ${description}
-website: https://www.spigotmc.org/resources/chunkyborder.84278/
+website: https://modrinth.com/plugin/chunkyborder
 permissions:
   chunkyborder.bypass.move:
     description: Bypass border movement checks
