@@ -11,6 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
@@ -68,6 +69,11 @@ public class ChunkyBorderNeoForge {
             // Dynmap is not installed
         }
         NeoForge.EVENT_BUS.register(this);
+        modBus.addListener((Consumer<FMLClientSetupEvent>) event -> {
+            final Path configPath = FMLPaths.CONFIGDIR.get().resolve("chunkyborder/config.json");
+            ChunkyBorderNeoForge.setConfig(new NeoForgeConfig(configPath));
+            BorderColor.parseColor(config.visualizerColor());
+        });
         modBus.addListener((Consumer<RegisterPayloadHandlersEvent>) event -> event.registrar(String.valueOf(PluginMessage.VERSION))
                 .optional()
                 .playToClient(BorderPayload.ID, CustomPacketPayload.codec(BorderPayload::write, BorderPayload::new), (borderPayload, context) -> {
