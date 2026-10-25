@@ -31,7 +31,6 @@ import org.popcraft.chunky.platform.util.Location;
 import org.popcraft.chunky.platform.util.Vector3;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.util.Translator;
-import org.popcraft.chunky.util.Version;
 import org.popcraft.chunkyborder.command.BorderCommand;
 import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
 import org.popcraft.chunkyborder.event.server.BlockBreakEvent;
@@ -106,8 +105,6 @@ public class ChunkyBorderNeoForge {
         Translator.addCustomTranslation("custom_border_message", config.message());
         BorderColor.parseColor(config.visualizerColor());
         new BorderInitializationTask(chunkyBorder).run();
-        // Swap yaw and pitch below Chunky 1.4.49 due to a bug
-        BorderCheckTask.swapRotation = chunkyBorder.getChunky().getVersion().isLowerThan(new Version(1, 4, 49));
         this.borderCheckTask = new BorderCheckTask(chunkyBorder);
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
         chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(event.getServer().getPlayerList().getPlayers(), e.world(), e.shape()));

@@ -27,7 +27,6 @@ import org.popcraft.chunky.platform.util.Location;
 import org.popcraft.chunky.platform.util.Vector3;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.util.Translator;
-import org.popcraft.chunky.util.Version;
 import org.popcraft.chunkyborder.command.BorderCommand;
 import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
 import org.popcraft.chunkyborder.event.server.BlockBreakEvent;
@@ -85,8 +84,6 @@ public class ChunkyBorderFabric implements ModInitializer {
         ServerLifecycleEvents.SERVER_STOPPING.register(minecraftServer -> chunkyBorder.disable());
         ServerLifecycleEvents.SERVER_STOPPED.register(minecraftServer -> this.server = null);
         final long checkInterval = Math.max(1, chunkyBorder.getConfig().checkInterval());
-        // Swap yaw and pitch below Chunky 1.4.49 due to a bug
-        BorderCheckTask.swapRotation = chunkyBorder.getChunky().getVersion().isLowerThan(new Version(1, 4, 49));
         final BorderCheckTask borderCheckTask = new BorderCheckTask(chunkyBorder);
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             if (server.getTicks() % checkInterval == 0) {
