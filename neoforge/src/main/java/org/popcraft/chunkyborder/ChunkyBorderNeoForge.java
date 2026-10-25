@@ -17,6 +17,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -189,7 +190,7 @@ public class ChunkyBorderNeoForge {
     }
 
     @SubscribeEvent
-    public void onBlockBreak(final BlockEvent.BreakEvent event) {
+    public void onBlockBreak(final BreakBlockEvent event) {
         if (!initialized || !(event.getPlayer() instanceof ServerPlayer player)) {
             return;
         }
