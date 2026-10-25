@@ -206,6 +206,7 @@ public class ChunkyBorderForge {
     }
 
     private void sendBorders(final ServerPlayer player) {
+        chunkyBorder.getPlayerData(player.getUUID()).setUsingMod(PLAY_BORDER_CHANNEL.isRemotePresent(player.connection.getConnection()));
         for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
             final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
             sendBorderPacket(List.of(player), world, shape);

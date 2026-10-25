@@ -205,6 +205,7 @@ public class ChunkyBorderNeoForge {
     }
 
     private void sendBorders(final ServerPlayer player) {
+        chunkyBorder.getPlayerData(player.getUUID()).setUsingMod(player.connection.hasChannel(BorderPayload.ID));
         for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
             final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
             sendBorderPacket(List.of(player), world, shape);
