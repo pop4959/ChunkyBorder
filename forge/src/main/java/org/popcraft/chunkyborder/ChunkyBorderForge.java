@@ -12,6 +12,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -36,6 +37,7 @@ import org.popcraft.chunkyborder.command.BorderCommand;
 import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
 import org.popcraft.chunkyborder.event.server.BlockBreakEvent;
 import org.popcraft.chunkyborder.event.server.BlockPlaceEvent;
+import org.popcraft.chunkyborder.event.server.PlayerQuitEvent;
 import org.popcraft.chunkyborder.integration.DynmapCommonAPIProvider;
 import org.popcraft.chunkyborder.packet.BorderPayload;
 import org.popcraft.chunkyborder.platform.Config;
@@ -121,6 +123,13 @@ public class ChunkyBorderForge {
         for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
             final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
             sendBorderPacket(List.of(player), world, shape);
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerLoggedOut(final PlayerEvent.PlayerLoggedOutEvent event) {
+        if (initialized && event.getEntity() instanceof final ServerPlayer player) {
+            chunkyBorder.getChunky().getEventBus().call(new PlayerQuitEvent(new ForgePlayer(player)));
         }
     }
 

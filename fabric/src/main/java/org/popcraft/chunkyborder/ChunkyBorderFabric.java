@@ -30,6 +30,7 @@ import org.popcraft.chunky.util.Version;
 import org.popcraft.chunkyborder.command.BorderCommand;
 import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
 import org.popcraft.chunkyborder.event.server.BlockBreakEvent;
+import org.popcraft.chunkyborder.event.server.PlayerQuitEvent;
 import org.popcraft.chunkyborder.packet.BorderPayload;
 import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
@@ -67,6 +68,7 @@ public class ChunkyBorderFabric implements ModInitializer {
                 sendBorderPacket(List.of(handler.player), world, shape);
             }
         });
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> chunkyBorder.getChunky().getEventBus().call(new PlayerQuitEvent(new FabricPlayer(handler.player))));
         S2CPlayChannelEvents.REGISTER.register((handler, sender, server, channels) -> {
             if (!registered) {
                 chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(server.getPlayerManager().getPlayerList(), e.world(), e.shape()));
