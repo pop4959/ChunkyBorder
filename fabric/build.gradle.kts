@@ -14,9 +14,9 @@ repositories {
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:26.1")
+    minecraft("com.mojang:minecraft:26.2")
     implementation("net.fabricmc:fabric-loader:0.18.5")
-    implementation("net.fabricmc.fabric-api:fabric-api:0.144.3+26.1")
+    implementation("net.fabricmc.fabric-api:fabric-api:0.161.0+26.2")
     implementation("org.popcraft:chunky-fabric:${project.property("target")}")
     compileOnly("us.dynmap:DynmapCoreAPI:${project.property("target_dynmap")}")
     compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:${project.property("target_bluemap")}")

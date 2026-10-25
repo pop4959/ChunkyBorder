@@ -15,8 +15,8 @@ repositories {
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:26.1")
-    forgeUserdev("net.minecraftforge:forge:26.1-62.0.9:userdev")
+    minecraft("com.mojang:minecraft:26.2")
+    forgeUserdev("net.minecraftforge:forge:26.2-65.0.0:userdev")
     implementation("org.popcraft:chunky-forge:${project.property("target")}")
     compileOnly("us.dynmap:DynmapCoreAPI:${project.property("target_dynmap")}")
     compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:${project.property("target_bluemap")}")
