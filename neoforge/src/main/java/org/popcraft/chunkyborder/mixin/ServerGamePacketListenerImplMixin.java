@@ -37,7 +37,7 @@ public class ServerGamePacketListenerImplMixin {
             return;
         }
         final NeoForgePlayer neoForgePlayer = new NeoForgePlayer(this.player);
-        final NeoForgeWorld world = new ChunkLoadingNeoForgeWorld(this.player.serverLevel());
+        final NeoForgeWorld world = new ChunkLoadingNeoForgeWorld(this.player.level());
         final Location location = new Location(world, x, y, z, yaw, pitch);
         final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(neoForgePlayer, location);
         ChunkyProvider.get().getEventBus().call(playerTeleportEvent);

@@ -8,18 +8,19 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.util.Result;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.network.Channel;
 import net.minecraftforge.network.ChannelBuilder;
@@ -90,7 +91,7 @@ public class ChunkyBorderForge {
     private BorderCheckTask borderCheckTask;
     private static boolean initialized;
 
-    public ChunkyBorderForge() {
+    public ChunkyBorderForge(final FMLJavaModLoadingContext context) {
         try {
             Class.forName("org.dynmap.DynmapCommonAPI");
             new DynmapCommonAPIProvider();
@@ -98,7 +99,7 @@ public class ChunkyBorderForge {
             // Dynmap is not installed
         }
         MinecraftForge.EVENT_BUS.register(this);
-        MinecraftForge.EVENT_BUS.register(new ClientEvents());
+        FMLClientSetupEvent.getBus(context.getModBusGroup()).addListener(ChunkyBorderForge::onClientSetup);
     }
 
     @SubscribeEvent
@@ -161,7 +162,7 @@ public class ChunkyBorderForge {
         final int maxRange = chunkyBorder.getConfig().visualizerRange();
         Particles.setMaxDistance(maxRange);
         server.getPlayerList().getPlayers().forEach(forgePlayer -> {
-            final ServerLevel serverLevel = forgePlayer.serverLevel();
+            final ServerLevel serverLevel = forgePlayer.level();
             final World world = new ForgeWorld(serverLevel);
             final Player player = new ForgePlayer(forgePlayer);
             final Shape border = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
@@ -184,16 +185,14 @@ public class ChunkyBorderForge {
     }
 
     @SubscribeEvent
-    public void onBlockPlace(final BlockEvent.EntityPlaceEvent event) {
+    public boolean onBlockPlace(final BlockEvent.EntityPlaceEvent event) {
         if (!initialized || !(event.getEntity() instanceof ServerPlayer player)) {
-            return;
+            return false;
         }
 
         final BlockPlaceEvent placeEvent = new BlockPlaceEvent(new ForgePlayer(player), new Location(new ForgeWorld((ServerLevel) event.getLevel()), event.getPos().getX(), event.getPos().getY(), event.getPos().getZ()));
         chunkyBorder.getChunky().getEventBus().call(placeEvent);
-        if (placeEvent.isCancelled()) {
-            event.setCanceled(true);
-        }
+        return placeEvent.isCancelled();
     }
 
     @SubscribeEvent
@@ -205,7 +204,7 @@ public class ChunkyBorderForge {
         final BlockBreakEvent breakEvent = new BlockBreakEvent(new ForgePlayer(player), new Location(new ForgeWorld((ServerLevel) event.getLevel()), event.getPos().getX(), event.getPos().getY(), event.getPos().getZ()));
         chunkyBorder.getChunky().getEventBus().call(breakEvent);
         if (breakEvent.isCancelled()) {
-            event.setCanceled(true);
+            event.setResult(Result.DENY);
         }
     }
 
@@ -223,19 +222,15 @@ public class ChunkyBorderForge {
         }
     }
 
-    @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static class ClientEvents {
-        @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event) {
-            final Path configPath = FMLPaths.CONFIGDIR.get().resolve("chunkyborder/config.json");
-            ChunkyBorderForge.setConfig(new ForgeConfig(configPath));
-            BorderColor.parseColor(config.visualizerColor());
-            MinecraftForge.EVENT_BUS.addListener(ClientEvents::onLoggingIn);
-        }
+    private static void onClientSetup(final FMLClientSetupEvent event) {
+        final Path configPath = FMLPaths.CONFIGDIR.get().resolve("chunkyborder/config.json");
+        ChunkyBorderForge.setConfig(new ForgeConfig(configPath));
+        BorderColor.parseColor(config.visualizerColor());
+        ClientPlayerNetworkEvent.LoggingIn.BUS.addListener(ChunkyBorderForge::onLoggingIn);
+    }
 
-        private static void onLoggingIn(final ClientPlayerNetworkEvent.LoggingIn event) {
-            ChannelListManager.addChannels(event.getConnection(), PLAY_BORDER_PACKET_ID);
-        }
+    private static void onLoggingIn(final ClientPlayerNetworkEvent.LoggingIn event) {
+        ChannelListManager.addChannels(event.getConnection(), PLAY_BORDER_PACKET_ID);
     }
 
     public static boolean isInitialized() {

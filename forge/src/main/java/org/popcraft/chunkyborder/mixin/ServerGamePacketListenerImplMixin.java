@@ -37,7 +37,7 @@ public class ServerGamePacketListenerImplMixin {
             return;
         }
         final ForgePlayer forgePlayer = new ForgePlayer(this.player);
-        final ForgeWorld world = new ChunkLoadingForgeWorld(this.player.serverLevel());
+        final ForgeWorld world = new ChunkLoadingForgeWorld(this.player.level());
         final Location location = new Location(world, x, y, z, yaw, pitch);
         final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(forgePlayer, location);
         ChunkyProvider.get().getEventBus().call(playerTeleportEvent);
