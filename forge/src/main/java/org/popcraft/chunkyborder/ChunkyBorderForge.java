@@ -64,20 +64,22 @@ public class ChunkyBorderForge {
             .clientbound()
             .add(BorderPayload.ID, StreamCodec.ofMember(BorderPayload::write, BorderPayload::new), (borderPayload, context) -> {
                 context.setPacketHandled(true);
-                final ClientBorder clientBorder = borderPayload.getBorder();
-                if (clientBorder.worldKey() == null) {
-                    return;
-                }
-                final ResourceLocation identifier = ResourceLocation.tryParse(clientBorder.worldKey());
-                if (identifier == null) {
-                    return;
-                }
-                final BorderShape borderShape = clientBorder.borderShape();
-                if (borderShape == null) {
-                    ChunkyBorderForge.borderShapes.remove(identifier);
-                } else {
-                    ChunkyBorderForge.borderShapes.put(identifier, borderShape);
-                }
+                context.enqueueWork(() -> {
+                    final ClientBorder clientBorder = borderPayload.getBorder();
+                    if (clientBorder.worldKey() == null) {
+                        return;
+                    }
+                    final ResourceLocation identifier = ResourceLocation.tryParse(clientBorder.worldKey());
+                    if (identifier == null) {
+                        return;
+                    }
+                    final BorderShape borderShape = clientBorder.borderShape();
+                    if (borderShape == null) {
+                        ChunkyBorderForge.borderShapes.remove(identifier);
+                    } else {
+                        ChunkyBorderForge.borderShapes.put(identifier, borderShape);
+                    }
+                });
             })
             .build();
     private static final Map<ResourceLocation, BorderShape> borderShapes = new ConcurrentHashMap<>();
