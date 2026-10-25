@@ -5,11 +5,11 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "BlockItemMixin",
-    "PlayerManagerMixin",
-    "ServerPlayNetworkHandlerMixin"
+    "PlayerListMixin",
+    "ServerGamePacketListenerImplMixin"
   ],
   "client": [
-    "WorldBorderRenderingMixin"
+    "WorldBorderRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

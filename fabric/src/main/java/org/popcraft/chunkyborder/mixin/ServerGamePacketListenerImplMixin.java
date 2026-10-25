@@ -1,7 +1,7 @@
 package org.popcraft.chunkyborder.mixin;
 
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import org.popcraft.chunky.ChunkyProvider;
 import org.popcraft.chunky.platform.FabricPlayer;
 import org.popcraft.chunky.platform.FabricWorld;
@@ -20,26 +20,26 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Objects;
 import java.util.Optional;
 
-@Mixin(ServerPlayNetworkHandler.class)
-public class ServerPlayNetworkHandlerMixin implements RespawningPlayerBridge {
+@Mixin(ServerGamePacketListenerImpl.class)
+public class ServerGamePacketListenerImplMixin implements RespawningPlayerBridge {
     @Shadow
-    public ServerPlayerEntity player;
+    public ServerPlayer player;
 
     @Unique
     private Location redirect;
 
     @Unique
-    private ServerPlayerEntity respawningPlayer;
+    private ServerPlayer respawningPlayer;
 
     @Inject(
-            method = "requestTeleport(DDDFF)V",
+            method = "teleport(DDDFF)V",
             at = @At("HEAD")
     )
     private void requestTeleport(final double x, final double y, final double z, final float yaw, final float pitch, final CallbackInfo ci) {
-        ServerPlayerEntity player = Objects.requireNonNullElse(this.respawningPlayer, this.player);
+        ServerPlayer player = Objects.requireNonNullElse(this.respawningPlayer, this.player);
         this.respawningPlayer = null; // Reset respawning player, that way it keeps using 'this.player' until it's respawning again
         final FabricPlayer fabricPlayer = new FabricPlayer(player);
-        final FabricWorld world = new ChunkLoadingFabricWorld(player.getEntityWorld());
+        final FabricWorld world = new ChunkLoadingFabricWorld(player.level());
         final Location location = new Location(world, x, y, z, yaw, pitch);
         final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(fabricPlayer, location);
         ChunkyProvider.get().getEventBus().call(playerTeleportEvent);
@@ -48,7 +48,7 @@ public class ServerPlayNetworkHandlerMixin implements RespawningPlayerBridge {
     }
 
     @ModifyVariable(
-            method = "requestTeleport(DDDFF)V",
+            method = "teleport(DDDFF)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 1
@@ -58,7 +58,7 @@ public class ServerPlayNetworkHandlerMixin implements RespawningPlayerBridge {
     }
 
     @ModifyVariable(
-            method = "requestTeleport(DDDFF)V",
+            method = "teleport(DDDFF)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 3
@@ -68,7 +68,7 @@ public class ServerPlayNetworkHandlerMixin implements RespawningPlayerBridge {
     }
 
     @ModifyVariable(
-            method = "requestTeleport(DDDFF)V",
+            method = "teleport(DDDFF)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 5
@@ -78,7 +78,7 @@ public class ServerPlayNetworkHandlerMixin implements RespawningPlayerBridge {
     }
 
     @ModifyVariable(
-            method = "requestTeleport(DDDFF)V",
+            method = "teleport(DDDFF)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 7
@@ -88,7 +88,7 @@ public class ServerPlayNetworkHandlerMixin implements RespawningPlayerBridge {
     }
 
     @ModifyVariable(
-            method = "requestTeleport(DDDFF)V",
+            method = "teleport(DDDFF)V",
             at = @At("HEAD"),
             argsOnly = true,
             index = 8
@@ -98,7 +98,7 @@ public class ServerPlayNetworkHandlerMixin implements RespawningPlayerBridge {
     }
 
     @Override
-    public void chunkyborder$setRespawningPlayer(ServerPlayerEntity player) {
+    public void chunkyborder$setRespawningPlayer(ServerPlayer player) {
         this.respawningPlayer = player;
     }
 }

@@ -1,11 +1,11 @@
 package org.popcraft.chunkyborder.mixin;
 
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import org.popcraft.chunky.ChunkyProvider;
 import org.popcraft.chunky.platform.FabricPlayer;
 import org.popcraft.chunky.platform.FabricWorld;
@@ -19,19 +19,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(BlockItem.class)
 public class BlockItemMixin {
     @Inject(
-            method = "place(Lnet/minecraft/item/ItemPlacementContext;)Lnet/minecraft/util/ActionResult;",
+            method = "place(Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/InteractionResult;",
             at = @At("HEAD"),
             cancellable = true
     )
-    private void place(final ItemPlacementContext context, final CallbackInfoReturnable<ActionResult> cir) {
-        if (!(context.getPlayer() instanceof final ServerPlayerEntity player)) {
+    private void place(final BlockPlaceContext context, final CallbackInfoReturnable<InteractionResult> cir) {
+        if (!(context.getPlayer() instanceof final ServerPlayer player)) {
             return;
         }
-        final BlockPos pos = context.getBlockPos();
-        final BlockPlaceEvent placeEvent = new BlockPlaceEvent(new FabricPlayer(player), new Location(new FabricWorld((ServerWorld) context.getWorld()), pos.getX(), pos.getY(), pos.getZ()));
+        final BlockPos pos = context.getClickedPos();
+        final BlockPlaceEvent placeEvent = new BlockPlaceEvent(new FabricPlayer(player), new Location(new FabricWorld((ServerLevel) context.getLevel()), pos.getX(), pos.getY(), pos.getZ()));
         ChunkyProvider.get().getEventBus().call(placeEvent);
         if (placeEvent.isCancelled()) {
-            cir.setReturnValue(ActionResult.FAIL);
+            cir.setReturnValue(InteractionResult.FAIL);
         }
     }
 }

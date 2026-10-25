@@ -9,14 +9,14 @@ import net.fabricmc.fabric.api.networking.v1.S2CPlayChannelEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.impl.networking.PayloadTypeRegistryImpl;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket;
-import net.minecraft.particle.DustParticleEffect;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.ChunkyProvider;
 import org.popcraft.chunky.platform.FabricPlayer;
@@ -56,10 +56,10 @@ public class ChunkyBorderFabric implements ModInitializer {
         Translator.addCustomTranslation("custom_border_message", config.message());
         BorderColor.parseColor(config.visualizerColor());
         new BorderInitializationTask(chunkyBorder).run();
-        final PayloadTypeRegistry<RegistryByteBuf> payloadTypeRegistry = PayloadTypeRegistry.playS2C();
-        if (payloadTypeRegistry instanceof final PayloadTypeRegistryImpl<RegistryByteBuf> payloadTypeRegistryImpl) {
+        final PayloadTypeRegistry<RegistryFriendlyByteBuf> payloadTypeRegistry = PayloadTypeRegistry.playS2C();
+        if (payloadTypeRegistry instanceof final PayloadTypeRegistryImpl<RegistryFriendlyByteBuf> payloadTypeRegistryImpl) {
             if (payloadTypeRegistryImpl.get(BorderPayload.ID) == null) {
-                PayloadTypeRegistry.playS2C().register(BorderPayload.ID, CustomPayload.codecOf(BorderPayload::write, BorderPayload::new));
+                PayloadTypeRegistry.playS2C().register(BorderPayload.ID, CustomPacketPayload.codec(BorderPayload::write, BorderPayload::new));
             }
         }
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
@@ -72,13 +72,13 @@ public class ChunkyBorderFabric implements ModInitializer {
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> chunkyBorder.getChunky().getEventBus().call(new PlayerQuitEvent(new FabricPlayer(handler.player))));
         S2CPlayChannelEvents.REGISTER.register((handler, sender, server, channels) -> {
             if (channels.contains(BorderPayload.ID.id())) {
-                chunkyBorder.getPlayerData(handler.player.getUuid()).setUsingMod(true);
+                chunkyBorder.getPlayerData(handler.player.getUUID()).setUsingMod(true);
             }
         });
         chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> {
             final MinecraftServer currentServer = this.server;
             if (currentServer != null) {
-                sendBorderPacket(currentServer.getPlayerManager().getPlayerList(), e.world(), e.shape());
+                sendBorderPacket(currentServer.getPlayerList().getPlayers(), e.world(), e.shape());
             }
         });
         ServerLifecycleEvents.SERVER_STOPPING.register(minecraftServer -> chunkyBorder.disable());
@@ -86,17 +86,17 @@ public class ChunkyBorderFabric implements ModInitializer {
         final long checkInterval = Math.max(1, chunkyBorder.getConfig().checkInterval());
         final BorderCheckTask borderCheckTask = new BorderCheckTask(chunkyBorder);
         ServerTickEvents.END_SERVER_TICK.register(server -> {
-            if (server.getTicks() % checkInterval == 0) {
+            if (server.getTickCount() % checkInterval == 0) {
                 borderCheckTask.run();
             }
         });
 
         PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, blockEntity) -> {
-            if (!(player instanceof ServerPlayerEntity serverPlayer)) {
+            if (!(player instanceof ServerPlayer serverPlayer)) {
                 return true;
             }
 
-            final BlockBreakEvent breakEvent = new BlockBreakEvent(new FabricPlayer(serverPlayer), new Location(new FabricWorld((ServerWorld) world), pos.getX(), pos.getY(), pos.getZ()));
+            final BlockBreakEvent breakEvent = new BlockBreakEvent(new FabricPlayer(serverPlayer), new Location(new FabricWorld((ServerLevel) world), pos.getX(), pos.getY(), pos.getZ()));
             chunky.getEventBus().call(breakEvent);
             return !breakEvent.isCancelled(); // Return false when cancelled to indicate we want to cancel this block break
         });
@@ -113,24 +113,24 @@ public class ChunkyBorderFabric implements ModInitializer {
         final int maxRange = chunkyBorder.getConfig().visualizerRange();
         Particles.setMaxDistance(maxRange);
         ServerTickEvents.END_SERVER_TICK.register(server -> {
-            final long tick = server.getTicks();
-            server.getPlayerManager().getPlayerList().forEach(fabricPlayer -> {
-                final ServerWorld serverWorld = fabricPlayer.getEntityWorld();
-                final World world = new FabricWorld(serverWorld);
+            final long tick = server.getTickCount();
+            server.getPlayerList().getPlayers().forEach(fabricPlayer -> {
+                final ServerLevel serverLevel = fabricPlayer.level();
+                final World world = new FabricWorld(serverLevel);
                 final Player player = new FabricPlayer(fabricPlayer);
                 final Shape border = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
                 final boolean isUsingMod = chunkyBorder.getPlayerData(player.getUUID()).isUsingMod();
                 if (border != null && !isUsingMod) {
                     final List<Vector3> particleLocations = Particles.at(player, border, (tick % 20) / 20d);
                     for (final Vector3 location : particleLocations) {
-                        final BlockPos pos = BlockPos.ofFloored(location.getX(), location.getY(), location.getZ());
-                        final boolean fullyOccluded = serverWorld.getBlockState(pos).isOpaqueFullCube()
-                                && serverWorld.getBlockState(pos.north()).isOpaqueFullCube()
-                                && serverWorld.getBlockState(pos.east()).isOpaqueFullCube()
-                                && serverWorld.getBlockState(pos.south()).isOpaqueFullCube()
-                                && serverWorld.getBlockState(pos.west()).isOpaqueFullCube();
+                        final BlockPos pos = BlockPos.containing(location.getX(), location.getY(), location.getZ());
+                        final boolean fullyOccluded = serverLevel.getBlockState(pos).isSolidRender()
+                                && serverLevel.getBlockState(pos.north()).isSolidRender()
+                                && serverLevel.getBlockState(pos.east()).isSolidRender()
+                                && serverLevel.getBlockState(pos.south()).isSolidRender()
+                                && serverLevel.getBlockState(pos.west()).isSolidRender();
                         if (!fullyOccluded) {
-                            serverWorld.spawnParticles(fabricPlayer, new DustParticleEffect(BorderColor.getColor(), 1f), false, false, location.getX(), location.getY(), location.getZ(), 1, 0d, 0d, 0d, 0d);
+                            serverLevel.sendParticles(fabricPlayer, new DustParticleOptions(BorderColor.getColor(), 1f), false, false, location.getX(), location.getY(), location.getZ(), 1, 0d, 0d, 0d, 0d);
                         }
                     }
                 }
@@ -138,9 +138,9 @@ public class ChunkyBorderFabric implements ModInitializer {
         });
     }
 
-    private void sendBorderPacket(final Collection<ServerPlayerEntity> players, final World world, final Shape shape) {
-        for (final ServerPlayerEntity player : players) {
-            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(new BorderPayload(world, shape)));
+    private void sendBorderPacket(final Collection<ServerPlayer> players, final World world, final Shape shape) {
+        for (final ServerPlayer player : players) {
+            player.connection.send(new ClientboundCustomPayloadPacket(new BorderPayload(world, shape)));
         }
     }
 }

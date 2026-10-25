@@ -1,12 +1,12 @@
 package org.popcraft.chunkyborder;
 
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 import org.popcraft.chunky.platform.FabricWorld;
 
 public class ChunkLoadingFabricWorld extends FabricWorld {
-    private final ServerWorld world;
+    private final ServerLevel world;
 
-    public ChunkLoadingFabricWorld(final ServerWorld world) {
+    public ChunkLoadingFabricWorld(final ServerLevel world) {
         super(world);
         this.world = world;
     }
