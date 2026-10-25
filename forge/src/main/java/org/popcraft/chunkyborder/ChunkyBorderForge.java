@@ -145,11 +145,11 @@ public class ChunkyBorderForge {
     }
 
     @SubscribeEvent
-    public void onServerTick(final TickEvent.ServerTickEvent event) {
+    public void onServerTick(final TickEvent.ServerTickEvent.Post event) {
         if (!initialized) {
             return;
         }
-        final MinecraftServer server = event.getServer();
+        final MinecraftServer server = event.server();
         final long tick = server.getTickCount();
         final long checkInterval = Math.max(1, chunkyBorder.getConfig().checkInterval());
         if (tick % checkInterval == 0) {

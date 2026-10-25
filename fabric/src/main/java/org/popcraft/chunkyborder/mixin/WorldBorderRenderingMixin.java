@@ -14,6 +14,7 @@ import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BuiltBuffer;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.render.WorldBorderRendering;
+import net.minecraft.client.render.state.WorldBorderRenderState;
 import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.client.util.BufferAllocator;
@@ -47,6 +48,8 @@ public class WorldBorderRenderingMixin {
     @Unique
     private boolean chunkyborder$forceRefreshBuffers = true;
     @Unique
+    private BorderShape chunkyborder$borderShape;
+    @Unique
     private BorderShape chunkyborder$lastBorderShape;
     @Unique
     private double chunkyborder$lastUploadedBoundWest;
@@ -63,7 +66,7 @@ public class WorldBorderRenderingMixin {
         final double boundNorth = Math.floor(z - viewDistanceBlocks);
         final List<BorderGeometry.Wall> walls = BorderGeometry.walls(borderShape, x, z, viewDistanceBlocks);
         if (!walls.isEmpty()) {
-            try (final BufferAllocator bufferAllocator = BufferAllocator.method_72201(VertexFormats.POSITION_TEXTURE.getVertexSize() * 4 * walls.size())) {
+            try (final BufferAllocator bufferAllocator = BufferAllocator.fixedSized(VertexFormats.POSITION_TEXTURE.getVertexSize() * 4 * walls.size())) {
                 final BufferBuilder bufferBuilder = new BufferBuilder(bufferAllocator, VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
                 for (final BorderGeometry.Wall wall : walls) {
                     final float x1 = (float) (wall.x(0) - boundWest);
@@ -96,29 +99,43 @@ public class WorldBorderRenderingMixin {
         this.chunkyborder$forceRefreshBuffers = false;
     }
 
-    @Inject(method = "render", at = @At("HEAD"), cancellable = true)
-    private void render(final WorldBorder border, final Vec3d cameraPos, final double viewDistanceBlocks, final double farPlaneDistance, final CallbackInfo ci) {
-        final ClientWorld clientWorld = MinecraftClient.getInstance().world;
-        if (clientWorld == null) {
-            return;
-        }
-        final BorderShape borderShape = ChunkyBorderFabricClient.getBorderShape(clientWorld.getRegistryKey().getValue());
+    @Inject(method = "updateRenderState", at = @At("HEAD"), cancellable = true)
+    private void updateRenderState(final WorldBorder worldBorder, final Vec3d cameraPos, final double viewDistanceBlocks, final WorldBorderRenderState state, final CallbackInfo ci) {
+        final BorderShape borderShape = chunkyborder$getBorderShape();
+        this.chunkyborder$borderShape = borderShape;
         if (borderShape == null) {
             return;
         }
         ci.cancel();
+        state.minX = worldBorder.getBoundWest();
+        state.maxX = worldBorder.getBoundEast();
+        state.minZ = worldBorder.getBoundNorth();
+        state.maxZ = worldBorder.getBoundSouth();
         final double distanceToBorder = BorderGeometry.distanceToBorder(borderShape, cameraPos.x, cameraPos.z);
         if (distanceToBorder < viewDistanceBlocks && distanceToBorder > -viewDistanceBlocks) {
-            double alpha = 1.0 - distanceToBorder / viewDistanceBlocks;
-            alpha = Math.pow(alpha, 4.0);
-            alpha = MathHelper.clamp(alpha, 0.0, 1.0);
+            state.alpha = 1.0 - distanceToBorder / viewDistanceBlocks;
+            state.alpha = Math.pow(state.alpha, 4.0);
+            state.alpha = MathHelper.clamp(state.alpha, 0.0, 1.0);
+            state.tint = BorderColor.getColor();
+        } else {
+            state.alpha = 0.0;
+        }
+    }
+
+    @Inject(method = "render", at = @At("HEAD"), cancellable = true)
+    private void render(final WorldBorderRenderState state, final Vec3d cameraPos, final double viewDistanceBlocks, final double farPlaneDistance, final CallbackInfo ci) {
+        final BorderShape borderShape = this.chunkyborder$borderShape;
+        if (borderShape == null) {
+            return;
+        }
+        ci.cancel();
+        if (!(state.alpha <= 0.0)) {
             final double x = cameraPos.x;
             final double z = cameraPos.z;
             final float farPlane = (float) farPlaneDistance;
-            final int color = BorderColor.getColor();
-            final float red = ColorHelper.getRed(color) / 255.0F;
-            final float green = ColorHelper.getGreen(color) / 255.0F;
-            final float blue = ColorHelper.getBlue(color) / 255.0F;
+            final float red = ColorHelper.getRed(state.tint) / 255.0F;
+            final float green = ColorHelper.getGreen(state.tint) / 255.0F;
+            final float blue = ColorHelper.getBlue(state.tint) / 255.0F;
             final float offset = (float) (Util.getMeasuringTimeMs() % 3000L) / 3000.0F;
             final float v0 = (float) (-MathHelper.fractionalPart(cameraPos.y * 0.5));
             final float v1 = v0 + farPlane;
@@ -143,7 +160,7 @@ public class WorldBorderRenderingMixin {
                 }
                 final RenderSystem.ShapeIndexBuffer shapeIndexBuffer = RenderSystem.getSequentialBuffer(VertexFormat.DrawMode.QUADS);
                 final GpuBuffer indexBuffer = shapeIndexBuffer.getIndexBuffer(6 * this.chunkyborder$walls.size());
-                final GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().write(RenderSystem.getModelViewMatrix(), new Vector4f(red, green, blue, (float) alpha), new Vector3f((float) (this.chunkyborder$lastUploadedBoundWest - x), (float) (-cameraPos.y), (float) (this.chunkyborder$lastUploadedBoundNorth - z)), new Matrix4f().translation(offset, offset, 0.0F), 0.0F);
+                final GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().write(RenderSystem.getModelViewMatrix(), new Vector4f(red, green, blue, (float) state.alpha), new Vector3f((float) (this.chunkyborder$lastUploadedBoundWest - x), (float) (-cameraPos.y), (float) (this.chunkyborder$lastUploadedBoundNorth - z)), new Matrix4f().translation(offset, offset, 0.0F), 0.0F);
                 try (final RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "World border", colorAttachment, OptionalInt.empty(), depthAttachment, OptionalDouble.empty())) {
                     renderPass.setPipeline(renderPipeline);
                     RenderSystem.bindDefaultUniforms(renderPass);
@@ -171,5 +188,14 @@ public class WorldBorderRenderingMixin {
     @Inject(method = "markBuffersDirty", at = @At("HEAD"))
     private void markBuffersDirty(final CallbackInfo ci) {
         this.chunkyborder$forceRefreshBuffers = true;
+    }
+
+    @Unique
+    private static BorderShape chunkyborder$getBorderShape() {
+        final ClientWorld clientWorld = MinecraftClient.getInstance().world;
+        if (clientWorld == null) {
+            return null;
+        }
+        return ChunkyBorderFabricClient.getBorderShape(clientWorld.getRegistryKey().getValue());
     }
 }
