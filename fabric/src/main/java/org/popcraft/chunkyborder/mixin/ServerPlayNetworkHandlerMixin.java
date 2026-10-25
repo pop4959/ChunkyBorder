@@ -6,6 +6,7 @@ import org.popcraft.chunky.ChunkyProvider;
 import org.popcraft.chunky.platform.FabricPlayer;
 import org.popcraft.chunky.platform.FabricWorld;
 import org.popcraft.chunky.platform.util.Location;
+import org.popcraft.chunkyborder.ChunkLoadingFabricWorld;
 import org.popcraft.chunkyborder.bridge.RespawningPlayerBridge;
 import org.popcraft.chunkyborder.event.server.PlayerTeleportEvent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -38,7 +39,7 @@ public class ServerPlayNetworkHandlerMixin implements RespawningPlayerBridge {
         ServerPlayerEntity player = Objects.requireNonNullElse(this.respawningPlayer, this.player);
         this.respawningPlayer = null; // Reset respawning player, that way it keeps using 'this.player' until it's respawning again
         final FabricPlayer fabricPlayer = new FabricPlayer(player);
-        final FabricWorld world = new FabricWorld(player.getServerWorld());
+        final FabricWorld world = new ChunkLoadingFabricWorld(player.getServerWorld());
         final Location location = new Location(world, x, y, z, yaw, pitch);
         final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(fabricPlayer, location);
         ChunkyProvider.get().getEventBus().call(playerTeleportEvent);
