@@ -64,7 +64,6 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
     private static final String PLAY_BORDER_PACKET_ID = "chunky:border";
     private static final List<String> HEADER = Arrays.asList("ChunkyBorder Configuration", "https://github.com/pop4959/ChunkyBorder/wiki/Configuration");
     private ChunkyBorder chunkyBorder;
-    private BorderCheckTask borderCheckTask;
 
     @Override
     public void onEnable() {
@@ -93,7 +92,11 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         }
         final long checkInterval = chunkyBorder.getConfig().checkInterval();
         final Runnable borderCheckTask = new BorderCheckTask(chunkyBorder);
-        getServer().getScheduler().scheduleSyncRepeatingTask(this, borderCheckTask, checkInterval, checkInterval);
+        if (Folia.isFolia()) {
+            Folia.scheduleFixedGlobal(this, borderCheckTask, checkInterval, checkInterval);
+        } else {
+            getServer().getScheduler().scheduleSyncRepeatingTask(this, borderCheckTask, checkInterval, checkInterval);
+        }
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
         getServer().getMessenger().registerOutgoingPluginChannel(this, PLAY_BORDER_PACKET_ID);
         chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(getServer().getOnlinePlayers(), e.world(), e.shape()));
