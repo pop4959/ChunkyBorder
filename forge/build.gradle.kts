@@ -1,10 +1,11 @@
 plugins {
-    id("dev.architectury.loom") version "1.17-SNAPSHOT"
+    id("org.relativitymc.neo-loom") version "1.17.11"
 }
 
 val shade = configurations.create("shade")
 
 repositories {
+    maven("https://maven.minecraftforge.net/")
     maven("https://repo.mikeprimm.com")
     maven("https://jitpack.io")
     exclusiveContent {
@@ -14,26 +15,25 @@ repositories {
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:1.21.11")
-    mappings(loom.officialMojangMappings())
-    forge("net.minecraftforge:forge:1.21.11-61.0.2")
-    modImplementation("org.popcraft:chunky-forge:${project.property("target")}")
+    minecraft("com.mojang:minecraft:26.1")
+    forgeUserdev("net.minecraftforge:forge:26.1-62.0.9:userdev")
+    implementation("org.popcraft:chunky-forge:${project.property("target")}")
     compileOnly("us.dynmap:DynmapCoreAPI:${project.property("target_dynmap")}")
     compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:${project.property("target_bluemap")}")
     compileOnly("xyz.jpenilla:squaremap-api:${project.property("target_squaremap")}")
     compileOnly("maven.modrinth:pl3xmap:${project.property("target_pl3xmap")}")
     implementation(project(":chunkyborder-common"))
     shade(project(":chunkyborder-common"))
-    components {
-        withModule("org.popcraft:chunky-forge") {
-            listOf("apiElements", "runtimeElements").forEach { variant ->
-                withVariant(variant) {
-                    withFiles {
-                        removeAllFiles()
-                        addFile("chunky-forge-${id.version}.jar")
-                    }
-                }
-            }
+}
+
+loom {
+    runs.forEach {
+        it.generateRunConfig.set(true)
+    }
+    mods {
+        create("main") {
+            sourceSet(project.sourceSets.main.get())
+            dependency(project.dependencyFactory.createProjectDependency(":chunkyborder-common"))
         }
     }
 }
@@ -70,8 +70,5 @@ tasks {
         configurations = listOf(shade)
         archiveClassifier.set(null as String?)
         archiveFileName.set("${project.property("artifactName")}-Forge-${project.version}.jar")
-    }
-    remapJar {
-        enabled = false
     }
 }

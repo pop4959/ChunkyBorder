@@ -1,5 +1,5 @@
 plugins {
-    id("dev.architectury.loom") version "1.17-SNAPSHOT"
+    id("org.relativitymc.neo-loom") version "1.17.11"
 }
 
 val shade = configurations.create("shade")
@@ -14,17 +14,22 @@ repositories {
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:1.21.11")
-    mappings(loom.officialMojangMappings())
-    modImplementation("net.fabricmc:fabric-loader:0.16.7")
-    modImplementation("net.fabricmc.fabric-api:fabric-api:0.141.6+1.21.11")
-    modImplementation("org.popcraft:chunky-fabric:${project.property("target")}")
+    minecraft("com.mojang:minecraft:26.1")
+    implementation("net.fabricmc:fabric-loader:0.18.5")
+    implementation("net.fabricmc.fabric-api:fabric-api:0.144.3+26.1")
+    implementation("org.popcraft:chunky-fabric:${project.property("target")}")
     compileOnly("us.dynmap:DynmapCoreAPI:${project.property("target_dynmap")}")
     compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:${project.property("target_bluemap")}")
     compileOnly("xyz.jpenilla:squaremap-api:${project.property("target_squaremap")}")
     compileOnly("maven.modrinth:pl3xmap:${project.property("target_pl3xmap")}")
     implementation(project(":chunkyborder-common"))
     shade(project(":chunkyborder-common"))
+}
+
+loom {
+    runs.forEach {
+        it.generateRunConfig.set(true)
+    }
 }
 
 tasks {
@@ -45,11 +50,6 @@ tasks {
     }
     shadowJar {
         configurations = listOf(shade)
-        archiveClassifier.set("dev")
-        archiveFileName.set(null as String?)
-    }
-    remapJar {
-        inputFile.set(shadowJar.get().archiveFile)
         archiveFileName.set("${project.property("artifactName")}-Fabric-${project.version}.jar")
     }
 }

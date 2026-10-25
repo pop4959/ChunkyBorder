@@ -40,7 +40,7 @@ public class ChunkyBorderFabricClient implements ClientModInitializer {
         final Path configPath = FabricLoader.getInstance().getConfigDir().resolve("chunkyborder/config.json");
         ChunkyBorderFabricClient.setConfig(new FabricConfig(configPath));
         BorderColor.parseColor(config.visualizerColor());
-        PayloadTypeRegistry.playS2C().register(BorderPayload.ID, CustomPacketPayload.codec(BorderPayload::write, BorderPayload::new));
+        PayloadTypeRegistry.clientboundPlay().register(BorderPayload.ID, CustomPacketPayload.codec(BorderPayload::write, BorderPayload::new));
         ClientPlayNetworking.registerGlobalReceiver(BorderPayload.ID, (borderPayload, context) -> {
             final ClientBorder clientBorder = borderPayload.getBorder();
             if (clientBorder.worldKey() == null) {

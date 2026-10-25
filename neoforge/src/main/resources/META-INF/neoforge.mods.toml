@@ -13,13 +13,13 @@ description="${description}"
 [[dependencies.chunkyborder]]
    modId="neoforge"
    type="required"
-   versionRange="[21.11.0-beta,)"
+   versionRange="[26.1.0.0-beta,26.1.2.21-beta)"
    ordering="NONE"
    side="BOTH"
 [[dependencies.chunkyborder]]
    modId="minecraft"
    type="required"
-   versionRange="[1.21.11,1.22)"
+   versionRange="[26.1,)"
    ordering="NONE"
    side="BOTH"
 [[dependencies.chunkyborder]]

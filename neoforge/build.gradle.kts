@@ -1,5 +1,5 @@
 plugins {
-    id("dev.architectury.loom") version "1.17-SNAPSHOT"
+    id("org.relativitymc.neo-loom") version "1.17.11"
 }
 
 val shade = configurations.create("shade")
@@ -15,16 +15,27 @@ repositories {
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:1.21.11")
-    mappings(loom.officialMojangMappings())
-    neoForge("net.neoforged:neoforge:21.11.0-beta")
-    modImplementation("org.popcraft:chunky-neoforge:${project.property("target")}")
+    minecraft("com.mojang:minecraft:26.1")
+    forgeUserdev("net.neoforged:neoforge:26.1.0.15-beta:userdev")
+    implementation("org.popcraft:chunky-neoforge:${project.property("target")}")
     compileOnly("us.dynmap:DynmapCoreAPI:${project.property("target_dynmap")}")
     compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:${project.property("target_bluemap")}")
     compileOnly("xyz.jpenilla:squaremap-api:${project.property("target_squaremap")}")
     compileOnly("maven.modrinth:pl3xmap:${project.property("target_pl3xmap")}")
     implementation(project(":chunkyborder-common"))
     shade(project(":chunkyborder-common"))
+}
+
+loom {
+    runs.forEach {
+        it.generateRunConfig.set(true)
+    }
+    mods {
+        create("main") {
+            sourceSet(project.sourceSets.main.get())
+            dependency(project.dependencyFactory.createProjectDependency(":chunkyborder-common"))
+        }
+    }
 }
 
 tasks {
@@ -56,11 +67,6 @@ tasks {
     }
     shadowJar {
         configurations = listOf(shade)
-        archiveClassifier.set("dev")
-        archiveFileName.set(null as String?)
-    }
-    remapJar {
-        inputFile.set(shadowJar.get().archiveFile)
         archiveFileName.set("${project.property("artifactName")}-NeoForge-${project.version}.jar")
     }
 }

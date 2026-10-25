@@ -4,8 +4,8 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
+import net.fabricmc.fabric.api.networking.v1.ClientboundPlayChannelEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.fabricmc.fabric.api.networking.v1.S2CPlayChannelEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.impl.networking.PayloadTypeRegistryImpl;
 import net.fabricmc.loader.api.FabricLoader;
@@ -56,10 +56,10 @@ public class ChunkyBorderFabric implements ModInitializer {
         Translator.addCustomTranslation("custom_border_message", config.message());
         BorderColor.parseColor(config.visualizerColor());
         new BorderInitializationTask(chunkyBorder).run();
-        final PayloadTypeRegistry<RegistryFriendlyByteBuf> payloadTypeRegistry = PayloadTypeRegistry.playS2C();
+        final PayloadTypeRegistry<RegistryFriendlyByteBuf> payloadTypeRegistry = PayloadTypeRegistry.clientboundPlay();
         if (payloadTypeRegistry instanceof final PayloadTypeRegistryImpl<RegistryFriendlyByteBuf> payloadTypeRegistryImpl) {
             if (payloadTypeRegistryImpl.get(BorderPayload.ID) == null) {
-                PayloadTypeRegistry.playS2C().register(BorderPayload.ID, CustomPacketPayload.codec(BorderPayload::write, BorderPayload::new));
+                PayloadTypeRegistry.clientboundPlay().register(BorderPayload.ID, CustomPacketPayload.codec(BorderPayload::write, BorderPayload::new));
             }
         }
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
@@ -70,7 +70,7 @@ public class ChunkyBorderFabric implements ModInitializer {
             }
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> chunkyBorder.getChunky().getEventBus().call(new PlayerQuitEvent(new FabricPlayer(handler.player))));
-        S2CPlayChannelEvents.REGISTER.register((handler, sender, server, channels) -> {
+        ClientboundPlayChannelEvents.REGISTER.register((handler, sender, server, channels) -> {
             if (channels.contains(BorderPayload.ID.id())) {
                 chunkyBorder.getPlayerData(handler.player.getUUID()).setUsingMod(true);
             }

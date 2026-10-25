@@ -16,7 +16,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.WorldBorderRenderer;
-import net.minecraft.client.renderer.state.WorldBorderRenderState;
+import net.minecraft.client.renderer.state.level.WorldBorderRenderState;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.util.ARGB;
@@ -174,7 +174,7 @@ public class WorldBorderRendererMixin {
                         if (visible && first < 0) {
                             first = i;
                         } else if (!visible && first >= 0) {
-                            draws.add(new RenderPass.Draw<>(0, this.chunkyborder$worldBorderBuffer, indexBuffer, indices.type(), 6 * first, 6 * (i - first)));
+                            draws.add(new RenderPass.Draw<>(0, this.chunkyborder$worldBorderBuffer, indexBuffer, indices.type(), 6 * first, 6 * (i - first), 0));
                             first = -1;
                         }
                     }
