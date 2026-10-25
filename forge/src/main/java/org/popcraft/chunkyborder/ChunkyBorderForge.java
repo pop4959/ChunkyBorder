@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -58,7 +58,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Mod(ChunkyBorderForge.MOD_ID)
 public class ChunkyBorderForge {
     public static final String MOD_ID = "chunkyborder";
-    private static final ResourceLocation PLAY_BORDER_PACKET_ID = ResourceLocation.fromNamespaceAndPath("chunky", "border");
+    private static final Identifier PLAY_BORDER_PACKET_ID = Identifier.fromNamespaceAndPath("chunky", "border");
     public static final Channel<CustomPacketPayload> PLAY_BORDER_CHANNEL = ChannelBuilder.named(PLAY_BORDER_PACKET_ID)
             .optional()
             .payloadChannel()
@@ -71,7 +71,7 @@ public class ChunkyBorderForge {
                     if (clientBorder.worldKey() == null) {
                         return;
                     }
-                    final ResourceLocation identifier = ResourceLocation.tryParse(clientBorder.worldKey());
+                    final Identifier identifier = Identifier.tryParse(clientBorder.worldKey());
                     if (identifier == null) {
                         return;
                     }
@@ -84,7 +84,7 @@ public class ChunkyBorderForge {
                 });
             })
             .build();
-    private static final Map<ResourceLocation, BorderShape> borderShapes = new ConcurrentHashMap<>();
+    private static final Map<Identifier, BorderShape> borderShapes = new ConcurrentHashMap<>();
     private static Config config;
     private ChunkyBorder chunkyBorder;
     private BorderCheckTask borderCheckTask;
@@ -234,7 +234,7 @@ public class ChunkyBorderForge {
         return initialized;
     }
 
-    public static BorderShape getBorderShape(final ResourceLocation identifier) {
+    public static BorderShape getBorderShape(final Identifier identifier) {
         return ChunkyBorderForge.borderShapes.get(identifier);
     }
 

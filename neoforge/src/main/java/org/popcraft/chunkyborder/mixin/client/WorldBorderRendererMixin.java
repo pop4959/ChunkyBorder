@@ -12,7 +12,6 @@ import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -22,6 +21,7 @@ import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
+import net.minecraft.util.Util;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -100,17 +100,17 @@ public class WorldBorderRendererMixin {
     }
 
     @Inject(method = "extract", at = @At("HEAD"), cancellable = true)
-    private void extract(final WorldBorder worldBorder, final Vec3 pos, final double renderDistance, final WorldBorderRenderState state, final CallbackInfo ci) {
+    private void extract(final WorldBorder worldBorder, final float partialTick, final Vec3 pos, final double renderDistance, final WorldBorderRenderState state, final CallbackInfo ci) {
         final BorderShape borderShape = chunkyborder$getBorderShape();
         this.chunkyborder$borderShape = borderShape;
         if (borderShape == null) {
             return;
         }
         ci.cancel();
-        state.minX = worldBorder.getMinX();
-        state.maxX = worldBorder.getMaxX();
-        state.minZ = worldBorder.getMinZ();
-        state.maxZ = worldBorder.getMaxZ();
+        state.minX = worldBorder.getMinX(partialTick);
+        state.maxX = worldBorder.getMaxX(partialTick);
+        state.minZ = worldBorder.getMinZ(partialTick);
+        state.maxZ = worldBorder.getMaxZ(partialTick);
         final double distanceToBorder = BorderGeometry.distanceToBorder(borderShape, pos.x, pos.z);
         if (distanceToBorder < renderDistance && distanceToBorder > -renderDistance) {
             state.alpha = 1.0 - distanceToBorder / renderDistance;
@@ -145,7 +145,6 @@ public class WorldBorderRendererMixin {
             if (!this.chunkyborder$walls.isEmpty()) {
                 final TextureManager textureManager = Minecraft.getInstance().getTextureManager();
                 final AbstractTexture abstractTexture = textureManager.getTexture(WorldBorderRenderer.FORCEFIELD_LOCATION);
-                abstractTexture.setUseMipmaps(false);
                 final RenderPipeline renderPipeline = RenderPipelines.WORLD_BORDER;
                 final RenderTarget mainRenderTarget = Minecraft.getInstance().getMainRenderTarget();
                 final RenderTarget weatherTarget = Minecraft.getInstance().levelRenderer.getWeatherTarget();
@@ -160,13 +159,13 @@ public class WorldBorderRendererMixin {
                 }
                 final RenderSystem.AutoStorageIndexBuffer indices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
                 final GpuBuffer indexBuffer = indices.getBuffer(6 * this.chunkyborder$walls.size());
-                final GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms().writeTransform(RenderSystem.getModelViewMatrix(), new Vector4f(red, green, blue, (float) state.alpha), new Vector3f((float) (this.chunkyborder$lastMinX - x), (float) (-pos.y), (float) (this.chunkyborder$lastMinZ - z)), new Matrix4f().translation(offset, offset, 0.0F), 0.0F);
+                final GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms().writeTransform(RenderSystem.getModelViewMatrix(), new Vector4f(red, green, blue, (float) state.alpha), new Vector3f((float) (this.chunkyborder$lastMinX - x), (float) (-pos.y), (float) (this.chunkyborder$lastMinZ - z)), new Matrix4f().translation(offset, offset, 0.0F));
                 try (final RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "World border", colorTexture, OptionalInt.empty(), depthTexture, OptionalDouble.empty())) {
                     renderPass.setPipeline(renderPipeline);
                     RenderSystem.bindDefaultUniforms(renderPass);
                     renderPass.setUniform("DynamicTransforms", dynamicTransforms);
                     renderPass.setIndexBuffer(indexBuffer, indices.type());
-                    renderPass.bindSampler("Sampler0", abstractTexture.getTextureView());
+                    renderPass.bindTexture("Sampler0", abstractTexture.getTextureView(), abstractTexture.getSampler());
                     renderPass.setVertexBuffer(0, this.chunkyborder$worldBorderBuffer);
                     final ArrayList<RenderPass.Draw<WorldBorderRenderer>> draws = new ArrayList<>();
                     int first = -1;
@@ -196,6 +195,6 @@ public class WorldBorderRendererMixin {
         if (clientLevel == null) {
             return null;
         }
-        return ChunkyBorderNeoForge.getBorderShape(clientLevel.dimension().location());
+        return ChunkyBorderNeoForge.getBorderShape(clientLevel.dimension().identifier());
     }
 }

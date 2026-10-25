@@ -14,10 +14,10 @@ repositories {
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:1.21.9")
-    mappings("net.fabricmc:yarn:1.21.9+build.1:v2")
+    minecraft("com.mojang:minecraft:1.21.11")
+    mappings("net.fabricmc:yarn:1.21.11+build.6:v2")
     modImplementation("net.fabricmc:fabric-loader:0.16.7")
-    modImplementation("net.fabricmc.fabric-api:fabric-api:0.134.1+1.21.9")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:0.141.6+1.21.11")
     modImplementation("org.popcraft:chunky-fabric:${project.property("target")}")
     compileOnly("us.dynmap:DynmapCoreAPI:${project.property("target_dynmap")}")
     compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:${project.property("target_bluemap")}")

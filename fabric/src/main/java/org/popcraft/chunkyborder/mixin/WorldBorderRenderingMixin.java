@@ -100,17 +100,17 @@ public class WorldBorderRenderingMixin {
     }
 
     @Inject(method = "updateRenderState", at = @At("HEAD"), cancellable = true)
-    private void updateRenderState(final WorldBorder worldBorder, final Vec3d cameraPos, final double viewDistanceBlocks, final WorldBorderRenderState state, final CallbackInfo ci) {
+    private void updateRenderState(final WorldBorder worldBorder, final float tickProgress, final Vec3d cameraPos, final double viewDistanceBlocks, final WorldBorderRenderState state, final CallbackInfo ci) {
         final BorderShape borderShape = chunkyborder$getBorderShape();
         this.chunkyborder$borderShape = borderShape;
         if (borderShape == null) {
             return;
         }
         ci.cancel();
-        state.minX = worldBorder.getBoundWest();
-        state.maxX = worldBorder.getBoundEast();
-        state.minZ = worldBorder.getBoundNorth();
-        state.maxZ = worldBorder.getBoundSouth();
+        state.minX = worldBorder.getBoundWest(tickProgress);
+        state.maxX = worldBorder.getBoundEast(tickProgress);
+        state.minZ = worldBorder.getBoundNorth(tickProgress);
+        state.maxZ = worldBorder.getBoundSouth(tickProgress);
         final double distanceToBorder = BorderGeometry.distanceToBorder(borderShape, cameraPos.x, cameraPos.z);
         if (distanceToBorder < viewDistanceBlocks && distanceToBorder > -viewDistanceBlocks) {
             state.alpha = 1.0 - distanceToBorder / viewDistanceBlocks;
@@ -145,7 +145,6 @@ public class WorldBorderRenderingMixin {
             if (!this.chunkyborder$walls.isEmpty()) {
                 final TextureManager textureManager = MinecraftClient.getInstance().getTextureManager();
                 final AbstractTexture abstractTexture = textureManager.getTexture(WorldBorderRendering.FORCEFIELD);
-                abstractTexture.setUseMipmaps(false);
                 final RenderPipeline renderPipeline = RenderPipelines.RENDERTYPE_WORLD_BORDER;
                 final Framebuffer framebuffer = MinecraftClient.getInstance().getFramebuffer();
                 final Framebuffer weatherFramebuffer = MinecraftClient.getInstance().worldRenderer.getWeatherFramebuffer();
@@ -160,13 +159,13 @@ public class WorldBorderRenderingMixin {
                 }
                 final RenderSystem.ShapeIndexBuffer shapeIndexBuffer = RenderSystem.getSequentialBuffer(VertexFormat.DrawMode.QUADS);
                 final GpuBuffer indexBuffer = shapeIndexBuffer.getIndexBuffer(6 * this.chunkyborder$walls.size());
-                final GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().write(RenderSystem.getModelViewMatrix(), new Vector4f(red, green, blue, (float) state.alpha), new Vector3f((float) (this.chunkyborder$lastUploadedBoundWest - x), (float) (-cameraPos.y), (float) (this.chunkyborder$lastUploadedBoundNorth - z)), new Matrix4f().translation(offset, offset, 0.0F), 0.0F);
+                final GpuBufferSlice gpuBufferSlice = RenderSystem.getDynamicUniforms().write(RenderSystem.getModelViewMatrix(), new Vector4f(red, green, blue, (float) state.alpha), new Vector3f((float) (this.chunkyborder$lastUploadedBoundWest - x), (float) (-cameraPos.y), (float) (this.chunkyborder$lastUploadedBoundNorth - z)), new Matrix4f().translation(offset, offset, 0.0F));
                 try (final RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "World border", colorAttachment, OptionalInt.empty(), depthAttachment, OptionalDouble.empty())) {
                     renderPass.setPipeline(renderPipeline);
                     RenderSystem.bindDefaultUniforms(renderPass);
                     renderPass.setUniform("DynamicTransforms", gpuBufferSlice);
                     renderPass.setIndexBuffer(indexBuffer, shapeIndexBuffer.getIndexType());
-                    renderPass.bindSampler("Sampler0", abstractTexture.getGlTextureView());
+                    renderPass.bindTexture("Sampler0", abstractTexture.getGlTextureView(), abstractTexture.getSampler());
                     renderPass.setVertexBuffer(0, this.chunkyborder$vertexBuffer);
                     final ArrayList<RenderPass.RenderObject<WorldBorderRendering>> renderObjects = new ArrayList<>();
                     int first = -1;

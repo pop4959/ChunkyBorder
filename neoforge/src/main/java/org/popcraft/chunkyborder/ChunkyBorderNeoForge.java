@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -56,7 +56,7 @@ import java.util.function.Consumer;
 @Mod(ChunkyBorderNeoForge.MOD_ID)
 public class ChunkyBorderNeoForge {
     public static final String MOD_ID = "chunkyborder";
-    private static final Map<ResourceLocation, BorderShape> borderShapes = new ConcurrentHashMap<>();
+    private static final Map<Identifier, BorderShape> borderShapes = new ConcurrentHashMap<>();
     private static Config config;
     private ChunkyBorder chunkyBorder;
     private BorderCheckTask borderCheckTask;
@@ -82,7 +82,7 @@ public class ChunkyBorderNeoForge {
                     if (clientBorder.worldKey() == null) {
                         return;
                     }
-                    final ResourceLocation identifier = ResourceLocation.tryParse(clientBorder.worldKey());
+                    final Identifier identifier = Identifier.tryParse(clientBorder.worldKey());
                     if (identifier == null) {
                         return;
                     }
@@ -222,7 +222,7 @@ public class ChunkyBorderNeoForge {
         return initialized;
     }
 
-    public static BorderShape getBorderShape(final ResourceLocation identifier) {
+    public static BorderShape getBorderShape(final Identifier identifier) {
         return ChunkyBorderNeoForge.borderShapes.get(identifier);
     }
 
