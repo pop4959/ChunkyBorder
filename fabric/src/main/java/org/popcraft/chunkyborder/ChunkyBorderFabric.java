@@ -58,7 +58,7 @@ public class ChunkyBorderFabric implements ModInitializer {
         new BorderInitializationTask(chunkyBorder).run();
         final PayloadTypeRegistry<RegistryFriendlyByteBuf> payloadTypeRegistry = PayloadTypeRegistry.clientboundPlay();
         if (payloadTypeRegistry instanceof final PayloadTypeRegistryImpl<RegistryFriendlyByteBuf> payloadTypeRegistryImpl) {
-            if (payloadTypeRegistryImpl.get(BorderPayload.ID) == null) {
+            if (payloadTypeRegistryImpl.get(BorderPayload.ID.id()) == null) {
                 PayloadTypeRegistry.clientboundPlay().register(BorderPayload.ID, CustomPacketPayload.codec(BorderPayload::write, BorderPayload::new));
             }
         }

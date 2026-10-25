@@ -41,6 +41,10 @@ public final class BorderGeometry {
     }
 
     public static List<Wall> walls(final BorderShape shape, final double x, final double z, final double renderDistance) {
+        return walls(shape, x, z, renderDistance, 0);
+    }
+
+    public static List<Wall> walls(final BorderShape shape, final double x, final double z, final double renderDistance, final double inset) {
         final Window window = new Window(Math.floor(x - renderDistance), Math.ceil(x + renderDistance), Math.floor(z - renderDistance), Math.ceil(z + renderDistance));
         final List<Wall> walls = new ArrayList<>();
         if (shape instanceof final PolygonBorderShape polygon) {
@@ -52,15 +56,29 @@ public final class BorderGeometry {
                 area += pointsX[j] * pointsZ[i] - pointsX[i] * pointsZ[j];
             }
             final float uSign = area > 0 ? -1 : 1;
+            final double[] insetX = new double[points];
+            final double[] insetZ = new double[points];
+            for (int i = 0; i < points; ++i) {
+                final int previous = i == 0 ? points - 1 : i - 1;
+                final int next = i + 1 == points ? 0 : i + 1;
+                final double[] previousNormal = inwardNormal(pointsX[previous], pointsZ[previous], pointsX[i], pointsZ[i], uSign);
+                final double[] nextNormal = inwardNormal(pointsX[i], pointsZ[i], pointsX[next], pointsZ[next], uSign);
+                final double normalX = previousNormal[0] + nextNormal[0];
+                final double normalZ = previousNormal[1] + nextNormal[1];
+                final double dot = normalX * nextNormal[0] + normalZ * nextNormal[1];
+                final double scale = dot > 1e-6 ? inset / dot : 0;
+                insetX[i] = pointsX[i] + normalX * scale;
+                insetZ[i] = pointsZ[i] + normalZ * scale;
+            }
             for (int i = 0; i < points; ++i) {
                 final int next = i + 1 == points ? 0 : i + 1;
-                addWall(walls, window, pointsX[i], pointsZ[i], pointsX[next], pointsZ[next], uSign, Double.NaN);
+                addWall(walls, window, insetX[i], insetZ[i], insetX[next], insetZ[next], uSign, Double.NaN, inset);
             }
         } else if (shape instanceof final EllipseBorderShape ellipse) {
             final double centerX = ellipse.getCenterX();
             final double centerZ = ellipse.getCenterZ();
-            final double radiusX = ellipse.getRadiusX();
-            final double radiusZ = ellipse.getRadiusZ();
+            final double radiusX = Math.max(0, ellipse.getRadiusX() - inset);
+            final double radiusZ = Math.max(0, ellipse.getRadiusZ() - inset);
             final double radius = Math.min(radiusX, radiusZ);
             if (radius <= 0) {
                 return walls;
@@ -91,14 +109,22 @@ public final class BorderGeometry {
                 final double z1 = centerZ + radiusZ * Math.sin(a);
                 final double x2 = centerX + radiusX * Math.cos(b);
                 final double z2 = centerZ + radiusZ * Math.sin(b);
-                addWall(walls, window, x1, z1, x2, z2, -1, (arcLength - Math.floor(arcLength / 2) * 2) * 0.5);
+                addWall(walls, window, x1, z1, x2, z2, -1, (arcLength - Math.floor(arcLength / 2) * 2) * 0.5, inset);
                 arcLength += Math.hypot(x2 - x1, z2 - z1);
             }
         }
         return walls;
     }
 
-    private static void addWall(final List<Wall> walls, final Window window, final double x1, final double z1, final double x2, final double z2, final float uSign, final double u) {
+    private static double[] inwardNormal(final double x1, final double z1, final double x2, final double z2, final float uSign) {
+        final double length = Math.hypot(x2 - x1, z2 - z1);
+        if (length == 0) {
+            return new double[]{0, 0};
+        }
+        return new double[]{(z2 - z1) / length * uSign, -(x2 - x1) / length * uSign};
+    }
+
+    private static void addWall(final List<Wall> walls, final Window window, final double x1, final double z1, final double x2, final double z2, final float uSign, final double u, final double inset) {
         final double dx = x2 - x1;
         final double dz = z2 - z1;
         final double length = Math.hypot(dx, dz);
@@ -116,7 +142,7 @@ public final class BorderGeometry {
         final double start = t[0] * length;
         final double position = x1 * unitX + z1 * unitZ + start;
         final double u0 = Double.isNaN(u) ? (position - Math.floor(position / 2) * 2) * 0.5 : u + start * 0.5;
-        walls.add(new Wall(x1 + unitX * start, z1 + unitZ * start, unitX, unitZ, (t[1] - t[0]) * length, (float) u0, uSign, normalX, normalZ, normalX * x1 + normalZ * z1));
+        walls.add(new Wall(x1 + unitX * start, z1 + unitZ * start, unitX, unitZ, (t[1] - t[0]) * length, (float) u0, uSign, normalX, normalZ, normalX * x1 + normalZ * z1 - inset));
     }
 
     private static boolean clip(final double p, final double q, final double[] t) {
