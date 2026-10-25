@@ -7,6 +7,7 @@ import org.popcraft.chunky.platform.ForgePlayer;
 import org.popcraft.chunky.platform.ForgeWorld;
 import org.popcraft.chunky.platform.util.Location;
 import org.popcraft.chunkyborder.ChunkLoadingForgeWorld;
+import org.popcraft.chunkyborder.ChunkyBorderForge;
 import org.popcraft.chunkyborder.event.server.PlayerTeleportEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -31,6 +32,10 @@ public class ServerGamePacketListenerImplMixin {
             at = @At("HEAD")
     )
     private void requestTeleport(final double x, final double y, final double z, final float yaw, final float pitch, final CallbackInfo ci) {
+        if (!ChunkyBorderForge.isInitialized()) {
+            redirect = null;
+            return;
+        }
         final ForgePlayer forgePlayer = new ForgePlayer(this.player);
         final ForgeWorld world = new ChunkLoadingForgeWorld(this.player.serverLevel());
         final Location location = new Location(world, x, y, z, yaw, pitch);

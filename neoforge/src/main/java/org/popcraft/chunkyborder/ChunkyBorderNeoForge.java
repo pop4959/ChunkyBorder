@@ -61,7 +61,7 @@ public class ChunkyBorderNeoForge {
     private static Config config;
     private ChunkyBorder chunkyBorder;
     private BorderCheckTask borderCheckTask;
-    private boolean initialized;
+    private static boolean initialized;
 
     public ChunkyBorderNeoForge(final IEventBus modBus) {
         try {
@@ -111,17 +111,14 @@ public class ChunkyBorderNeoForge {
         this.borderCheckTask = new BorderCheckTask(chunkyBorder);
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
         chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(event.getServer().getPlayerList().getPlayers(), e.world(), e.shape()));
-        this.initialized = true;
+        initialized = true;
+        event.getServer().getPlayerList().getPlayers().forEach(this::sendBorders);
     }
 
     @SubscribeEvent
     public void onEntityJoinLevel(final EntityJoinLevelEvent event) {
-        if (!(event.getEntity() instanceof final ServerPlayer player)) {
-            return;
-        }
-        for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
-            final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
-            sendBorderPacket(List.of(player), world, shape);
+        if (initialized && event.getEntity() instanceof final ServerPlayer player) {
+            sendBorders(player);
         }
     }
 
@@ -134,6 +131,10 @@ public class ChunkyBorderNeoForge {
 
     @SubscribeEvent
     public void onServerStopping(final ServerStoppingEvent event) {
+        if (!initialized) {
+            return;
+        }
+        initialized = false;
         chunkyBorder.disable();
     }
 
@@ -179,7 +180,7 @@ public class ChunkyBorderNeoForge {
 
     @SubscribeEvent
     public void onBlockPlace(final BlockEvent.EntityPlaceEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) {
+        if (!initialized || !(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
 
@@ -192,7 +193,7 @@ public class ChunkyBorderNeoForge {
 
     @SubscribeEvent
     public void onBlockBreak(final BlockEvent.BreakEvent event) {
-        if (!(event.getPlayer() instanceof ServerPlayer player)) {
+        if (!initialized || !(event.getPlayer() instanceof ServerPlayer player)) {
             return;
         }
 
@@ -203,6 +204,13 @@ public class ChunkyBorderNeoForge {
         }
     }
 
+    private void sendBorders(final ServerPlayer player) {
+        for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
+            final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
+            sendBorderPacket(List.of(player), world, shape);
+        }
+    }
+
     private void sendBorderPacket(final Collection<ServerPlayer> players, final World world, final Shape shape) {
         for (final ServerPlayer player : players) {
             if (!player.connection.hasChannel(BorderPayload.ID)) {
@@ -210,6 +218,10 @@ public class ChunkyBorderNeoForge {
             }
             player.connection.send(new ClientboundCustomPayloadPacket(new BorderPayload(world, shape)));
         }
+    }
+
+    public static boolean isInitialized() {
+        return initialized;
     }
 
     public static BorderShape getBorderShape(final ResourceLocation identifier) {

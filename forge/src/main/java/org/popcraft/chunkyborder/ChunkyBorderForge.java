@@ -84,7 +84,7 @@ public class ChunkyBorderForge {
     private static Config config;
     private ChunkyBorder chunkyBorder;
     private BorderCheckTask borderCheckTask;
-    private boolean initialized;
+    private static boolean initialized;
 
     public ChunkyBorderForge() {
         try {
@@ -112,17 +112,14 @@ public class ChunkyBorderForge {
         this.borderCheckTask = new BorderCheckTask(chunkyBorder);
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
         chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(event.getServer().getPlayerList().getPlayers(), e.world(), e.shape()));
-        this.initialized = true;
+        initialized = true;
+        event.getServer().getPlayerList().getPlayers().forEach(this::sendBorders);
     }
 
     @SubscribeEvent
     public void onEntityJoinLevel(final EntityJoinLevelEvent event) {
-        if (!(event.getEntity() instanceof final ServerPlayer player)) {
-            return;
-        }
-        for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
-            final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
-            sendBorderPacket(List.of(player), world, shape);
+        if (initialized && event.getEntity() instanceof final ServerPlayer player) {
+            sendBorders(player);
         }
     }
 
@@ -135,6 +132,10 @@ public class ChunkyBorderForge {
 
     @SubscribeEvent
     public void onServerStopping(final ServerStoppingEvent event) {
+        if (!initialized) {
+            return;
+        }
+        initialized = false;
         chunkyBorder.disable();
     }
 
@@ -180,7 +181,7 @@ public class ChunkyBorderForge {
 
     @SubscribeEvent
     public void onBlockPlace(final BlockEvent.EntityPlaceEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) {
+        if (!initialized || !(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
 
@@ -193,7 +194,7 @@ public class ChunkyBorderForge {
 
     @SubscribeEvent
     public void onBlockBreak(final BlockEvent.BreakEvent event) {
-        if (!(event.getPlayer() instanceof ServerPlayer player)) {
+        if (!initialized || !(event.getPlayer() instanceof ServerPlayer player)) {
             return;
         }
 
@@ -201,6 +202,13 @@ public class ChunkyBorderForge {
         chunkyBorder.getChunky().getEventBus().call(breakEvent);
         if (breakEvent.isCancelled()) {
             event.setCanceled(true);
+        }
+    }
+
+    private void sendBorders(final ServerPlayer player) {
+        for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
+            final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
+            sendBorderPacket(List.of(player), world, shape);
         }
     }
 
@@ -218,6 +226,10 @@ public class ChunkyBorderForge {
             ChunkyBorderForge.setConfig(new ForgeConfig(configPath));
             BorderColor.parseColor(config.visualizerColor());
         }
+    }
+
+    public static boolean isInitialized() {
+        return initialized;
     }
 
     public static BorderShape getBorderShape(final ResourceLocation identifier) {
