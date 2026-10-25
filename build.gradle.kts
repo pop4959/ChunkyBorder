@@ -1,15 +1,13 @@
-import java.io.ByteArrayOutputStream
-
 plugins {
     id("java-library")
     id("maven-publish")
-    id("io.github.goooler.shadow") version "8.1.7"
+    id("com.gradleup.shadow") version "9.6.1"
 }
 
 subprojects {
     plugins.apply("java-library")
     plugins.apply("maven-publish")
-    plugins.apply("io.github.goooler.shadow")
+    plugins.apply("com.gradleup.shadow")
 
     group = "${project.property("group")}"
     version = "${project.property("version")}.${commitsSinceLastTag()}"
@@ -20,9 +18,9 @@ subprojects {
     }
 
     dependencies {
-        compileOnly(group = "org.apache.logging.log4j", name = "log4j-api", version = "2.14.1")
-        compileOnly(group = "com.google.code.gson", name = "gson", version = "2.8.9")
-        compileOnly(group = "org.popcraft", name = "chunky-common", version = "${project.property("target")}")
+        compileOnly("org.apache.logging.log4j:log4j-api:2.14.1")
+        compileOnly("com.google.code.gson:gson:2.8.9")
+        compileOnly("org.popcraft:chunky-common:${project.property("target")}")
     }
 
     java {
@@ -73,13 +71,11 @@ subprojects {
 }
 
 fun commitsSinceLastTag(): String {
-    val tagDescription = ByteArrayOutputStream()
-    exec {
+    val tagDescription = providers.exec {
         commandLine("git", "describe", "--tags")
-        standardOutput = tagDescription
-    }
-    if (tagDescription.toString().indexOf('-') < 0) {
+    }.standardOutput.asText.get()
+    if (tagDescription.indexOf('-') < 0) {
         return "0"
     }
-    return tagDescription.toString().split('-')[1]
+    return tagDescription.split('-')[1]
 }

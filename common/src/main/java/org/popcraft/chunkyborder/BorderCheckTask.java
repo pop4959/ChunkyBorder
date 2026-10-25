@@ -1,6 +1,7 @@
 package org.popcraft.chunkyborder;
 
 import org.popcraft.chunky.platform.Player;
+import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.platform.util.Location;
 import org.popcraft.chunky.platform.util.Vector2;
 import org.popcraft.chunky.platform.util.Vector3;
@@ -17,6 +18,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class BorderCheckTask implements Runnable {
     private final ChunkyBorder chunkyBorder;
+    public static boolean swapRotation;
 
     public BorderCheckTask(final ChunkyBorder chunkyBorder) {
         this.chunkyBorder = chunkyBorder;
@@ -25,58 +27,65 @@ public class BorderCheckTask implements Runnable {
     @Override
     public void run() {
         for (final Player player : chunkyBorder.getChunky().getServer().getPlayers()) {
-            check(player);
+            final PlayerData playerData = chunkyBorder.getPlayerData(player.getUUID());
+            chunkyBorder.getBorder(player.getWorld().getName()).ifPresent(borderData -> {
+                final Location location = getLocation(player);
+                if (borderData.getBorder().isBounding(location.getX(), location.getZ())) {
+                    playerData.setLastLocation(location);
+                } else if (!playerData.isBypassing() && !player.hasPermission("chunkyborder.bypass.move")) {
+                    final CompletableFuture<Location> redirectFuture;
+                    final BorderWrapType borderWrapType = borderData.getWrapType();
+                    if (!BorderWrapType.NONE.equals(borderWrapType)) {
+                        redirectFuture = wrap(borderData, borderWrapType, player, playerData);
+                        redirectFuture.thenAccept(redirect -> {
+                            playerData.setLastLocation(redirect);
+                            chunkyBorder.getChunky().getEventBus().call(new BorderWrapEvent(player, location, redirect));
+                        });
+                    } else {
+                        final Location lastLocation = playerData.getLastLocation().orElse(location.getWorld().getSpawn());
+                        lastLocation.setYaw(location.getYaw());
+                        lastLocation.setPitch(location.getPitch());
+                        redirectFuture = CompletableFuture.completedFuture(lastLocation);
+                    }
+
+                    redirectFuture.thenAccept(redirect -> {
+                        if (chunkyBorder.getConfig().hasEffect()) {
+                            location.getWorld().playEffect(player, chunkyBorder.getConfig().effect());
+                        }
+                        if (chunkyBorder.getConfig().hasSound()) {
+                            location.getWorld().playSound(player, chunkyBorder.getConfig().sound());
+                        }
+                        player.teleport(redirect);
+                        if (chunkyBorder.getConfig().hasMessage()) {
+                            if (chunkyBorder.getConfig().useActionBar()) {
+                                player.sendActionBar("custom_border_message");
+                            } else {
+                                player.sendMessage("custom_border_message");
+                            }
+                        }
+                    }).whenComplete(((unused, throwable) -> {
+                        if (throwable != null) {
+                            chunkyBorder.getLogger().warn("An exception occurred while redirecting {}", player.getName(), throwable);
+                        }
+                    }));
+                }
+            });
         }
     }
 
-    public void check(final Player player) {
-        final PlayerData playerData = chunkyBorder.getPlayerData(player.getUUID());
-        chunkyBorder.getBorder(player.getWorld().getName()).ifPresent(borderData -> {
-            final Location location = player.getLocation();
-            if (borderData.getBorder().isBounding(location.getX(), location.getZ())) {
-                playerData.setLastLocation(location);
-            } else if (!playerData.isBypassing() && !player.hasPermission("chunkyborder.bypass.move")) {
-                final CompletableFuture<Location> redirectFuture;
-                final BorderWrapType borderWrapType = borderData.getWrapType();
-                if (!BorderWrapType.NONE.equals(borderWrapType)) {
-                    redirectFuture = wrap(borderData, borderWrapType, player, playerData);
-                    redirectFuture.thenAccept(redirect -> {
-                        playerData.setLastLocation(redirect);
-                        chunkyBorder.getChunky().getEventBus().call(new BorderWrapEvent(player, location, redirect));
-                    });
-                } else {
-                    final Location lastLocation = playerData.getLastLocation().orElse(location.getWorld().getSpawn());
-                    lastLocation.setYaw(location.getYaw());
-                    lastLocation.setPitch(location.getPitch());
-                    redirectFuture = CompletableFuture.completedFuture(lastLocation);
-                }
-
-                redirectFuture.thenAccept(redirect -> {
-                    if (chunkyBorder.getConfig().hasEffect()) {
-                        location.getWorld().playEffect(player, chunkyBorder.getConfig().effect());
-                    }
-                    if (chunkyBorder.getConfig().hasSound()) {
-                        location.getWorld().playSound(player, chunkyBorder.getConfig().sound());
-                    }
-                    player.teleport(redirect);
-                    if (chunkyBorder.getConfig().hasMessage()) {
-                        if (chunkyBorder.getConfig().useActionBar()) {
-                            player.sendActionBar("custom_border_message");
-                        } else {
-                            player.sendMessage("custom_border_message");
-                        }
-                    }
-                }).whenComplete(((unused, throwable) -> {
-                    if (throwable != null) {
-                        chunkyBorder.getLogger().warn("An exception occurred while redirecting {}", player.getName(), throwable);
-                    }
-                }));
-            }
-        });
+    private Location getLocation(final Player player) {
+        final Location location = player.getLocation();
+        if (swapRotation) {
+            final float yaw = location.getYaw();
+            final float pitch = location.getPitch();
+            location.setYaw(pitch);
+            location.setPitch(yaw);
+        }
+        return location;
     }
 
     private CompletableFuture<Location> wrap(final BorderData borderData, final BorderWrapType borderWrapType, final Player player, final PlayerData playerData) {
-        final Location location = player.getLocation();
+        final Location location = getLocation(player);
         final boolean rectangle = ShapeType.SQUARE.equals(borderData.getShape()) || ShapeType.RECTANGLE.equals(borderData.getShape());
         final boolean wrapped = switch (borderWrapType) {
             case NONE -> false;
@@ -88,14 +97,16 @@ public class BorderCheckTask implements Runnable {
             case EARTH -> rectangle && wrapEarth(borderData, location);
         };
         if (wrapped) {
-            return location.getWorld().getElevationAtAsync((int) location.getX(), (int) location.getZ()).thenApply(elevation -> {
-                if (elevation >= location.getWorld().getMaxElevation()) {
-                    return location.getWorld().getSpawn();
-                }
+            return location.getWorld().getChunkAtAsync((int) location.getX() >> 4, (int) location.getZ() >> 4)
+                    .thenCompose(ignored -> this.getElevationAtAsync(location.getWorld(), (int) location.getX(), (int) location.getZ()))
+                    .thenApply(elevation -> {
+                        if (elevation >= location.getWorld().getMaxElevation()) {
+                            return location.getWorld().getSpawn();
+                        }
 
-                location.setY(elevation);
-                return location;
-            });
+                        location.setY(elevation);
+                        return location;
+                    });
         } else {
             final Location lastLocation = playerData.getLastLocation().orElse(location.getWorld().getSpawn());
             location.setX(lastLocation.getX());
@@ -195,5 +206,32 @@ public class BorderCheckTask implements Runnable {
             location.setYaw(180);
         }
         return true;
+    }
+
+    // FIXME: replace when chunky dependency is bumped
+    private static final java.lang.invoke.MethodHandle GET_ELEVATION_AT_ASYNC;
+
+    static {
+        java.lang.invoke.MethodHandle temp;
+
+        try {
+            temp = java.lang.invoke.MethodHandles.publicLookup().unreflect(World.class.getMethod("getElevationAtAsync", int.class, int.class));
+        } catch (ReflectiveOperationException e) {
+            temp = null;
+        }
+
+        GET_ELEVATION_AT_ASYNC = temp;
+    }
+
+    @SuppressWarnings("unchecked")
+    private CompletableFuture<Integer> getElevationAtAsync(final World world, final int x, final int z) {
+        if (GET_ELEVATION_AT_ASYNC == null) {
+            return CompletableFuture.completedFuture(world.getElevation(x, z));
+        }
+        try {
+            return (CompletableFuture<Integer>) GET_ELEVATION_AT_ASYNC.invokeExact(world, x, z);
+        } catch (Throwable e) {
+            return CompletableFuture.failedFuture(e);
+        }
     }
 }

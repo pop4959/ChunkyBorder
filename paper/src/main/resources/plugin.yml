@@ -1,0 +1,21 @@
+name: ChunkyBorder
+version: ${version}
+main: ${group}.chunkyborder.ChunkyBorderPaper
+api-version: 1.21.8
+folia-supported: true
+depend: [Chunky]
+softdepend: [dynmap, BlueMap, Pl3xMap, squaremap]
+load: POSTWORLD
+authors: [${author}]
+description: ${description}
+website: https://modrinth.com/plugin/chunkyborder
+permissions:
+  chunkyborder.bypass.move:
+    description: Bypass border movement checks
+    default: false
+  chunkyborder.bypass.place:
+    description: Bypass border block placement checks
+    default: false
+  chunkyborder.bypass.break:
+    description: Bypass border block breaking checks
+    default: false

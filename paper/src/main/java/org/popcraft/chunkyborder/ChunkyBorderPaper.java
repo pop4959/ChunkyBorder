@@ -1,0 +1,324 @@
+package org.popcraft.chunkyborder;
+
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.AdvancedPie;
+import org.bstats.charts.DrilldownPie;
+import org.bstats.charts.SimplePie;
+import org.bukkit.Color;
+import org.bukkit.Particle;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.configuration.file.FileConfigurationOptions;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerRegisterChannelEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.ServicePriority;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.popcraft.chunky.Chunky;
+import org.popcraft.chunky.ChunkyProvider;
+import org.popcraft.chunky.platform.PaperPlayer;
+import org.popcraft.chunky.platform.PaperWorld;
+import org.popcraft.chunky.platform.Player;
+import org.popcraft.chunky.platform.World;
+import org.popcraft.chunky.platform.util.Location;
+import org.popcraft.chunky.platform.util.Vector3;
+import org.popcraft.chunky.shape.Shape;
+import org.popcraft.chunky.util.TranslationKey;
+import org.popcraft.chunky.util.Translator;
+import org.popcraft.chunkyborder.command.BorderCommand;
+import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
+import org.popcraft.chunkyborder.event.server.BlockBreakEvent;
+import org.popcraft.chunkyborder.event.server.BlockPlaceEvent;
+import org.popcraft.chunkyborder.event.server.CreatureSpawnEvent;
+import org.popcraft.chunkyborder.event.server.PlayerQuitEvent;
+import org.popcraft.chunkyborder.event.server.PlayerTeleportEvent;
+import org.popcraft.chunkyborder.event.server.WorldLoadEvent;
+import org.popcraft.chunkyborder.event.server.WorldUnloadEvent;
+import org.popcraft.chunkyborder.integration.BlueMapIntegration;
+import org.popcraft.chunkyborder.integration.DynmapIntegration;
+import org.popcraft.chunkyborder.integration.Pl3xMapIntegration;
+import org.popcraft.chunkyborder.integration.SquaremapIntegration;
+import org.popcraft.chunkyborder.platform.Config;
+import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
+import org.popcraft.chunkyborder.util.BorderColor;
+import org.popcraft.chunkyborder.util.ClientBorder;
+import org.popcraft.chunkyborder.util.Particles;
+import org.popcraft.chunkyborder.util.PluginMessage;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static org.popcraft.chunky.util.Translator.translate;
+
+public final class ChunkyBorderPaper extends JavaPlugin implements Listener {
+    private static final String PLAY_BORDER_PACKET_ID = "chunky:border";
+    private static final List<String> HEADER = Arrays.asList("ChunkyBorder Configuration", "https://github.com/pop4959/ChunkyBorder/wiki/Configuration");
+    private ChunkyBorder chunkyBorder;
+
+    @Override
+    public void onEnable() {
+        final FileConfigurationOptions options = getConfig().options();
+        options.copyDefaults(true);
+        options.setHeader(HEADER);
+        saveConfig();
+        final Chunky chunky = ChunkyProvider.get();
+        final Config config = new PaperConfig(this);
+        final MapIntegrationLoader mapIntegrationLoader = new PaperMapIntegrationLoader(this);
+        this.chunkyBorder = new ChunkyBorder(chunky, config, mapIntegrationLoader);
+        getServer().getServicesManager().register(ChunkyBorder.class, chunkyBorder, this, ServicePriority.Normal);
+        if (!chunkyBorder.hasCompatibleChunkyVersion()) {
+            getLogger().severe(() -> translate(TranslationKey.BORDER_DEPENDENCY_UPDATE));
+            this.setEnabled(false);
+            return;
+        }
+        Translator.addCustomTranslation("custom_border_message", config.message());
+        BorderColor.parseColor(config.visualizerColor());
+        getServer().getPluginManager().registerEvents(this, this);
+        final Runnable borderInitTask = new BorderInitializationTask(chunkyBorder);
+        getServer().getGlobalRegionScheduler().run(this, ignored -> borderInitTask.run());
+        final long checkInterval = chunkyBorder.getConfig().checkInterval();
+        final Runnable borderCheckTask = new BorderCheckTask(chunkyBorder);
+        getServer().getGlobalRegionScheduler().runAtFixedRate(this, ignored -> borderCheckTask.run(), checkInterval, checkInterval);
+        chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
+        getServer().getMessenger().registerOutgoingPluginChannel(this, PLAY_BORDER_PACKET_ID);
+        chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(getServer().getOnlinePlayers(), e.world(), e.shape()));
+        startMetrics();
+        startVisualizer();
+    }
+
+    private void startMetrics() {
+        final Metrics metrics = new Metrics(this, 8953);
+        metrics.addCustomChart(new DrilldownPie("platform", () -> Map.of("Paper", Map.of(getPluginMeta().getVersion(), 1))));
+        metrics.addCustomChart(new AdvancedPie("mapIntegration", () -> {
+            final Map<String, Integer> map = new HashMap<>();
+            chunkyBorder.getMapIntegrations().forEach(mapIntegration -> {
+                if (mapIntegration instanceof BlueMapIntegration) {
+                    map.put("BlueMap", 1);
+                } else if (mapIntegration instanceof DynmapIntegration) {
+                    map.put("Dynmap", 1);
+                } else if (mapIntegration instanceof Pl3xMapIntegration) {
+                    map.put("Pl3xMap", 1);
+                } else if (mapIntegration instanceof SquaremapIntegration) {
+                    map.put("squaremap", 1);
+                }
+            });
+            if (map.isEmpty()) {
+                map.put("None", 1);
+            }
+            return map;
+        }));
+        final Map<String, BorderData> borders = chunkyBorder.getBorders();
+        metrics.addCustomChart(new AdvancedPie("borderDimension", () -> {
+            final Map<String, Integer> map = new HashMap<>();
+            if (borders != null) {
+                borders.values().forEach(border -> chunkyBorder.getChunky().getServer().getWorld(border.getWorld()).ifPresent(world -> {
+                    final String dimension = ((PaperWorld) world).getDimension();
+                    map.put(dimension, map.getOrDefault(dimension, 0) + 1);
+                }));
+            }
+            return map;
+        }));
+        metrics.addCustomChart(new AdvancedPie("borderSize", () -> {
+            final Map<String, Integer> map = new HashMap<>();
+            if (borders != null) {
+                borders.values().forEach(border -> {
+                    final String size = String.valueOf((int) Math.max(border.getRadiusX(), border.getRadiusZ()));
+                    map.put(size, map.getOrDefault(size, 0) + 1);
+                });
+            }
+            return map;
+        }));
+        metrics.addCustomChart(new AdvancedPie("borderShape", () -> {
+            final Map<String, Integer> map = new HashMap<>();
+            if (borders != null) {
+                borders.values().forEach(border -> {
+                    final String shape = border.getShape().toLowerCase();
+                    map.put(shape, map.getOrDefault(shape, 0) + 1);
+                });
+            }
+            return map;
+        }));
+        metrics.addCustomChart(new AdvancedPie("borderWrap", () -> {
+            final Map<String, Integer> map = new HashMap<>();
+            if (borders != null) {
+                borders.values().forEach(border -> {
+                    final String wrap = border.getWrap().toLowerCase();
+                    map.put(wrap, map.getOrDefault(wrap, 0) + 1);
+                });
+            }
+            return map;
+        }));
+        metrics.addCustomChart(new SimplePie("visualizer", () -> chunkyBorder.getConfig().visualizerEnabled() ? "enabled" : "disabled"));
+    }
+
+    private void startVisualizer() {
+        final boolean visualizerEnabled = chunkyBorder.getConfig().visualizerEnabled();
+        if (!visualizerEnabled) {
+            return;
+        }
+        final int maxRange = chunkyBorder.getConfig().visualizerRange();
+        Particles.setMaxDistance(maxRange);
+        final AtomicLong tick = new AtomicLong();
+        final Runnable borderVisualizerTask = () -> {
+            tick.incrementAndGet();
+            getServer().getOnlinePlayers().forEach(paperPlayer -> {
+                final org.bukkit.World paperWorld = paperPlayer.getWorld();
+                final Player player = new PaperPlayer(paperPlayer);
+                final Shape border = chunkyBorder.getBorder(paperWorld.getName()).map(BorderData::getBorder).orElse(null);
+                final boolean isUsingMod = chunkyBorder.getPlayerData(player.getUUID()).isUsingMod();
+                if (border != null && !isUsingMod) {
+                    final List<Vector3> particleLocations = Particles.at(player, border, (tick.longValue() % 20) / 20d);
+                    final Color visualizerColor = Color.fromRGB(BorderColor.getColor());
+                    final Particle.DustOptions visualizerOptions = new Particle.DustOptions(visualizerColor, 1);
+                    for (final Vector3 location : particleLocations) {
+                        final org.bukkit.Location paperLocation = new org.bukkit.Location(paperWorld, location.getX(), location.getY(), location.getZ());
+                        if (!getServer().isOwnedByCurrentRegion(paperLocation)) {
+                            paperPlayer.spawnParticle(Particle.DUST, paperLocation, 1, visualizerOptions);
+                        } else {
+                            final Block block = paperWorld.getBlockAt(paperLocation);
+                            final boolean fullyOccluded = block.getType().isOccluding()
+                                    && block.getRelative(BlockFace.NORTH).getType().isOccluding()
+                                    && block.getRelative(BlockFace.EAST).getType().isOccluding()
+                                    && block.getRelative(BlockFace.SOUTH).getType().isOccluding()
+                                    && block.getRelative(BlockFace.WEST).getType().isOccluding();
+                            if (!fullyOccluded) {
+                                paperPlayer.spawnParticle(Particle.DUST, paperLocation, 1, visualizerOptions);
+                            }
+                        }
+                    }
+                }
+            });
+        };
+        getServer().getGlobalRegionScheduler().runAtFixedRate(this, ignored -> borderVisualizerTask.run(), 1L, 1L);
+    }
+
+    @Override
+    public void onDisable() {
+        HandlerList.unregisterAll((Plugin) this);
+        getServer().getGlobalRegionScheduler().cancelTasks(this);
+        getServer().getServicesManager().unregisterAll(this);
+        chunkyBorder.disable();
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onWorldLoad(final org.bukkit.event.world.WorldLoadEvent e) {
+        chunkyBorder.getChunky().getEventBus().call(new WorldLoadEvent(new PaperWorld(e.getWorld())));
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onWorldUnload(final org.bukkit.event.world.WorldUnloadEvent e) {
+        chunkyBorder.getChunky().getEventBus().call(new WorldUnloadEvent(new PaperWorld(e.getWorld())));
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onPlayerTeleport(final org.bukkit.event.player.PlayerTeleportEvent e) {
+        if (e.getTo() == null || e.getTo().getWorld() == null) {
+            return;
+        }
+        final Player player = new PaperPlayer(e.getPlayer());
+        final World world = new PaperWorld(e.getTo().getWorld());
+        final Location location = new Location(world, e.getTo().getX(), e.getTo().getY(), e.getTo().getZ(), e.getTo().getYaw(), e.getTo().getPitch());
+        final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(player, location);
+        chunkyBorder.getChunky().getEventBus().call(playerTeleportEvent);
+        final Optional<Location> redirect = playerTeleportEvent.redirect();
+        if (redirect.isPresent()) {
+            if ((chunkyBorder.getConfig().preventEnderpearl() && org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.ENDER_PEARL.equals(e.getCause()))
+                    || (chunkyBorder.getConfig().preventChorusFruit() && org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.CONSUMABLE_EFFECT.equals(e.getCause()))) {
+                e.setCancelled(true);
+            } else {
+                redirect.map(r -> new org.bukkit.Location(e.getTo().getWorld(), r.getX(), r.getY(), r.getZ(), r.getYaw(), r.getPitch()))
+                        .ifPresent(e::setTo);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onPlayerRespawn(final PlayerRespawnEvent e) {
+        final org.bukkit.Location paperLocation = e.getRespawnLocation();
+        final Player player = new PaperPlayer(e.getPlayer());
+        final World world = new PaperWorld(paperLocation.getWorld());
+        final Location location = new Location(world, paperLocation.getX(), paperLocation.getY(), paperLocation.getZ(), paperLocation.getYaw(), paperLocation.getPitch());
+        final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(player, location);
+        chunkyBorder.getChunky().getEventBus().call(playerTeleportEvent);
+        playerTeleportEvent.redirect()
+                .map(r -> new org.bukkit.Location(paperLocation.getWorld(), r.getX(), r.getY(), r.getZ(), r.getYaw(), r.getPitch()))
+                .ifPresent(e::setRespawnLocation);
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onCreatureSpawn(final org.bukkit.event.entity.CreatureSpawnEvent e) {
+        if (!chunkyBorder.getConfig().preventMobSpawns()) {
+            return;
+        }
+        final org.bukkit.World paperWorld = e.getEntity().getWorld();
+        final org.bukkit.Location paperLocation = e.getLocation();
+        final World world = new PaperWorld(paperWorld);
+        final Location location = new Location(world, paperLocation.getX(), paperLocation.getY(), paperLocation.getZ());
+        final CreatureSpawnEvent creatureSpawnEvent = new CreatureSpawnEvent(location);
+        chunkyBorder.getChunky().getEventBus().call(creatureSpawnEvent);
+        if (creatureSpawnEvent.isCancelled()) {
+            e.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onBlockPlace(final org.bukkit.event.block.BlockPlaceEvent e) {
+        final org.bukkit.World paperWorld = e.getPlayer().getWorld();
+        final org.bukkit.Location paperLocation = e.getBlockPlaced().getLocation();
+        final World world = new PaperWorld(paperWorld);
+        final Location location = new Location(world, paperLocation.getX(), paperLocation.getY(), paperLocation.getZ());
+        final Player player = new PaperPlayer(e.getPlayer());
+        final BlockPlaceEvent blockPlaceEvent = new BlockPlaceEvent(player, location);
+        chunkyBorder.getChunky().getEventBus().call(blockPlaceEvent);
+        if (blockPlaceEvent.isCancelled()) {
+            e.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onBlockBreak(final org.bukkit.event.block.BlockBreakEvent e) {
+        final org.bukkit.Location paperLocation = e.getBlock().getLocation();
+        final World world = new PaperWorld(e.getPlayer().getWorld());
+        final BlockBreakEvent blockBreakEvent = new BlockBreakEvent(new PaperPlayer(e.getPlayer()), new Location(world, paperLocation.getX(), paperLocation.getY(), paperLocation.getZ()));
+        chunkyBorder.getChunky().getEventBus().call(blockBreakEvent);
+        if (blockBreakEvent.isCancelled()) {
+            e.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerQuit(final org.bukkit.event.player.PlayerQuitEvent e) {
+        chunkyBorder.getChunky().getEventBus().call(new PlayerQuitEvent(new PaperPlayer(e.getPlayer())));
+    }
+
+    @EventHandler
+    public void onPlayerRegisterChannel(final PlayerRegisterChannelEvent e) {
+        final String channel = e.getChannel();
+        if (!PLAY_BORDER_PACKET_ID.equals(channel)) {
+            return;
+        }
+        final org.bukkit.entity.Player player = e.getPlayer();
+        final List<org.bukkit.entity.Player> players = List.of(player);
+        for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
+            final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
+            sendBorderPacket(players, world, shape);
+        }
+        chunkyBorder.getPlayerData(player.getUniqueId()).setUsingMod(true);
+    }
+
+    private void sendBorderPacket(final Collection<? extends org.bukkit.entity.Player> players, final World world, final Shape shape) {
+        final byte[] data = PluginMessage.writeBorder(new ClientBorder(world.getKey(), shape));
+        for (final org.bukkit.entity.Player player : players) {
+            player.sendPluginMessage(this, PLAY_BORDER_PACKET_ID, data);
+        }
+    }
+}

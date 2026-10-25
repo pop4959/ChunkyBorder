@@ -1,8 +1,8 @@
 plugins {
-    id("dev.architectury.loom") version "1.10-SNAPSHOT"
+    id("dev.architectury.loom") version "1.17-SNAPSHOT"
 }
 
-val shade: Configuration by configurations.creating
+val shade = configurations.create("shade")
 
 repositories {
     maven("https://repo.mikeprimm.com")
@@ -14,31 +14,33 @@ repositories {
 }
 
 dependencies {
-    minecraft(group = "com.mojang", name = "minecraft", version = "1.21.4")
-    mappings(group = "net.fabricmc", name = "yarn", version = "1.21.4+build.1", classifier = "v2")
-    modImplementation(group = "net.fabricmc", name = "fabric-loader", version = "0.16.7")
-    modImplementation(group = "net.fabricmc.fabric-api", name = "fabric-api", version = "0.111.0+1.21.4")
-    modImplementation(group = "org.popcraft", name = "chunky-fabric", version = "${project.property("target")}")
-    compileOnly(group = "us.dynmap", name = "DynmapCoreAPI", version = "${project.property("target_dynmap")}")
-    compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "${project.property("target_bluemap")}")
-    compileOnly(group = "xyz.jpenilla", name = "squaremap-api", version = "${project.property("target_squaremap")}")
-    compileOnly(group = "maven.modrinth", name = "pl3xmap", version = "${project.property("target_pl3xmap")}")
+    minecraft("com.mojang:minecraft:1.21.4")
+    mappings("net.fabricmc:yarn:1.21.4+build.8:v2")
+    modImplementation("net.fabricmc:fabric-loader:0.16.7")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:0.111.0+1.21.4")
+    modImplementation("org.popcraft:chunky-fabric:${project.property("target")}")
+    compileOnly("us.dynmap:DynmapCoreAPI:${project.property("target_dynmap")}")
+    compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:${project.property("target_bluemap")}")
+    compileOnly("xyz.jpenilla:squaremap-api:${project.property("target_squaremap")}")
+    compileOnly("maven.modrinth:pl3xmap:${project.property("target_pl3xmap")}")
     implementation(project(":chunkyborder-common"))
     shade(project(":chunkyborder-common"))
 }
 
 tasks {
     processResources {
+        val properties = mapOf(
+            "id" to rootProject.name,
+            "version" to project.version,
+            "name" to project.property("artifactName")!!,
+            "description" to project.property("description")!!,
+            "author" to project.property("author")!!,
+            "github" to project.property("github")!!,
+            "target" to project.property("target")!!
+        )
+        inputs.properties(properties)
         filesMatching("fabric.mod.json") {
-            expand(
-                "id" to rootProject.name,
-                "version" to project.version,
-                "name" to project.property("artifactName"),
-                "description" to project.property("description"),
-                "author" to project.property("author"),
-                "github" to project.property("github"),
-                "target" to project.property("target")
-            )
+            expand(properties)
         }
     }
     shadowJar {

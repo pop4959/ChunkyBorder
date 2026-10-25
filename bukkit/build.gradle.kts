@@ -10,26 +10,37 @@ repositories {
 }
 
 dependencies {
-    compileOnly(group = "org.spigotmc", name = "spigot-api", version = "1.20.5-R0.1-SNAPSHOT")
-    compileOnly(group = "org.popcraft", name = "chunky-bukkit", version = "${project.property("target")}")
-    compileOnly(group = "org.popcraft", name = "chunky-folia", version = "${project.property("target")}")
-    compileOnly(group = "us.dynmap", name = "DynmapCoreAPI", version = "${project.property("target_dynmap")}")
-    compileOnly(group = "com.github.BlueMap-Minecraft", name = "BlueMapAPI", version = "${project.property("target_bluemap")}")
-    compileOnly(group = "xyz.jpenilla", name = "squaremap-api", version = "${project.property("target_squaremap")}")
-    compileOnly(group = "maven.modrinth", name = "pl3xmap", version = "${project.property("target_pl3xmap")}")
-    implementation(group = "org.bstats", name = "bstats-bukkit", version = "3.0.2")
+    compileOnly("org.spigotmc:spigot-api:1.21.2-R0.1-SNAPSHOT")
+    compileOnly("org.popcraft:chunky-bukkit:1.5.23")
+    compileOnly("org.popcraft:chunky-paperlib:1.5.23")
+    compileOnly("us.dynmap:DynmapCoreAPI:${project.property("target_dynmap")}")
+    compileOnly("com.github.BlueMap-Minecraft:BlueMapAPI:${project.property("target_bluemap")}")
+    compileOnly("xyz.jpenilla:squaremap-api:${project.property("target_squaremap")}")
+    compileOnly("maven.modrinth:pl3xmap:${project.property("target_pl3xmap")}")
+    implementation("org.bstats:bstats-bukkit:3.2.1")
     implementation(project(":chunkyborder-common"))
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(25))
+    }
+}
+
 tasks {
+    withType<JavaCompile> {
+        options.release = 25
+    }
     processResources {
+        val properties = mapOf(
+            "version" to project.version,
+            "group" to project.group,
+            "author" to project.property("author")!!,
+            "description" to project.property("description")!!
+        )
+        inputs.properties(properties)
         filesMatching("plugin.yml") {
-            expand(
-                "version" to project.version,
-                "group" to project.group,
-                "author" to project.property("author"),
-                "description" to project.property("description")
-            )
+            expand(properties)
         }
     }
     shadowJar {

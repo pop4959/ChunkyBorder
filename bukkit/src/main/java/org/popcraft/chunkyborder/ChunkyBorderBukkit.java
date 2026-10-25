@@ -2,6 +2,8 @@ package org.popcraft.chunkyborder;
 
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.AdvancedPie;
+import org.bstats.charts.DrilldownPie;
+import org.bstats.charts.SimplePie;
 import org.bukkit.Color;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
@@ -13,6 +15,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRegisterChannelEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -47,9 +50,7 @@ import org.popcraft.chunkyborder.util.BorderColor;
 import org.popcraft.chunkyborder.util.ClientBorder;
 import org.popcraft.chunkyborder.util.Particles;
 import org.popcraft.chunkyborder.util.PluginMessage;
-import org.popcraft.chunkyborder.util.EnumUtil;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -63,10 +64,6 @@ import static org.popcraft.chunky.util.Translator.translate;
 public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
     private static final String PLAY_BORDER_PACKET_ID = "chunky:border";
     private static final List<String> HEADER = Arrays.asList("ChunkyBorder Configuration", "https://github.com/pop4959/ChunkyBorder/wiki/Configuration");
-    @SuppressWarnings("ExcessiveLambdaUsage")
-    private static final Particle DUST_PARTICLE = EnumUtil
-            .valueOf(Particle.class, "REDSTONE") // 1.20.4 and prior
-            .orElseGet(() -> Particle.DUST); // 1.20.5 and above
     private ChunkyBorder chunkyBorder;
     private BorderCheckTask borderCheckTask;
 
@@ -74,11 +71,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
     public void onEnable() {
         final FileConfigurationOptions options = getConfig().options();
         options.copyDefaults(true);
-        try {
-            FileConfigurationOptions.class.getMethod("header", String.class).invoke(options, String.join("\n", HEADER));
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            options.setHeader(HEADER);
-        }
+        options.setHeader(HEADER);
         saveConfig();
         final Chunky chunky = ChunkyProvider.get();
         final Config config = new BukkitConfig(this);
@@ -114,6 +107,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
 
     private void startMetrics() {
         final Metrics metrics = new Metrics(this, 8953);
+        metrics.addCustomChart(new DrilldownPie("platform", () -> Map.of("Bukkit", Map.of(getDescription().getVersion(), 1))));
         metrics.addCustomChart(new AdvancedPie("mapIntegration", () -> {
             final Map<String, Integer> map = new HashMap<>();
             chunkyBorder.getMapIntegrations().forEach(mapIntegration -> {
@@ -133,6 +127,16 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
             return map;
         }));
         final Map<String, BorderData> borders = chunkyBorder.getBorders();
+        metrics.addCustomChart(new AdvancedPie("borderDimension", () -> {
+            final Map<String, Integer> map = new HashMap<>();
+            if (borders != null) {
+                borders.values().forEach(border -> chunkyBorder.getChunky().getServer().getWorld(border.getWorld()).ifPresent(world -> {
+                    final String dimension = ((BukkitWorld) world).getDimension();
+                    map.put(dimension, map.getOrDefault(dimension, 0) + 1);
+                }));
+            }
+            return map;
+        }));
         metrics.addCustomChart(new AdvancedPie("borderSize", () -> {
             final Map<String, Integer> map = new HashMap<>();
             if (borders != null) {
@@ -163,6 +167,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
             }
             return map;
         }));
+        metrics.addCustomChart(new SimplePie("visualizer", () -> chunkyBorder.getConfig().visualizerEnabled() ? "enabled" : "disabled"));
     }
 
     private void startVisualizer() {
@@ -187,7 +192,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
                     for (final Vector3 location : particleLocations) {
                         final org.bukkit.Location bukkitLocation = new org.bukkit.Location(bukkitWorld, location.getX(), location.getY(), location.getZ());
                         if (Folia.isFolia()) {
-                            bukkitPlayer.spawnParticle(DUST_PARTICLE, bukkitLocation, 1, visualizerOptions);
+                            bukkitPlayer.spawnParticle(Particle.DUST, bukkitLocation, 1, visualizerOptions);
                         } else {
                             final Block block = bukkitWorld.getBlockAt(bukkitLocation);
                             final boolean fullyOccluded = block.getType().isOccluding()
@@ -196,7 +201,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
                                     && block.getRelative(BlockFace.SOUTH).getType().isOccluding()
                                     && block.getRelative(BlockFace.WEST).getType().isOccluding();
                             if (!fullyOccluded) {
-                                bukkitPlayer.spawnParticle(DUST_PARTICLE, bukkitLocation, 1, visualizerOptions);
+                                bukkitPlayer.spawnParticle(Particle.DUST, bukkitLocation, 1, visualizerOptions);
                             }
                         }
                     }
@@ -263,6 +268,19 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
                         .ifPresent(e::setTo);
             }
         }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onPlayerRespawn(final PlayerRespawnEvent e) {
+        final org.bukkit.Location bukkitLocation = e.getRespawnLocation();
+        final Player player = new BukkitPlayer(e.getPlayer());
+        final World world = new BukkitWorld(bukkitLocation.getWorld());
+        final Location location = new Location(world, bukkitLocation.getX(), bukkitLocation.getY(), bukkitLocation.getZ(), bukkitLocation.getYaw(), bukkitLocation.getPitch());
+        final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(player, location);
+        chunkyBorder.getChunky().getEventBus().call(playerTeleportEvent);
+        playerTeleportEvent.redirect()
+                .map(r -> new org.bukkit.Location(bukkitLocation.getWorld(), r.getX(), r.getY(), r.getZ(), r.getYaw(), r.getPitch()))
+                .ifPresent(e::setRespawnLocation);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
