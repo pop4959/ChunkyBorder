@@ -13,6 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRegisterChannelEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.Plugin;
@@ -63,6 +64,7 @@ public final class ChunkyBorderPaper extends JavaPlugin implements Listener {
     private static final String PLAY_BORDER_PACKET_ID = "chunky:border";
     private static final List<String> HEADER = Arrays.asList("ChunkyBorder Configuration", "https://github.com/pop4959/ChunkyBorder/wiki/Configuration");
     private ChunkyBorder chunkyBorder;
+    private BorderCheckTask borderCheckTask;
 
     @Override
     public void onEnable() {
@@ -85,9 +87,7 @@ public final class ChunkyBorderPaper extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         final Runnable borderInitTask = new BorderInitializationTask(chunkyBorder);
         getServer().getGlobalRegionScheduler().run(this, ignored -> borderInitTask.run());
-        final long checkInterval = chunkyBorder.getConfig().checkInterval();
-        final Runnable borderCheckTask = new BorderCheckTask(chunkyBorder);
-        getServer().getGlobalRegionScheduler().runAtFixedRate(this, ignored -> borderCheckTask.run(), checkInterval, checkInterval);
+        this.borderCheckTask = new BorderCheckTask(chunkyBorder);
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
         getServer().getMessenger().registerOutgoingPluginChannel(this, PLAY_BORDER_PACKET_ID);
         chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(getServer().getOnlinePlayers(), e.world(), e.shape()));
@@ -217,6 +217,15 @@ public final class ChunkyBorderPaper extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldUnload(final org.bukkit.event.world.WorldUnloadEvent e) {
         chunkyBorder.getChunky().getEventBus().call(new WorldUnloadEvent(new PaperWorld(e.getWorld())));
+    }
+
+    @EventHandler
+    public void onPlayerJoin(final PlayerJoinEvent event) {
+        final org.bukkit.entity.Player player = event.getPlayer();
+        final Player cPlayer = new PaperPlayer(player);
+
+        final long interval = chunkyBorder.getConfig().checkInterval();
+        player.getScheduler().runAtFixedRate(this, _ -> this.borderCheckTask.check(cPlayer), null, interval, interval);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
