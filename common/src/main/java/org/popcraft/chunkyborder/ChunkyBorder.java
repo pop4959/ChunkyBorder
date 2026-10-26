@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.popcraft.chunky.util.Translator.translate;
 
@@ -54,7 +55,7 @@ public class ChunkyBorder {
     private final MapIntegrationLoader mapIntegrationLoader;
     private final List<MapIntegration> mapIntegrations = new ArrayList<>();
     private final Map<String, BorderData> borders;
-    private final Map<UUID, PlayerData> players = new HashMap<>();
+    private final Map<UUID, PlayerData> players = new ConcurrentHashMap<>();
     private final Version version, targetVersion;
 
     public ChunkyBorder(final Chunky chunky, final Config config, final MapIntegrationLoader mapIntegrationLoader) {
