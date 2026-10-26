@@ -88,6 +88,7 @@ public final class ChunkyBorderPaper extends JavaPlugin implements Listener {
         final Runnable borderInitTask = new BorderInitializationTask(chunkyBorder);
         getServer().getGlobalRegionScheduler().run(this, ignored -> borderInitTask.run());
         this.borderCheckTask = new BorderCheckTask(chunkyBorder);
+        getServer().getOnlinePlayers().forEach(this::startBorderCheck);
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
         getServer().getMessenger().registerOutgoingPluginChannel(this, PLAY_BORDER_PACKET_ID);
         chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(getServer().getOnlinePlayers(), e.world(), e.shape()));
@@ -220,12 +221,14 @@ public final class ChunkyBorderPaper extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    public void onPlayerJoin(final PlayerJoinEvent event) {
-        final org.bukkit.entity.Player player = event.getPlayer();
-        final Player cPlayer = new PaperPlayer(player);
+    public void onPlayerJoin(final PlayerJoinEvent e) {
+        startBorderCheck(e.getPlayer());
+    }
 
-        final long interval = chunkyBorder.getConfig().checkInterval();
-        player.getScheduler().runAtFixedRate(this, _ -> this.borderCheckTask.check(cPlayer), null, interval, interval);
+    private void startBorderCheck(final org.bukkit.entity.Player paperPlayer) {
+        final Player player = new PaperPlayer(paperPlayer);
+        final long checkInterval = Math.max(1, chunkyBorder.getConfig().checkInterval());
+        paperPlayer.getScheduler().runAtFixedRate(this, ignored -> borderCheckTask.check(player), null, checkInterval, checkInterval);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
