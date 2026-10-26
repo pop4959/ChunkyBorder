@@ -9,6 +9,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
@@ -22,6 +23,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.network.Channel;
 import net.minecraftforge.network.ChannelBuilder;
+import net.minecraftforge.network.ChannelListManager;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.ChunkyProvider;
 import org.popcraft.chunky.platform.ForgePlayer;
@@ -228,6 +230,11 @@ public class ChunkyBorderForge {
             final Path configPath = FMLPaths.CONFIGDIR.get().resolve("chunkyborder/config.json");
             ChunkyBorderForge.setConfig(new ForgeConfig(configPath));
             BorderColor.parseColor(config.visualizerColor());
+            MinecraftForge.EVENT_BUS.addListener(ClientEvents::onLoggingIn);
+        }
+
+        private static void onLoggingIn(final ClientPlayerNetworkEvent.LoggingIn event) {
+            ChannelListManager.addChannels(event.getConnection(), PLAY_BORDER_PACKET_ID);
         }
     }
 
