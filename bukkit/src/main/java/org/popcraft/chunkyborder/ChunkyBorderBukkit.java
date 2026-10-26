@@ -13,6 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRegisterChannelEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.Plugin;
@@ -319,11 +320,19 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerRegisterChannel(final PlayerRegisterChannelEvent e) {
-        final String channel = e.getChannel();
-        if (!PLAY_BORDER_PACKET_ID.equals(channel)) {
-            return;
+        if (PLAY_BORDER_PACKET_ID.equals(e.getChannel())) {
+            sendBorders(e.getPlayer());
         }
-        final org.bukkit.entity.Player player = e.getPlayer();
+    }
+
+    @EventHandler
+    public void onPlayerJoin(final PlayerJoinEvent e) {
+        if (e.getPlayer().getListeningPluginChannels().contains(PLAY_BORDER_PACKET_ID)) {
+            sendBorders(e.getPlayer());
+        }
+    }
+
+    private void sendBorders(final org.bukkit.entity.Player player) {
         final List<org.bukkit.entity.Player> players = List.of(player);
         for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
             final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);

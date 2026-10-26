@@ -223,6 +223,9 @@ public final class ChunkyBorderPaper extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerJoin(final PlayerJoinEvent e) {
         startBorderCheck(e.getPlayer());
+        if (e.getPlayer().getListeningPluginChannels().contains(PLAY_BORDER_PACKET_ID)) {
+            sendBorders(e.getPlayer());
+        }
     }
 
     private void startBorderCheck(final org.bukkit.entity.Player paperPlayer) {
@@ -314,11 +317,12 @@ public final class ChunkyBorderPaper extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerRegisterChannel(final PlayerRegisterChannelEvent e) {
-        final String channel = e.getChannel();
-        if (!PLAY_BORDER_PACKET_ID.equals(channel)) {
-            return;
+        if (PLAY_BORDER_PACKET_ID.equals(e.getChannel())) {
+            sendBorders(e.getPlayer());
         }
-        final org.bukkit.entity.Player player = e.getPlayer();
+    }
+
+    private void sendBorders(final org.bukkit.entity.Player player) {
         final List<org.bukkit.entity.Player> players = List.of(player);
         for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
             final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
