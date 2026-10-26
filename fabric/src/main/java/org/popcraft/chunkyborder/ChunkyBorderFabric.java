@@ -13,6 +13,7 @@ import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket;
 import net.minecraft.particle.DustParticleEffect;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -43,7 +44,7 @@ import java.util.List;
 
 public class ChunkyBorderFabric implements ModInitializer {
     private ChunkyBorder chunkyBorder;
-    private boolean registered;
+    private MinecraftServer server;
 
     @SuppressWarnings("UnstableApiUsage")
     @Override
@@ -63,6 +64,7 @@ public class ChunkyBorderFabric implements ModInitializer {
             }
         }
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            this.server = server;
             for (final World world : chunkyBorder.getChunky().getServer().getWorlds()) {
                 final Shape shape = chunkyBorder.getBorder(world.getName()).map(BorderData::getBorder).orElse(null);
                 sendBorderPacket(List.of(handler.player), world, shape);
@@ -70,15 +72,18 @@ public class ChunkyBorderFabric implements ModInitializer {
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> chunkyBorder.getChunky().getEventBus().call(new PlayerQuitEvent(new FabricPlayer(handler.player))));
         S2CPlayChannelEvents.REGISTER.register((handler, sender, server, channels) -> {
-            if (!registered) {
-                chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(server.getPlayerManager().getPlayerList(), e.world(), e.shape()));
-                registered = true;
-            }
             if (channels.contains(BorderPayload.ID.id())) {
                 chunkyBorder.getPlayerData(handler.player.getUuid()).setUsingMod(true);
             }
         });
+        chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> {
+            final MinecraftServer currentServer = this.server;
+            if (currentServer != null) {
+                sendBorderPacket(currentServer.getPlayerManager().getPlayerList(), e.world(), e.shape());
+            }
+        });
         ServerLifecycleEvents.SERVER_STOPPING.register(minecraftServer -> chunkyBorder.disable());
+        ServerLifecycleEvents.SERVER_STOPPED.register(minecraftServer -> this.server = null);
         final long checkInterval = Math.max(1, chunkyBorder.getConfig().checkInterval());
         // Swap yaw and pitch below Chunky 1.4.49 due to a bug
         BorderCheckTask.swapRotation = chunkyBorder.getChunky().getVersion().isLowerThan(new Version(1, 4, 49));
