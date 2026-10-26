@@ -101,6 +101,6 @@ public class Pl3xMapIntegration extends AbstractMapIntegration {
     }
 
     private Optional<World> getWorld(final org.popcraft.chunky.platform.World world) {
-        return Optional.ofNullable(Pl3xMap.api().getWorldRegistry().get(world.getName())).filter(World::isEnabled);
+        return Optional.ofNullable(Pl3xMap.api().getWorldRegistry().get(worldName(world))).filter(World::isEnabled);
     }
 }

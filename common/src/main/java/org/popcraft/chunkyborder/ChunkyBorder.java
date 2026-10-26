@@ -146,9 +146,12 @@ public class ChunkyBorder {
                     })
                     .orElse(null));
         });
-        eventBus.subscribe(WorldLoadEvent.class, e -> getBorder(e.world().getName())
-                .map(BorderData::getBorder)
-                .ifPresent(border -> mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(e.world(), border))));
+        eventBus.subscribe(WorldLoadEvent.class, e -> {
+            migrateBorder(e.world());
+            getBorder(e.world().getName())
+                    .map(BorderData::getBorder)
+                    .ifPresent(border -> mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(e.world(), border)));
+        });
         eventBus.subscribe(WorldUnloadEvent.class, e -> getBorder(e.world().getName())
                 .map(BorderData::getBorder)
                 .ifPresent(border -> mapIntegrations.forEach(mapIntegration -> mapIntegration.removeShapeMarker(e.world()))));
@@ -224,7 +227,27 @@ public class ChunkyBorder {
     }
 
     public Optional<BorderData> getBorder(final String world) {
-        return Optional.ofNullable(borders.get(world));
+        final BorderData borderData = borders.get(world);
+        if (borderData != null) {
+            return Optional.of(borderData);
+        }
+        return chunky.getServer().getWorld(world).map(implWorld -> borders.get(implWorld.getName()));
+    }
+
+    private void migrateBorder(final World world) {
+        final String name = world.getName();
+        if (borders.containsKey(name)) {
+            return;
+        }
+        for (final String key : borders.keySet()) {
+            final Optional<World> borderWorld = chunky.getServer().getWorld(key);
+            if (borderWorld.isPresent() && borderWorld.get().getName().equals(name)) {
+                final BorderData borderData = borders.remove(key);
+                borderData.setWorld(name);
+                borders.put(name, borderData);
+                return;
+            }
+        }
     }
 
     public Map<String, BorderData> getBorders() {
@@ -272,6 +295,7 @@ public class ChunkyBorder {
     }
 
     public void addBorders() {
+        chunky.getServer().getWorlds().forEach(this::migrateBorder);
         for (final BorderData borderData : borders.values()) {
             final String worldName = borderData.getWorld();
             if (worldName == null) {

@@ -174,7 +174,7 @@ public final class ChunkyBorderPaper extends JavaPlugin implements Listener {
             getServer().getOnlinePlayers().forEach(paperPlayer -> {
                 final org.bukkit.World paperWorld = paperPlayer.getWorld();
                 final Player player = new PaperPlayer(paperPlayer);
-                final Shape border = chunkyBorder.getBorder(paperWorld.getName()).map(BorderData::getBorder).orElse(null);
+                final Shape border = chunkyBorder.getBorder(paperWorld.getKey().toString()).map(BorderData::getBorder).orElse(null);
                 final boolean isUsingMod = chunkyBorder.getPlayerData(player.getUUID()).isUsingMod();
                 if (border != null && !isUsingMod) {
                     final List<Vector3> particleLocations = Particles.at(player, border, (tick.longValue() % 20) / 20d);

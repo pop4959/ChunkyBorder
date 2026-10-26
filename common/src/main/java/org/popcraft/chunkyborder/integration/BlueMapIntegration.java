@@ -66,7 +66,7 @@ public class BlueMapIntegration extends AbstractMapIntegration {
                 .depthTestEnabled(false)
                 .build();
         markerSet.getMarkers().put(MARKER_SET_ID, marker);
-        blueMapAPI.getWorld(world.getName())
+        blueMapAPI.getWorld(worldName(world))
                 .map(BlueMapWorld::getMaps)
                 .ifPresent(maps -> maps.forEach(map -> map.getMarkerSets().put(MARKER_SET_ID, markerSet)));
     }
@@ -76,7 +76,7 @@ public class BlueMapIntegration extends AbstractMapIntegration {
         if (blueMapAPI == null) {
             return;
         }
-        blueMapAPI.getWorld(world.getName())
+        blueMapAPI.getWorld(worldName(world))
                 .map(BlueMapWorld::getMaps)
                 .ifPresent(maps -> maps.forEach(map -> map.getMarkerSets().remove(MARKER_SET_ID)));
     }

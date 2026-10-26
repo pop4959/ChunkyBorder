@@ -1,7 +1,10 @@
 package org.popcraft.chunkyborder;
 
+import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.PluginManager;
 import org.dynmap.DynmapCommonAPI;
+import org.popcraft.chunky.platform.World;
 import org.popcraft.chunkyborder.integration.BlueMapIntegration;
 import org.popcraft.chunkyborder.integration.DynmapIntegration;
 import org.popcraft.chunkyborder.integration.MapIntegration;
@@ -31,7 +34,12 @@ public class PaperMapIntegrationLoader implements MapIntegrationLoader {
             return Optional.empty();
         }
         return Optional.ofNullable(chunkyBorderPaper.getServer().getPluginManager().getPlugin(BLUEMAP))
-                .map(blueMap -> new BlueMapIntegration());
+                .map(blueMap -> new BlueMapIntegration() {
+                    @Override
+                    protected String worldName(final World world) {
+                        return bukkitName(world);
+                    }
+                });
     }
 
     @Override
@@ -43,7 +51,12 @@ public class PaperMapIntegrationLoader implements MapIntegrationLoader {
         return Optional.ofNullable(chunkyBorderPaper.getServer().getPluginManager().getPlugin(DYNMAP))
                 .map(dynmap -> {
                     final DynmapCommonAPI dynmapAPI = (DynmapCommonAPI) dynmap;
-                    return dynmapAPI.markerAPIInitialized() ? new DynmapIntegration(dynmapAPI) : null;
+                    return dynmapAPI.markerAPIInitialized() ? new DynmapIntegration(dynmapAPI) {
+                        @Override
+                        protected String worldName(final World world) {
+                            return bukkitName(world);
+                        }
+                    } : null;
                 });
     }
 
@@ -54,7 +67,12 @@ public class PaperMapIntegrationLoader implements MapIntegrationLoader {
             return Optional.empty();
         }
         return Optional.ofNullable(pluginManager.getPlugin(PL3XMAP))
-                .map(pl3xmap -> new Pl3xMapIntegration());
+                .map(pl3xmap -> new Pl3xMapIntegration() {
+                    @Override
+                    protected String worldName(final World world) {
+                        return bukkitName(world);
+                    }
+                });
     }
 
     @Override
@@ -72,5 +90,11 @@ public class PaperMapIntegrationLoader implements MapIntegrationLoader {
                         return null;
                     }
                 });
+    }
+
+    private static String bukkitName(final World world) {
+        final NamespacedKey key = NamespacedKey.fromString(world.getKey());
+        final org.bukkit.World bukkitWorld = key == null ? null : Bukkit.getWorld(key);
+        return bukkitWorld == null ? world.getName() : bukkitWorld.getName();
     }
 }

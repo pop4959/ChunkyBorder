@@ -27,7 +27,7 @@ public class DynmapIntegration extends AbstractMapIntegration {
     @Override
     public void addShapeMarker(final World world, final Shape shape) {
         removeShapeMarker(world);
-        final String dynmapWorldName = adaptWorldName(world.getName());
+        final String dynmapWorldName = adaptWorldName(worldName(world));
         if (shape instanceof final AbstractPolygon polygon) {
             final List<Vector2> points = polygon.points();
             final int size = points.size();
