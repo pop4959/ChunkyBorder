@@ -5,7 +5,9 @@ import org.bstats.charts.AdvancedPie;
 import org.bstats.charts.DrilldownPie;
 import org.bstats.charts.SimplePie;
 import org.bukkit.Color;
+import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.file.FileConfigurationOptions;
@@ -50,6 +52,7 @@ import org.popcraft.chunkyborder.platform.Config;
 import org.popcraft.chunkyborder.platform.MapIntegrationLoader;
 import org.popcraft.chunkyborder.util.BorderColor;
 import org.popcraft.chunkyborder.util.ClientBorder;
+import org.popcraft.chunkyborder.util.Elevation;
 import org.popcraft.chunkyborder.util.Particles;
 import org.popcraft.chunkyborder.util.PluginMessage;
 
@@ -59,6 +62,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -91,13 +96,34 @@ public final class ChunkyBorderPaper extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         final Runnable borderInitTask = new BorderInitializationTask(chunkyBorder);
         getServer().getGlobalRegionScheduler().run(this, ignored -> borderInitTask.run());
-        this.borderCheckTask = new BorderCheckTask(chunkyBorder);
+        this.borderCheckTask = new BorderCheckTask(chunkyBorder, this::findElevation);
         getServer().getOnlinePlayers().forEach(this::startBorderCheck);
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
         getServer().getMessenger().registerOutgoingPluginChannel(this, PLAY_BORDER_PACKET_ID);
         chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(getServer().getOnlinePlayers(), e.world(), e.shape()));
         startMetrics();
         startVisualizer();
+    }
+
+    private CompletableFuture<OptionalInt> findElevation(final World world, final int x, final int y, final int z) {
+        final org.bukkit.World paperWorld = getServer().getWorld(world.getUUID());
+        if (paperWorld == null) {
+            return CompletableFuture.completedFuture(OptionalInt.empty());
+        }
+        return CompletableFuture.supplyAsync(() -> Elevation.search(y, paperWorld.getMinHeight() + 1, paperWorld.getMaxHeight() - 2, searchY -> isSafe(paperWorld, x, searchY, z)), task -> getServer().getRegionScheduler().execute(this, paperWorld, x >> 4, z >> 4, task));
+    }
+
+    private boolean isSafe(final org.bukkit.World world, final int x, final int y, final int z) {
+        final Block ground = world.getBlockAt(x, y - 1, z);
+        final Block feet = ground.getRelative(BlockFace.UP);
+        final Block head = feet.getRelative(BlockFace.UP);
+        final Material groundType = ground.getType();
+        return (groundType.isSolid() || groundType == Material.WATER) && isClear(feet) && isClear(head);
+    }
+
+    private boolean isClear(final Block block) {
+        final Material type = block.getType();
+        return block.isPassable() && type != Material.LAVA && !Tag.FIRE.isTagged(type);
     }
 
     private void startMetrics() {

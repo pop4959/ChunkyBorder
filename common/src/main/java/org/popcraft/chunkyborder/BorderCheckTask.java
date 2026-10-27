@@ -11,16 +11,24 @@ import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.ShapeType;
 import org.popcraft.chunky.shape.ShapeUtil;
 import org.popcraft.chunkyborder.event.border.BorderWrapEvent;
+import org.popcraft.chunkyborder.platform.ElevationFinder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 
 public class BorderCheckTask implements Runnable {
     private final ChunkyBorder chunkyBorder;
+    private final ElevationFinder elevationFinder;
 
     public BorderCheckTask(final ChunkyBorder chunkyBorder) {
+        this(chunkyBorder, null);
+    }
+
+    public BorderCheckTask(final ChunkyBorder chunkyBorder, final ElevationFinder elevationFinder) {
         this.chunkyBorder = chunkyBorder;
+        this.elevationFinder = elevationFinder;
     }
 
     @Override
@@ -90,14 +98,21 @@ public class BorderCheckTask implements Runnable {
         };
         if (wrapped) {
             return location.getWorld().getChunkAtAsync((int) location.getX() >> 4, (int) location.getZ() >> 4)
-                    .thenCompose(ignored -> this.getElevationAtAsync(location.getWorld(), (int) location.getX(), (int) location.getZ()))
-                    .thenApply(elevation -> {
-                        if (elevation >= location.getWorld().getMaxElevation()) {
-                            return location.getWorld().getSpawn();
+                    .thenCompose(ignored -> this.findSafeElevation(location))
+                    .thenCompose(safeElevation -> {
+                        if (safeElevation.isPresent()) {
+                            location.setY(safeElevation.getAsInt());
+                            return CompletableFuture.completedFuture(location);
                         }
+                        return this.getElevationAtAsync(location.getWorld(), (int) location.getX(), (int) location.getZ())
+                                .thenApply(elevation -> {
+                                    if (elevation >= location.getWorld().getMaxElevation()) {
+                                        return location.getWorld().getSpawn();
+                                    }
 
-                        location.setY(elevation);
-                        return location;
+                                    location.setY(elevation);
+                                    return location;
+                                });
                     });
         } else {
             final Location lastLocation = playerData.getLastLocation().orElse(location.getWorld().getSpawn());
@@ -107,6 +122,13 @@ public class BorderCheckTask implements Runnable {
 
             return CompletableFuture.completedFuture(location);
         }
+    }
+
+    private CompletableFuture<OptionalInt> findSafeElevation(final Location location) {
+        if (elevationFinder == null) {
+            return CompletableFuture.completedFuture(OptionalInt.empty());
+        }
+        return elevationFinder.findElevation(location.getWorld(), (int) Math.floor(location.getX()), (int) Math.floor(location.getY()), (int) Math.floor(location.getZ()));
     }
 
     private boolean wrapBoth(final BorderData borderData, final Location location) {
