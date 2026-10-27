@@ -62,6 +62,11 @@ public class PaperConfig implements Config {
     }
 
     @Override
+    public boolean preventEndGateway() {
+        return chunkyBorderPaper.getConfig().getBoolean("border-options.prevent-end-gateway", false);
+    }
+
+    @Override
     public boolean visualizerEnabled() {
         return chunkyBorderPaper.getConfig().getBoolean("border-options.visualizer-enabled", false);
     }

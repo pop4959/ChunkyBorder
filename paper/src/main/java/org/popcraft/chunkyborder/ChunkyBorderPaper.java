@@ -247,7 +247,8 @@ public final class ChunkyBorderPaper extends JavaPlugin implements Listener {
         final Optional<Location> redirect = playerTeleportEvent.redirect();
         if (redirect.isPresent()) {
             if ((chunkyBorder.getConfig().preventEnderpearl() && org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.ENDER_PEARL.equals(e.getCause()))
-                    || (chunkyBorder.getConfig().preventChorusFruit() && org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.CONSUMABLE_EFFECT.equals(e.getCause()))) {
+                    || (chunkyBorder.getConfig().preventChorusFruit() && org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.CONSUMABLE_EFFECT.equals(e.getCause()))
+                    || (chunkyBorder.getConfig().preventEndGateway() && org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.END_GATEWAY.equals(e.getCause()))) {
                 e.setCancelled(true);
             } else {
                 redirect.map(r -> new org.bukkit.Location(e.getTo().getWorld(), r.getX(), r.getY(), r.getZ(), r.getYaw(), r.getPitch()))

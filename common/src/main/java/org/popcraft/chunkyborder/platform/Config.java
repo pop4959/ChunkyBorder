@@ -38,6 +38,8 @@ public interface Config {
 
     boolean preventChorusFruit();
 
+    boolean preventEndGateway();
+
     boolean visualizerEnabled();
 
     int visualizerRange();

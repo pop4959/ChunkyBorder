@@ -75,6 +75,11 @@ public class FabricConfig implements Config {
     }
 
     @Override
+    public boolean preventEndGateway() {
+        return Optional.ofNullable(configModel.borderOptions.preventEndGateway).orElse(false);
+    }
+
+    @Override
     public boolean visualizerEnabled() {
         return Optional.ofNullable(configModel.borderOptions.visualizerEnabled).orElse(false);
     }
@@ -200,6 +205,7 @@ public class FabricConfig implements Config {
         private Boolean preventMobSpawns = false;
         private Boolean preventEnderpearl = false;
         private Boolean preventChorusFruit = false;
+        private Boolean preventEndGateway = false;
         private Boolean visualizerEnabled = false;
         private Integer visualizerRange = 8;
         private String visualizerColor = "20A0FF";
@@ -266,6 +272,14 @@ public class FabricConfig implements Config {
 
         public void setPreventChorusFruit(final Boolean preventChorusFruit) {
             this.preventChorusFruit = preventChorusFruit;
+        }
+
+        public Boolean getPreventEndGateway() {
+            return preventEndGateway;
+        }
+
+        public void setPreventEndGateway(final Boolean preventEndGateway) {
+            this.preventEndGateway = preventEndGateway;
         }
 
         public Boolean getVisualizerEnabled() {

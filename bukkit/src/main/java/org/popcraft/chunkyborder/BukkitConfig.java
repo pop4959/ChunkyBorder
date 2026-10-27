@@ -62,6 +62,11 @@ public class BukkitConfig implements Config {
     }
 
     @Override
+    public boolean preventEndGateway() {
+        return chunkyBorderBukkit.getConfig().getBoolean("border-options.prevent-end-gateway", false);
+    }
+
+    @Override
     public boolean visualizerEnabled() {
         return chunkyBorderBukkit.getConfig().getBoolean("border-options.visualizer-enabled", false);
     }
