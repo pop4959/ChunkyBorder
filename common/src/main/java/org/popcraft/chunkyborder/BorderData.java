@@ -3,6 +3,7 @@ package org.popcraft.chunkyborder;
 import org.popcraft.chunky.Selection;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.ShapeFactory;
+import org.popcraft.chunkyborder.api.Border;
 
 import java.io.Serializable;
 
@@ -97,6 +98,10 @@ public class BorderData implements Serializable {
 
     public void setBorder(final Shape border) {
         this.border = border;
+    }
+
+    public Border toApi() {
+        return new Border(world, getBorder().name(), centerX, centerZ, radiusX, radiusZ, getWrap());
     }
 
     public Selection.Builder asSelection() {

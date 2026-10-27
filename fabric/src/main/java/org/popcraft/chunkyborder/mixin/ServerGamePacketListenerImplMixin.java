@@ -7,6 +7,7 @@ import org.popcraft.chunky.platform.FabricPlayer;
 import org.popcraft.chunky.platform.FabricWorld;
 import org.popcraft.chunky.platform.util.Location;
 import org.popcraft.chunkyborder.ChunkLoadingFabricWorld;
+import org.popcraft.chunkyborder.api.RedirectType;
 import org.popcraft.chunkyborder.bridge.RespawningPlayerBridge;
 import org.popcraft.chunkyborder.event.server.PlayerTeleportEvent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -36,12 +37,13 @@ public class ServerGamePacketListenerImplMixin implements RespawningPlayerBridge
             at = @At("HEAD")
     )
     private void requestTeleport(final double x, final double y, final double z, final float yaw, final float pitch, final CallbackInfo ci) {
+        final RedirectType type = this.respawningPlayer == null ? RedirectType.TELEPORT : RedirectType.RESPAWN;
         ServerPlayer player = Objects.requireNonNullElse(this.respawningPlayer, this.player);
         this.respawningPlayer = null; // Reset respawning player, that way it keeps using 'this.player' until it's respawning again
         final FabricPlayer fabricPlayer = new FabricPlayer(player);
         final FabricWorld world = new ChunkLoadingFabricWorld(player.level());
         final Location location = new Location(world, x, y, z, yaw, pitch);
-        final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(fabricPlayer, location);
+        final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(fabricPlayer, location, type);
         ChunkyProvider.get().getEventBus().call(playerTeleportEvent);
         final Optional<Location> optionalLocation = playerTeleportEvent.redirect();
         optionalLocation.ifPresentOrElse(redirectLocation -> redirect = redirectLocation, () -> redirect = null);

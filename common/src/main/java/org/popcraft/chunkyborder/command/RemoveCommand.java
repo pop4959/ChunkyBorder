@@ -8,13 +8,11 @@ import org.popcraft.chunky.platform.Sender;
 import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.util.Input;
 import org.popcraft.chunky.util.TranslationKey;
-import org.popcraft.chunkyborder.BorderData;
 import org.popcraft.chunkyborder.ChunkyBorder;
-import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
+import org.popcraft.chunkyborder.api.event.border.BorderChangeEvent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class RemoveCommand implements ChunkyCommand {
@@ -36,19 +34,14 @@ public class RemoveCommand implements ChunkyCommand {
                 return;
             }
         }
-        final Map<String, BorderData> borders = chunkyBorder.getBorders();
         final Selection selection = chunkyBorder.getChunky().getSelection().build();
         final World world = selection.world();
-        final BorderData currentBorder = borders.get(world.getName());
-        if (currentBorder != null) {
-            borders.remove(world.getName());
-            chunkyBorder.getMapIntegrations().forEach(mapIntegration -> mapIntegration.removeShapeMarker(world));
+        if (chunkyBorder.removeBorder(world)) {
             sender.sendMessagePrefixed(TranslationKey.FORMAT_BORDER_REMOVE, world.getName());
-            chunkyBorder.saveBorders();
         } else {
             sender.sendMessagePrefixed(TranslationKey.FORMAT_BORDER_NO_BORDER, world.getName());
+            chunkyBorder.getChunky().getEventBus().call(new BorderChangeEvent(world.getName(), null));
         }
-        chunkyBorder.getChunky().getEventBus().call(new BorderChangeEvent(world, null));
     }
 
     @Override

@@ -20,7 +20,11 @@ import org.popcraft.chunky.shape.ShapeUtil;
 import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunky.util.Translator;
 import org.popcraft.chunky.util.Version;
-import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
+import org.popcraft.chunkyborder.api.ChunkyBorderAPI;
+import org.popcraft.chunkyborder.api.ChunkyBorderAPIImpl;
+import org.popcraft.chunkyborder.api.RedirectType;
+import org.popcraft.chunkyborder.api.event.border.BorderChangeEvent;
+import org.popcraft.chunkyborder.api.event.border.BorderRedirectEvent;
 import org.popcraft.chunkyborder.event.server.BlockBreakEvent;
 import org.popcraft.chunkyborder.event.server.BlockPlaceEvent;
 import org.popcraft.chunkyborder.event.server.CreatureSpawnEvent;
@@ -57,6 +61,7 @@ public class ChunkyBorder {
     private final Map<String, BorderData> borders;
     private final Map<UUID, PlayerData> players = new ConcurrentHashMap<>();
     private final Version version, targetVersion;
+    private final ChunkyBorderAPI api;
 
     public ChunkyBorder(final Chunky chunky, final Config config, final MapIntegrationLoader mapIntegrationLoader) {
         this.chunky = chunky;
@@ -65,6 +70,7 @@ public class ChunkyBorder {
         this.borders = loadBorders();
         this.version = loadVersion();
         this.targetVersion = loadTargetVersion();
+        this.api = new ChunkyBorderAPIImpl(this);
         subscribeEvents();
         ChunkyBorderProvider.register(this);
     }
@@ -142,6 +148,9 @@ public class ChunkyBorder {
                             }
                         }
                         getPlayerData(player.getUUID()).setLastLocation(insideBorder);
+                        if (!e.isPrevented()) {
+                            callRedirectEvent(player, e.getLocation(), insideBorder, e.getType());
+                        }
                         return insideBorder;
                     })
                     .orElse(null));
@@ -250,6 +259,38 @@ public class ChunkyBorder {
         }
     }
 
+    public void addBorder(final World world, final BorderData borderData) {
+        final BorderData currentBorder = borders.get(world.getName());
+        if (currentBorder != null) {
+            borderData.setWrap(currentBorder.getWrap());
+        }
+        borders.put(world.getName(), borderData);
+        final Shape border = borderData.getBorder();
+        mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(world, border));
+        saveBorders();
+        chunky.getEventBus().call(new BorderChangeEvent(world.getName(), borderData.toApi()));
+    }
+
+    public boolean removeBorder(final World world) {
+        if (borders.remove(world.getName()) == null) {
+            return false;
+        }
+        mapIntegrations.forEach(mapIntegration -> mapIntegration.removeShapeMarker(world));
+        saveBorders();
+        chunky.getEventBus().call(new BorderChangeEvent(world.getName(), null));
+        return true;
+    }
+
+    public void setWrap(final BorderData borderData, final BorderWrapType wrap) {
+        borderData.setWrap(wrap.toString());
+        saveBorders();
+        chunky.getEventBus().call(new BorderChangeEvent(borderData.getWorld(), borderData.toApi()));
+    }
+
+    public void callRedirectEvent(final Player player, final Location from, final Location to, final RedirectType type) {
+        chunky.getEventBus().call(new BorderRedirectEvent(player.getUUID(), to.getWorld().getName(), from.getX(), from.getY(), from.getZ(), to.getX(), to.getY(), to.getZ(), type));
+    }
+
     public Map<String, BorderData> getBorders() {
         return borders;
     }
@@ -268,6 +309,10 @@ public class ChunkyBorder {
 
     public Version getTargetVersion() {
         return targetVersion;
+    }
+
+    public ChunkyBorderAPI getApi() {
+        return api;
     }
 
     public Map<String, BorderData> loadBorders() {
@@ -307,7 +352,7 @@ public class ChunkyBorder {
             }
             final Shape border = borderData.getBorder();
             mapIntegrations.forEach(mapIntegration -> mapIntegration.addShapeMarker(world, border));
-            chunky.getEventBus().call(new BorderChangeEvent(world, border));
+            chunky.getEventBus().call(new BorderChangeEvent(world.getName(), borderData.toApi()));
         }
     }
 

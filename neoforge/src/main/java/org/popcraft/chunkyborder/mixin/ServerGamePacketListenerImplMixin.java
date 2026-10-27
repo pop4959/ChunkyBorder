@@ -8,6 +8,7 @@ import org.popcraft.chunky.platform.NeoForgeWorld;
 import org.popcraft.chunky.platform.util.Location;
 import org.popcraft.chunkyborder.ChunkLoadingNeoForgeWorld;
 import org.popcraft.chunkyborder.ChunkyBorderNeoForge;
+import org.popcraft.chunkyborder.api.RedirectType;
 import org.popcraft.chunkyborder.event.server.PlayerTeleportEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -39,7 +40,7 @@ public class ServerGamePacketListenerImplMixin {
         final NeoForgePlayer neoForgePlayer = new NeoForgePlayer(this.player);
         final NeoForgeWorld world = new ChunkLoadingNeoForgeWorld(this.player.level());
         final Location location = new Location(world, x, y, z, yaw, pitch);
-        final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(neoForgePlayer, location);
+        final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(neoForgePlayer, location, this.player.isRemoved() ? RedirectType.RESPAWN : RedirectType.TELEPORT);
         ChunkyProvider.get().getEventBus().call(playerTeleportEvent);
         final Optional<Location> optionalLocation = playerTeleportEvent.redirect();
         optionalLocation.ifPresentOrElse(redirectLocation -> redirect = redirectLocation, () -> redirect = null);

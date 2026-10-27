@@ -10,11 +10,13 @@ import org.popcraft.chunky.shape.AbstractPolygon;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.shape.ShapeType;
 import org.popcraft.chunky.shape.ShapeUtil;
+import org.popcraft.chunkyborder.api.RedirectType;
 import org.popcraft.chunkyborder.event.border.BorderWrapEvent;
 import org.popcraft.chunkyborder.platform.ElevationFinder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 
@@ -46,9 +48,11 @@ public class BorderCheckTask implements Runnable {
                 playerData.setLastLocation(location);
             } else if (!playerData.isBypassing() && !player.hasPermission("chunkyborder.bypass.move")) {
                 final CompletableFuture<Location> redirectFuture;
-                final BorderWrapType borderWrapType = borderData.getWrapType();
-                if (!BorderWrapType.NONE.equals(borderWrapType)) {
-                    redirectFuture = wrap(borderData, borderWrapType, player, playerData);
+                final RedirectType redirectType;
+                final Optional<CompletableFuture<Location>> wrapFuture = wrap(borderData, borderData.getWrapType(), player);
+                if (wrapFuture.isPresent()) {
+                    redirectFuture = wrapFuture.get();
+                    redirectType = RedirectType.WRAP;
                     redirectFuture.thenAccept(redirect -> {
                         playerData.setLastLocation(redirect);
                         chunkyBorder.getChunky().getEventBus().call(new BorderWrapEvent(player, location, redirect));
@@ -58,6 +62,7 @@ public class BorderCheckTask implements Runnable {
                     lastLocation.setYaw(location.getYaw());
                     lastLocation.setPitch(location.getPitch());
                     redirectFuture = CompletableFuture.completedFuture(lastLocation);
+                    redirectType = RedirectType.BOUNCE;
                 }
 
                 redirectFuture.thenAccept(redirect -> {
@@ -68,6 +73,7 @@ public class BorderCheckTask implements Runnable {
                         location.getWorld().playSound(player, chunkyBorder.getConfig().sound());
                     }
                     player.teleport(redirect);
+                    chunkyBorder.callRedirectEvent(player, location, redirect, redirectType);
                     if (chunkyBorder.getConfig().hasMessage()) {
                         if (chunkyBorder.getConfig().useActionBar()) {
                             player.sendActionBar("custom_border_message");
@@ -84,7 +90,7 @@ public class BorderCheckTask implements Runnable {
         });
     }
 
-    private CompletableFuture<Location> wrap(final BorderData borderData, final BorderWrapType borderWrapType, final Player player, final PlayerData playerData) {
+    private Optional<CompletableFuture<Location>> wrap(final BorderData borderData, final BorderWrapType borderWrapType, final Player player) {
         final Location location = player.getLocation();
         final boolean rectangle = ShapeType.SQUARE.equals(borderData.getShape()) || ShapeType.RECTANGLE.equals(borderData.getShape());
         final boolean wrapped = switch (borderWrapType) {
@@ -96,32 +102,26 @@ public class BorderCheckTask implements Runnable {
             case Z -> wrapZ(borderData, location);
             case EARTH -> rectangle && wrapEarth(borderData, location);
         };
-        if (wrapped) {
-            return location.getWorld().getChunkAtAsync((int) location.getX() >> 4, (int) location.getZ() >> 4)
-                    .thenCompose(ignored -> this.findSafeElevation(location))
-                    .thenCompose(safeElevation -> {
-                        if (safeElevation.isPresent()) {
-                            location.setY(safeElevation.getAsInt());
-                            return CompletableFuture.completedFuture(location);
-                        }
-                        return this.getElevationAtAsync(location.getWorld(), (int) location.getX(), (int) location.getZ())
-                                .thenApply(elevation -> {
-                                    if (elevation >= location.getWorld().getMaxElevation()) {
-                                        return location.getWorld().getSpawn();
-                                    }
-
-                                    location.setY(elevation);
-                                    return location;
-                                });
-                    });
-        } else {
-            final Location lastLocation = playerData.getLastLocation().orElse(location.getWorld().getSpawn());
-            location.setX(lastLocation.getX());
-            location.setY(lastLocation.getY());
-            location.setZ(lastLocation.getZ());
-
-            return CompletableFuture.completedFuture(location);
+        if (!wrapped) {
+            return Optional.empty();
         }
+        return Optional.of(location.getWorld().getChunkAtAsync((int) location.getX() >> 4, (int) location.getZ() >> 4)
+                .thenCompose(ignored -> this.findSafeElevation(location))
+                .thenCompose(safeElevation -> {
+                    if (safeElevation.isPresent()) {
+                        location.setY(safeElevation.getAsInt());
+                        return CompletableFuture.completedFuture(location);
+                    }
+                    return this.getElevationAtAsync(location.getWorld(), (int) location.getX(), (int) location.getZ())
+                            .thenApply(elevation -> {
+                                if (elevation >= location.getWorld().getMaxElevation()) {
+                                    return location.getWorld().getSpawn();
+                                }
+
+                                location.setY(elevation);
+                                return location;
+                            });
+                }));
     }
 
     private CompletableFuture<OptionalInt> findSafeElevation(final Location location) {

@@ -35,8 +35,8 @@ import org.popcraft.chunky.platform.util.Location;
 import org.popcraft.chunky.platform.util.Vector3;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.util.Translator;
+import org.popcraft.chunkyborder.api.event.border.BorderChangeEvent;
 import org.popcraft.chunkyborder.command.BorderCommand;
-import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
 import org.popcraft.chunkyborder.event.server.BlockBreakEvent;
 import org.popcraft.chunkyborder.event.server.BlockPlaceEvent;
 import org.popcraft.chunkyborder.event.server.PlayerQuitEvent;
@@ -113,7 +113,7 @@ public class ChunkyBorderForge {
         new BorderInitializationTask(chunkyBorder).run();
         this.borderCheckTask = new BorderCheckTask(chunkyBorder);
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
-        chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(event.getServer().getPlayerList().getPlayers(), e.world(), e.shape()));
+        chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> chunkyBorder.getChunky().getServer().getWorld(e.world()).ifPresent(world -> sendBorderPacket(event.getServer().getPlayerList().getPlayers(), world, chunkyBorder.getBorder(e.world()).map(BorderData::getBorder).orElse(null))));
         initialized = true;
         event.getServer().getPlayerList().getPlayers().forEach(this::sendBorders);
     }

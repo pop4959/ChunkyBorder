@@ -37,8 +37,10 @@ import org.popcraft.chunky.platform.util.Vector3;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunky.util.Translator;
+import org.popcraft.chunkyborder.api.ChunkyBorderAPI;
+import org.popcraft.chunkyborder.api.RedirectType;
+import org.popcraft.chunkyborder.api.event.border.BorderChangeEvent;
 import org.popcraft.chunkyborder.command.BorderCommand;
-import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
 import org.popcraft.chunkyborder.event.server.BlockBreakEvent;
 import org.popcraft.chunkyborder.event.server.BlockPlaceEvent;
 import org.popcraft.chunkyborder.event.server.CreatureSpawnEvent;
@@ -88,6 +90,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         final MapIntegrationLoader mapIntegrationLoader = new BukkitMapIntegrationLoader(this);
         this.chunkyBorder = new ChunkyBorder(chunky, config, mapIntegrationLoader);
         getServer().getServicesManager().register(ChunkyBorder.class, chunkyBorder, this, ServicePriority.Normal);
+        getServer().getServicesManager().register(ChunkyBorderAPI.class, chunkyBorder.getApi(), this, ServicePriority.Normal);
         if (!chunkyBorder.hasCompatibleChunkyVersion()) {
             getLogger().severe(() -> translate(TranslationKey.BORDER_DEPENDENCY_UPDATE));
             this.setEnabled(false);
@@ -111,7 +114,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         }
         chunkyBorder.getChunky().getCommands().put("border", new BorderCommand(chunkyBorder));
         getServer().getMessenger().registerOutgoingPluginChannel(this, PLAY_BORDER_PACKET_ID);
-        chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> sendBorderPacket(getServer().getOnlinePlayers(), e.world(), e.shape()));
+        chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> chunkyBorder.getChunky().getServer().getWorld(e.world()).ifPresent(world -> sendBorderPacket(getServer().getOnlinePlayers(), world, chunkyBorder.getBorder(e.world()).map(BorderData::getBorder).orElse(null))));
         startMetrics();
         startVisualizer();
     }
@@ -285,13 +288,14 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         final Player player = new BukkitPlayer(e.getPlayer());
         final World world = new BukkitWorld(e.getTo().getWorld());
         final Location location = new Location(world, e.getTo().getX(), e.getTo().getY(), e.getTo().getZ(), e.getTo().getYaw(), e.getTo().getPitch());
-        final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(player, location);
+        final boolean prevented = (chunkyBorder.getConfig().preventEnderpearl() && org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.ENDER_PEARL.equals(e.getCause()))
+                || (chunkyBorder.getConfig().preventChorusFruit() && org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.CHORUS_FRUIT.equals(e.getCause()))
+                || (chunkyBorder.getConfig().preventEndGateway() && org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.END_GATEWAY.equals(e.getCause()));
+        final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(player, location, RedirectType.TELEPORT, prevented);
         chunkyBorder.getChunky().getEventBus().call(playerTeleportEvent);
         final Optional<Location> redirect = playerTeleportEvent.redirect();
         if (redirect.isPresent()) {
-            if ((chunkyBorder.getConfig().preventEnderpearl() && org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.ENDER_PEARL.equals(e.getCause()))
-                    || (chunkyBorder.getConfig().preventChorusFruit() && org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.CHORUS_FRUIT.equals(e.getCause()))
-                    || (chunkyBorder.getConfig().preventEndGateway() && org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.END_GATEWAY.equals(e.getCause()))) {
+            if (prevented) {
                 e.setCancelled(true);
             } else {
                 redirect.map(r -> new org.bukkit.Location(e.getTo().getWorld(), r.getX(), r.getY(), r.getZ(), r.getYaw(), r.getPitch()))
@@ -306,7 +310,7 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         final Player player = new BukkitPlayer(e.getPlayer());
         final World world = new BukkitWorld(bukkitLocation.getWorld());
         final Location location = new Location(world, bukkitLocation.getX(), bukkitLocation.getY(), bukkitLocation.getZ(), bukkitLocation.getYaw(), bukkitLocation.getPitch());
-        final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(player, location);
+        final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(player, location, RedirectType.RESPAWN);
         chunkyBorder.getChunky().getEventBus().call(playerTeleportEvent);
         playerTeleportEvent.redirect()
                 .map(r -> new org.bukkit.Location(bukkitLocation.getWorld(), r.getX(), r.getY(), r.getZ(), r.getYaw(), r.getPitch()))

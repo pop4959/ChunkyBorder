@@ -6,18 +6,15 @@ import org.popcraft.chunky.command.ChunkyCommand;
 import org.popcraft.chunky.command.CommandArguments;
 import org.popcraft.chunky.platform.Sender;
 import org.popcraft.chunky.platform.World;
-import org.popcraft.chunky.shape.ShapeFactory;
 import org.popcraft.chunky.shape.ShapeType;
 import org.popcraft.chunky.util.Formatting;
 import org.popcraft.chunky.util.Input;
 import org.popcraft.chunky.util.TranslationKey;
 import org.popcraft.chunkyborder.BorderData;
 import org.popcraft.chunkyborder.ChunkyBorder;
-import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class AddCommand implements ChunkyCommand {
@@ -78,14 +75,7 @@ public class AddCommand implements ChunkyCommand {
         }
         final Selection selection = chunky.getSelection().build();
         final World world = selection.world();
-        final BorderData borderData = new BorderData(selection);
-        final Map<String, BorderData> borders = chunkyBorder.getBorders();
-        final BorderData currentBorder = borders.get(world.getName());
-        if (currentBorder != null) {
-            borderData.setWrap(currentBorder.getWrap());
-        }
-        borders.put(world.getName(), borderData);
-        chunkyBorder.getMapIntegrations().forEach(mapIntegration -> mapIntegration.addShapeMarker(world, borderData.getBorder()));
+        chunkyBorder.addBorder(world, new BorderData(selection));
         sender.sendMessagePrefixed(TranslationKey.FORMAT_BORDER_ADD,
                 selection.shape(),
                 world.getName(),
@@ -93,8 +83,6 @@ public class AddCommand implements ChunkyCommand {
                 Formatting.number(selection.centerZ()),
                 Formatting.radius(selection)
         );
-        chunkyBorder.saveBorders();
-        chunkyBorder.getChunky().getEventBus().call(new BorderChangeEvent(world, ShapeFactory.getShape(selection, false)));
     }
 
     @Override

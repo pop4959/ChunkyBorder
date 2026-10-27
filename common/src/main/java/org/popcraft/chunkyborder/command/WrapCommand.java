@@ -31,12 +31,11 @@ public class WrapCommand implements ChunkyCommand {
         final BorderData currentBorder = borders.get(world.getName());
         if (currentBorder != null) {
             final BorderWrapType wrap = arguments.next().map(BorderWrapType::fromString).orElse(BorderWrapType.NONE);
-            currentBorder.setWrap(wrap.toString());
+            chunkyBorder.setWrap(currentBorder, wrap);
             sender.sendMessagePrefixed(TranslationKey.FORMAT_BORDER_WRAP,
                     translate("wrap_%s".formatted(wrap.toString().toLowerCase())),
                     world.getName()
             );
-            chunkyBorder.saveBorders();
         } else {
             sender.sendMessagePrefixed(TranslationKey.FORMAT_BORDER_NO_BORDER, world.getName());
         }

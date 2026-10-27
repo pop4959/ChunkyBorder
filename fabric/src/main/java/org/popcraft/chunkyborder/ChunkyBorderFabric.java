@@ -27,8 +27,8 @@ import org.popcraft.chunky.platform.util.Location;
 import org.popcraft.chunky.platform.util.Vector3;
 import org.popcraft.chunky.shape.Shape;
 import org.popcraft.chunky.util.Translator;
+import org.popcraft.chunkyborder.api.event.border.BorderChangeEvent;
 import org.popcraft.chunkyborder.command.BorderCommand;
-import org.popcraft.chunkyborder.event.border.BorderChangeEvent;
 import org.popcraft.chunkyborder.event.server.BlockBreakEvent;
 import org.popcraft.chunkyborder.event.server.PlayerQuitEvent;
 import org.popcraft.chunkyborder.packet.BorderPayload;
@@ -78,7 +78,7 @@ public class ChunkyBorderFabric implements ModInitializer {
         chunkyBorder.getChunky().getEventBus().subscribe(BorderChangeEvent.class, e -> {
             final MinecraftServer currentServer = this.server;
             if (currentServer != null) {
-                sendBorderPacket(currentServer.getPlayerList().getPlayers(), e.world(), e.shape());
+                chunkyBorder.getChunky().getServer().getWorld(e.world()).ifPresent(world -> sendBorderPacket(currentServer.getPlayerList().getPlayers(), world, chunkyBorder.getBorder(e.world()).map(BorderData::getBorder).orElse(null)));
             }
         });
         ServerLifecycleEvents.SERVER_STOPPING.register(minecraftServer -> chunkyBorder.disable());
