@@ -80,6 +80,11 @@ public class NeoForgeConfig implements Config {
     }
 
     @Override
+    public boolean preventTrident() {
+        return Optional.ofNullable(configModel.borderOptions.preventTrident).orElse(false);
+    }
+
+    @Override
     public boolean visualizerEnabled() {
         return Optional.ofNullable(configModel.borderOptions.visualizerEnabled).orElse(false);
     }
@@ -206,6 +211,7 @@ public class NeoForgeConfig implements Config {
         private Boolean preventEnderpearl = false;
         private Boolean preventChorusFruit = false;
         private Boolean preventEndGateway = false;
+        private Boolean preventTrident = false;
         private Boolean visualizerEnabled = false;
         private Integer visualizerRange = 8;
         private String visualizerColor = "20A0FF";
@@ -280,6 +286,14 @@ public class NeoForgeConfig implements Config {
 
         public void setPreventEndGateway(final Boolean preventEndGateway) {
             this.preventEndGateway = preventEndGateway;
+        }
+
+        public Boolean getPreventTrident() {
+            return preventTrident;
+        }
+
+        public void setPreventTrident(final Boolean preventTrident) {
+            this.preventTrident = preventTrident;
         }
 
         public Boolean getVisualizerEnabled() {

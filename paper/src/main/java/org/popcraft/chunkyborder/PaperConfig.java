@@ -67,6 +67,11 @@ public class PaperConfig implements Config {
     }
 
     @Override
+    public boolean preventTrident() {
+        return chunkyBorderPaper.getConfig().getBoolean("border-options.prevent-trident", false);
+    }
+
+    @Override
     public boolean visualizerEnabled() {
         return chunkyBorderPaper.getConfig().getBoolean("border-options.visualizer-enabled", false);
     }

@@ -9,21 +9,25 @@ import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.file.FileConfigurationOptions;
+import org.bukkit.entity.Trident;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRegisterChannelEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
 import org.popcraft.chunky.Chunky;
 import org.popcraft.chunky.ChunkyProvider;
 import org.popcraft.chunky.platform.BukkitPlayer;
 import org.popcraft.chunky.platform.BukkitWorld;
 import org.popcraft.chunky.platform.Folia;
+import org.popcraft.chunky.platform.Paper;
 import org.popcraft.chunky.platform.Player;
 import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.platform.util.Location;
@@ -58,6 +62,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 
 import static org.popcraft.chunky.util.Translator.translate;
 
@@ -287,6 +293,60 @@ public final class ChunkyBorderBukkit extends JavaPlugin implements Listener {
         if (creatureSpawnEvent.isCancelled()) {
             e.setCancelled(true);
         }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onProjectileLaunch(final ProjectileLaunchEvent e) {
+        if (!chunkyBorder.getConfig().preventTrident() || !(e.getEntity() instanceof final Trident trident) || !(trident.getShooter() instanceof final org.bukkit.entity.Player shooter)) {
+            return;
+        }
+        final Player player = new BukkitPlayer(shooter);
+        if (chunkyBorder.getPlayerData(player.getUUID()).isBypassing() || player.hasPermission("chunkyborder.bypass.move")) {
+            return;
+        }
+        final AtomicReference<org.bukkit.Location> lastInside = new AtomicReference<>(trident.getLocation());
+        if (!isInsideBorder(lastInside.get())) {
+            return;
+        }
+        final BooleanSupplier stopped = () -> !trident.isValid() || trident.isInBlock();
+        final Runnable tridentCheck = () -> {
+            final org.bukkit.Location location = trident.getLocation();
+            if (!isInsideBorder(location)) {
+                trident.setVelocity(new Vector());
+                if (Folia.isFolia()) {
+                    Paper.teleportAsync(trident, lastInside.get());
+                } else {
+                    trident.teleport(lastInside.get());
+                }
+                return;
+            }
+            lastInside.set(location);
+            if (!isInsideBorder(location.clone().add(trident.getVelocity()))) {
+                trident.setVelocity(new Vector());
+            }
+        };
+        if (Folia.isFolia()) {
+            Folia.scheduleFixed(this, trident, () -> {
+                if (!stopped.getAsBoolean()) {
+                    tridentCheck.run();
+                }
+            }, 1L, 1L);
+        } else {
+            getServer().getScheduler().runTaskTimer(this, task -> {
+                if (stopped.getAsBoolean()) {
+                    task.cancel();
+                } else {
+                    tridentCheck.run();
+                }
+            }, 1L, 1L);
+        }
+    }
+
+    private boolean isInsideBorder(final org.bukkit.Location location) {
+        return chunkyBorder.getBorder(location.getWorld().getName())
+                .map(BorderData::getBorder)
+                .map(border -> border.isBounding(location.getX(), location.getZ()))
+                .orElse(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)

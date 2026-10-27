@@ -11,6 +11,7 @@ border-options:
   prevent-enderpearl: false
   prevent-chorus-fruit: false
   prevent-end-gateway: false
+  prevent-trident: false
   visualizer-enabled: false
   visualizer-range: 8
   visualizer-color: 20A0FF

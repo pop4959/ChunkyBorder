@@ -67,6 +67,11 @@ public class BukkitConfig implements Config {
     }
 
     @Override
+    public boolean preventTrident() {
+        return chunkyBorderBukkit.getConfig().getBoolean("border-options.prevent-trident", false);
+    }
+
+    @Override
     public boolean visualizerEnabled() {
         return chunkyBorderBukkit.getConfig().getBoolean("border-options.visualizer-enabled", false);
     }

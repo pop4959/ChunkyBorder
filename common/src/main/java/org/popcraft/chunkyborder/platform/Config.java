@@ -40,6 +40,8 @@ public interface Config {
 
     boolean preventEndGateway();
 
+    boolean preventTrident();
+
     boolean visualizerEnabled();
 
     int visualizerRange();
