@@ -6,7 +6,6 @@ import org.popcraft.chunky.ChunkyProvider;
 import org.popcraft.chunky.platform.ForgePlayer;
 import org.popcraft.chunky.platform.ForgeWorld;
 import org.popcraft.chunky.platform.util.Location;
-import org.popcraft.chunkyborder.ChunkLoadingForgeWorld;
 import org.popcraft.chunkyborder.ChunkyBorderForge;
 import org.popcraft.chunkyborder.api.RedirectType;
 import org.popcraft.chunkyborder.event.server.PlayerTeleportEvent;
@@ -38,7 +37,7 @@ public class ServerGamePacketListenerImplMixin {
             return;
         }
         final ForgePlayer forgePlayer = new ForgePlayer(this.player);
-        final ForgeWorld world = new ChunkLoadingForgeWorld(this.player.level());
+        final ForgeWorld world = new ForgeWorld(this.player.level());
         final Location location = new Location(world, x, y, z, yaw, pitch);
         final PlayerTeleportEvent playerTeleportEvent = new PlayerTeleportEvent(forgePlayer, location, this.player.isRemoved() ? RedirectType.RESPAWN : RedirectType.TELEPORT);
         ChunkyProvider.get().getEventBus().call(playerTeleportEvent);

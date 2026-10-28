@@ -1,7 +1,6 @@
 package org.popcraft.chunkyborder;
 
 import org.popcraft.chunky.platform.Player;
-import org.popcraft.chunky.platform.World;
 import org.popcraft.chunky.platform.util.Location;
 import org.popcraft.chunky.platform.util.Vector2;
 import org.popcraft.chunky.platform.util.Vector3;
@@ -112,7 +111,7 @@ public class BorderCheckTask implements Runnable {
                         location.setY(safeElevation.getAsInt());
                         return CompletableFuture.completedFuture(location);
                     }
-                    return this.getElevationAtAsync(location.getWorld(), (int) location.getX(), (int) location.getZ())
+                    return location.getWorld().getElevationAtAsync((int) location.getX(), (int) location.getZ())
                             .thenApply(elevation -> {
                                 if (elevation >= location.getWorld().getMaxElevation()) {
                                     return location.getWorld().getSpawn();
@@ -220,32 +219,5 @@ public class BorderCheckTask implements Runnable {
             location.setYaw(180);
         }
         return true;
-    }
-
-    // FIXME: replace when chunky dependency is bumped
-    private static final java.lang.invoke.MethodHandle GET_ELEVATION_AT_ASYNC;
-
-    static {
-        java.lang.invoke.MethodHandle temp;
-
-        try {
-            temp = java.lang.invoke.MethodHandles.publicLookup().unreflect(World.class.getMethod("getElevationAtAsync", int.class, int.class));
-        } catch (ReflectiveOperationException e) {
-            temp = null;
-        }
-
-        GET_ELEVATION_AT_ASYNC = temp;
-    }
-
-    @SuppressWarnings("unchecked")
-    private CompletableFuture<Integer> getElevationAtAsync(final World world, final int x, final int z) {
-        if (GET_ELEVATION_AT_ASYNC == null) {
-            return CompletableFuture.completedFuture(world.getElevation(x, z));
-        }
-        try {
-            return (CompletableFuture<Integer>) GET_ELEVATION_AT_ASYNC.invokeExact(world, x, z);
-        } catch (Throwable e) {
-            return CompletableFuture.failedFuture(e);
-        }
     }
 }
